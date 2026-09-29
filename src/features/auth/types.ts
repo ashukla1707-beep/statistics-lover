@@ -29,6 +29,10 @@ export interface SignUpInput {
   phone?: string
 }
 
+export interface SignUpResult {
+  requiresEmailConfirmation: boolean
+}
+
 export interface AuthSnapshot {
   status: AuthStatus
   session: Session | null

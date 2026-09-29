@@ -1,21 +1,35 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { navigationItems, siteConfig } from '../../config/site'
+import { useAuth } from '../../features/auth'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
+  const { status } = useAuth()
   const closeMenu = () => setIsMenuOpen(false)
+
+  const accountTarget = status === 'authenticated'
+    ? '/dashboard'
+    : status === 'suspended'
+      ? '/account-suspended'
+      : '/login'
+
+  const accountLabel = status === 'authenticated'
+    ? 'Dashboard'
+    : status === 'suspended'
+      ? 'Account'
+      : 'Student Login'
 
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <a className="brand" href="#home" onClick={closeMenu} aria-label="Statistics Lover home">
+        <Link className="brand" to="/" onClick={closeMenu} aria-label="Statistics Lover home">
           <img className="brand-logo" src={siteConfig.logoPath} alt="Statistics Lover logo" />
           <span className="brand-copy">
             <strong>{siteConfig.name}</strong>
             <small>{siteConfig.tagline}</small>
           </span>
-        </a>
+        </Link>
 
         <button
           className="menu-toggle"
@@ -36,13 +50,13 @@ export function Header() {
           aria-label="Primary navigation"
         >
           {navigationItems.map((item) => (
-            <a key={item.href} href={item.href} onClick={closeMenu}>
+            <a key={item.href} href={`/${item.href}`} onClick={closeMenu}>
               {item.label}
             </a>
           ))}
-          <a className="button button-small" href="#login" onClick={closeMenu}>
-            Student Login
-          </a>
+          <Link className="button button-small" to={accountTarget} onClick={closeMenu}>
+            {accountLabel}
+          </Link>
         </nav>
       </div>
     </header>

@@ -16,12 +16,12 @@ import {
   signOutCurrentUser,
   signUpWithPassword,
 } from './authService'
-import type { AuthSnapshot, SignUpInput } from './types'
+import type { AuthSnapshot, SignUpInput, SignUpResult } from './types'
 
 export interface AuthContextValue extends AuthSnapshot {
   isConfigured: boolean
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (input: SignUpInput) => Promise<void>
+  signUp: (input: SignUpInput) => Promise<SignUpResult>
   signOut: () => Promise<void>
   refreshIdentity: () => Promise<void>
   hasRole: (role: UserRole) => boolean
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   )
 
   const signUp = useCallback(
-    async (input: SignUpInput) => {
+    async (input: SignUpInput): Promise<SignUpResult> => {
       setSnapshot((current) => ({ ...current, error: null }))
       const session = await signUpWithPassword({
         ...input,
@@ -138,6 +138,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
         phone: input.phone?.trim() || undefined,
       })
       await hydrateSession(session)
+
+      return {
+        requiresEmailConfirmation: !session,
+      }
     },
     [hydrateSession],
   )

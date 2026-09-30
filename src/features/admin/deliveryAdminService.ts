@@ -1,4 +1,5 @@
 import { requireSupabase } from '../../services/supabase/client'
+import { validateDeliveryProviderReference } from './providerLinkValidation'
 
 export type DeliveryActionKind = 'join' | 'watch'
 export type DeliveryProvider = 'google_meet' | 'google_drive' | 'cloudflare_stream' | 'external'
@@ -61,6 +62,8 @@ export async function saveManagedDeliverySource(input: {
   const client = requireSupabase()
   const reference = input.providerReference.trim()
   const label = input.label?.trim() || null
+  const validationError = validateDeliveryProviderReference(input.actionKind, input.provider, reference)
+  if (validationError) throw new Error(validationError)
 
   const { data, error } = await client
     .from('lecture_delivery_sources')

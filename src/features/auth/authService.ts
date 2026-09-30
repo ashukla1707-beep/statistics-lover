@@ -91,10 +91,12 @@ export async function signUpWithPassword(
   input: SignUpInput,
 ): Promise<Session | null> {
   const client = requireSupabase()
+  const emailRedirectTo = new URL('/login', window.location.origin).toString()
   const { data, error } = await client.auth.signUp({
     email: input.email,
     password: input.password,
     options: {
+      emailRedirectTo,
       data: {
         full_name: input.fullName,
         phone: input.phone ?? null,

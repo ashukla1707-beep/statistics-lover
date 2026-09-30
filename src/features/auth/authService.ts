@@ -108,6 +108,19 @@ export async function signUpWithPassword(
   return data.session
 }
 
+export async function requestPasswordReset(email: string): Promise<void> {
+  const client = requireSupabase()
+  const redirectTo = new URL('/reset-password', window.location.origin).toString()
+  const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo })
+  if (error) throw error
+}
+
+export async function updateCurrentUserPassword(password: string): Promise<void> {
+  const client = requireSupabase()
+  const { error } = await client.auth.updateUser({ password })
+  if (error) throw error
+}
+
 export async function signOutCurrentUser(): Promise<void> {
   const client = requireSupabase()
   const { error } = await client.auth.signOut()

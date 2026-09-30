@@ -32,6 +32,19 @@ function SiteLayout() {
 export default function App() {
   return (
     <Routes>
+      <Route
+        path="learn/:batchId/lecture/:lectureId"
+        element={
+          <RequireAuth
+            loadingFallback={<div className="lecture-player-loading">Loading recording…</div>}
+            anonymousFallback={<Navigate to="/login" replace />}
+            suspendedFallback={<Navigate to="/account-suspended" replace />}
+          >
+            <LecturePlayerPage />
+          </RequireAuth>
+        }
+      />
+
       <Route element={<SiteLayout />}>
         <Route index element={<HomePage />} />
         <Route path="login" element={<AuthPage mode="login" />} />
@@ -60,18 +73,6 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <LearningPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="learn/:batchId/lecture/:lectureId"
-          element={
-            <RequireAuth
-              loadingFallback={<div className="auth-state">Loading recording…</div>}
-              anonymousFallback={<Navigate to="/login" replace />}
-              suspendedFallback={<Navigate to="/account-suspended" replace />}
-            >
-              <LecturePlayerPage />
             </RequireAuth>
           }
         />

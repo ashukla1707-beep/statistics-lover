@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { siteConfig } from '../../config/site'
 import { useAuth } from './useAuth'
 
 type AuthMode = 'login' | 'register'
@@ -95,9 +94,6 @@ export function AuthPage({ mode }: AuthPageProps) {
               ? 'Your account starts with student access. Course and batch access will be granted by enrollment.'
               : 'Sign in to continue to your courses, classes, tests, materials and results.'}
           </p>
-          <div className="auth-brand-mark" aria-hidden="true">
-            <img src={siteConfig.logoPath} alt="" />
-          </div>
         </div>
 
         <div className="auth-card">
@@ -145,9 +141,13 @@ export function AuthPage({ mode }: AuthPageProps) {
               />
             </label>
 
-            <label className="form-field">
-              <span>Password</span>
+            <div className="form-field">
+              <div className="auth-field-heading">
+                <label htmlFor="auth-password">Password</label>
+                {!isRegister && <Link to="/forgot-password">Forgot password?</Link>}
+              </div>
               <input
+                id="auth-password"
                 type="password"
                 autoComplete={isRegister ? 'new-password' : 'current-password'}
                 value={password}
@@ -155,7 +155,7 @@ export function AuthPage({ mode }: AuthPageProps) {
                 minLength={8}
                 required
               />
-            </label>
+            </div>
 
             {isRegister && (
               <label className="form-field">

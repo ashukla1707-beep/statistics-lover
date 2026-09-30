@@ -1,12 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { loadStudentCourseEnrollments, type StudentCourseEnrollment } from './courseService'
-import { loadBatchLearningContent, type StudentSubject } from './learningService'
+import {
+  loadBatchDeliveryActions,
+  loadBatchLearningContent,
+  type LectureDeliveryAction,
+  type StudentSubject,
+} from './learningService'
 
 type LearningState = {
   enrollment: StudentCourseEnrollment | null
   subjects: StudentSubject[]
+  deliveryActions: LectureDeliveryAction[]
   error: string | null
   loaded: boolean
 }
@@ -18,7 +24,13 @@ function humanize(value: string) {
 export function LearningPage() {
   const { batchId = '' } = useParams()
   const { identity } = useAuth()
-  const [state, setState] = useState<LearningState>({ enrollment: null, subjects: [], error: null, loaded: false })
+  const [state, setState] = useState<LearningState>({
+    enrollment: null,
+    subjects: [],
+    deliveryActions: [],
+    error: null,
+    loaded: false,
+  })
 
   useEffect(() => {
     if (!identity?.userId || !batchId) return
@@ -28,18 +40,29 @@ export function LearningPage() {
       .then(async (enrollments) => {
         const enrollment = enrollments.find((item) => item.batch.id === batchId) ?? null
         if (!enrollment) {
-          if (active) setState({ enrollment: null, subjects: [], error: 'This batch is not assigned to your account.', loaded: true })
+          if (active) setState({ enrollment: null, subjects: [], deliveryActions: [], error: 'This batch is not assigned to your account.', loaded: true })
           return
         }
-        const subjects = await loadBatchLearningContent(batchId)
-        if (active) setState({ enrollment, subjects, error: null, loaded: true })
+        const [subjects, deliveryActions] = await Promise.all([
+          loadBatchLearningContent(batchId),
+          loadBatchDeliveryActions(batchId),
+        ])
+        if (active) setState({ enrollment, subjects, deliveryActions, error: null, loaded: true })
       })
       .catch(() => {
-        if (active) setState({ enrollment: null, subjects: [], error: 'We could not load this learning space right now.', loaded: true })
+        if (active) setState({ enrollment: null, subjects: [], deliveryActions: [], error: 'We could not load this learning space right now.', loaded: true })
       })
 
     return () => { active = false }
   }, [batchId, identity?.userId])
+
+  const actionsByLecture = useMemo(() => {
+    const map = new Map<string, LectureDeliveryAction[]>()
+    for (const action of state.deliveryActions) {
+      map.set(action.lectureId, [...(map.get(action.lectureId) ?? []), action])
+    }
+    return map
+  }, [state.deliveryActions])
 
   if (!state.loaded) {
     return <div className="auth-state">Loading your learning space…</div>
@@ -112,20 +135,43 @@ export function LearningPage() {
                           <p className="learning-muted">No available lectures yet.</p>
                         ) : (
                           <div className="learning-lecture-list">
-                            {module.lectures.map((lecture) => (
-                              <article className="learning-lecture" key={lecture.id}>
-                                <div className="learning-lecture-index">{lecture.position + 1}</div>
-                                <div className="learning-lecture-copy">
-                                  <div className="learning-lecture-title-row">
-                                    <strong>{lecture.title}</strong>
-                                    <span className={`learning-status learning-status-${lecture.status}`}>{humanize(lecture.status)}</span>
+                            {module.lectures.map((lecture) => {
+                              const deliveryActions = actionsByLecture.get(lecture.id) ?? []
+                              return (
+                                <article className="learning-lecture" key={lecture.id}>
+                                  <div className="learning-lecture-index">{lecture.position + 1}</div>
+                                  <div className="learning-lecture-copy">
+                                    <div className="learning-lecture-title-row">
+                                      <strong>{lecture.title}</strong>
+                                      <span className={`learning-status learning-status-${lecture.status}`}>{humanize(lecture.status)}</span>
+                                    </div>
+                                    <span>{humanize(lecture.deliveryMode)}{lecture.durationMinutes ? ` · ${lecture.durationMinutes} min` : ''}</span>
+                                    {lecture.scheduledAt && <small>{new Date(lecture.scheduledAt).toLocaleString()}</small>}
+                                    {lecture.description && <p>{lecture.description}</p>}
+                                    {deliveryActions.length > 0 && (
+                                      <div className="learning-delivery-actions">
+                                        {deliveryActions.map((action) => (
+                                          <a
+                                            className="button button-small"
+                                            href={action.actionUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            key={`${action.lectureId}-${action.actionKind}`}
+                                          >
+                                            {action.label}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {deliveryActions.length > 0 && (
+                                      <small className="learning-provider-note">
+                                        Access verified for your enrollment · {deliveryActions.map((action) => humanize(action.provider)).join(' / ')}
+                                      </small>
+                                    )}
                                   </div>
-                                  <span>{humanize(lecture.deliveryMode)}{lecture.durationMinutes ? ` · ${lecture.durationMinutes} min` : ''}</span>
-                                  {lecture.scheduledAt && <small>{new Date(lecture.scheduledAt).toLocaleString()}</small>}
-                                  {lecture.description && <p>{lecture.description}</p>}
-                                </div>
-                              </article>
-                            ))}
+                                </article>
+                              )
+                            })}
                           </div>
                         )}
                       </details>

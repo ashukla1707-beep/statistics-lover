@@ -53,19 +53,7 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="hero-visual" aria-label="Statistics Lover brand">
-            <div className="logo-card">
-              <img src={siteConfig.logoPath} alt="Statistics Lover — Learn Practice Succeed" />
-            </div>
-            <div className="floating-card floating-card-top">
-              <strong>Learn</strong>
-              <span>Concept-first teaching</span>
-            </div>
-            <div className="floating-card floating-card-bottom">
-              <strong>Practice</strong>
-              <span>Tests • PYQs • Assignments</span>
-            </div>
-          </div>
+
         </div>
       </section>
 

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { loadStudentCourseEnrollments, type StudentCourseEnrollment } from './courseService'
-import { DriveRecordingFrame } from './DriveRecordingFrame'
 import {
   loadBatchDeliveryActions,
   loadBatchLearningContent,
@@ -153,11 +152,13 @@ export function LearningPage() {
                                       <div className="learning-delivery-actions">
                                         {deliveryActions.map((action) => (
                                           action.provider === 'google_drive' && action.actionKind === 'watch' ? (
-                                            <DriveRecordingFrame
-                                              action={action}
-                                              title={lecture.title}
+                                            <Link
+                                              className="button button-small"
+                                              to={`/learn/${batchId}/lecture/${lecture.id}`}
                                               key={`${action.lectureId}-${action.actionKind}`}
-                                            />
+                                            >
+                                              {action.label}
+                                            </Link>
                                           ) : (
                                             <a
                                               className="button button-small"

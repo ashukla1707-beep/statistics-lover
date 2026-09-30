@@ -5,8 +5,9 @@ import { useAuth } from '../../features/auth'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { status } = useAuth()
+  const { status, hasAnyRole } = useAuth()
   const closeMenu = () => setIsMenuOpen(false)
+  const canManageAcademics = status === 'authenticated' && hasAnyRole(['content_manager', 'admin', 'owner'])
 
   const accountTarget = status === 'authenticated'
     ? '/dashboard'
@@ -54,6 +55,9 @@ export function Header() {
               {item.label}
             </a>
           ))}
+          {canManageAcademics && (
+            <Link to="/admin/academics" onClick={closeMenu}>Admin</Link>
+          )}
           <Link className="button button-small" to={accountTarget} onClick={closeMenu}>
             {accountLabel}
           </Link>

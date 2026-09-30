@@ -158,7 +158,16 @@ export async function listStudentEnrollments(studentId: string): Promise<Managed
     .order('enrolled_at', { ascending: false })
 
   if (error) throw error
-  return (data ?? []) as unknown as EnrollmentRow[]
+  return ((data ?? []) as unknown as EnrollmentRow[]).map((row) => ({
+    id: row.id,
+    studentId: row.student_id,
+    status: row.status,
+    enrolledAt: row.enrolled_at,
+    accessStartsAt: row.access_starts_at,
+    accessEndsAt: row.access_ends_at,
+    source: row.source,
+    batch: row.batch,
+  }))
 }
 
 export async function createStudentEnrollment(input: {

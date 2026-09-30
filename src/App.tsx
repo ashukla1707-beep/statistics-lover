@@ -3,6 +3,7 @@ import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
 import { AcademicManagementPage } from './features/admin/AcademicManagementPage'
 import { ContentManagementPage } from './features/admin/ContentManagementPage'
+import { DeliveryManagementPage } from './features/admin/DeliveryManagementPage'
 import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
   AuthPage,
@@ -86,6 +87,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <ContentManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/delivery"
+          element={
+            <RequireAuth
+              roles={['content_manager', 'admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading delivery workspace…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <DeliveryManagementPage />
             </RequireAuth>
           }
         />

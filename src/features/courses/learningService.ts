@@ -29,6 +29,14 @@ export interface StudentSubject {
   modules: StudentModule[]
 }
 
+export interface LectureDeliveryAction {
+  lectureId: string
+  actionKind: 'join' | 'watch'
+  provider: 'google_meet' | 'google_drive' | 'cloudflare_stream' | 'external'
+  actionUrl: string
+  label: string
+}
+
 type SubjectRow = {
   id: string
   title: string
@@ -56,6 +64,14 @@ type LectureRow = {
   scheduled_at: string | null
   duration_minutes: number | null
   release_at: string | null
+}
+
+type DeliveryActionRow = {
+  lecture_id: string
+  action_kind: LectureDeliveryAction['actionKind']
+  provider: LectureDeliveryAction['provider']
+  action_url: string
+  label: string
 }
 
 export async function loadBatchLearningContent(batchId: string): Promise<StudentSubject[]> {
@@ -126,5 +142,21 @@ export async function loadBatchLearningContent(batchId: string): Promise<Student
             releaseAt: lecture.release_at,
           })),
       })),
+  }))
+}
+
+export async function loadBatchDeliveryActions(batchId: string): Promise<LectureDeliveryAction[]> {
+  const { data, error } = await requireSupabase().rpc('get_batch_delivery_actions', {
+    target_batch: batchId,
+  })
+
+  if (error) throw error
+
+  return ((data ?? []) as DeliveryActionRow[]).map((row) => ({
+    lectureId: row.lecture_id,
+    actionKind: row.action_kind,
+    provider: row.provider,
+    actionUrl: row.action_url,
+    label: row.label,
   }))
 }

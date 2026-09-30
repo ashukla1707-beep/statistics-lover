@@ -20,26 +20,6 @@ type PlayerContext = {
   loaded: boolean
 }
 
-function unlockOrientation() {
-  const orientation = screen.orientation as typeof screen.orientation & { unlock?: () => void }
-  try {
-    orientation.unlock?.()
-  } catch {
-    // Orientation locking is optional and browser-dependent.
-  }
-}
-
-async function lockLandscapeIfSupported() {
-  const orientation = screen.orientation as typeof screen.orientation & {
-    lock?: (orientation: string) => Promise<void>
-  }
-  try {
-    await orientation.lock?.('landscape')
-  } catch {
-    // Some mobile browsers do not permit orientation locking even in fullscreen.
-  }
-}
-
 export function LecturePlayerPage() {
   const { batchId = '', lectureId = '' } = useParams()
   const { identity } = useAuth()
@@ -121,16 +101,11 @@ export function LecturePlayerPage() {
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const active = document.fullscreenElement === stageRef.current
-      setIsFullscreen(active)
-      if (!active) unlockOrientation()
+      setIsFullscreen(document.fullscreenElement === stageRef.current)
     }
 
     document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-      unlockOrientation()
-    }
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
@@ -145,7 +120,6 @@ export function LecturePlayerPage() {
       }
 
       await stageRef.current.requestFullscreen({ navigationUI: 'hide' })
-      await lockLandscapeIfSupported()
     } catch {
       // Playback remains available inline when fullscreen is unavailable.
     }

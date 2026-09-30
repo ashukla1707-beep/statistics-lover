@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
 import { AcademicManagementPage } from './features/admin/AcademicManagementPage'
+import { ContentManagementPage } from './features/admin/ContentManagementPage'
 import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
   AuthPage,
@@ -10,6 +11,7 @@ import {
   ResetPasswordPage,
   SuspendedPage,
 } from './features/auth'
+import { LearningPage } from './features/courses/LearningPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { HomePage } from './features/home/HomePage'
 
@@ -48,6 +50,18 @@ export default function App() {
           }
         />
         <Route
+          path="learn/:batchId"
+          element={
+            <RequireAuth
+              loadingFallback={<div className="auth-state">Loading your learning space…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <LearningPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="admin/academics"
           element={
             <RequireAuth
@@ -58,6 +72,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <AcademicManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/content"
+          element={
+            <RequireAuth
+              roles={['content_manager', 'admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading content workspace…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <ContentManagementPage />
             </RequireAuth>
           }
         />

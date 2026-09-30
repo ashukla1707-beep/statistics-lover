@@ -8,6 +8,7 @@ import './styles/auth.css'
 import './styles/admin.css'
 import './styles/enrollment-admin.css'
 import './styles/content.css'
+import './styles/delivery.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

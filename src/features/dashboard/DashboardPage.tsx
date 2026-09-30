@@ -10,44 +10,52 @@ function formatRole(role: string) {
   return role.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
+type CourseLoadState = {
+  userId: string | null
+  enrollments: StudentCourseEnrollment[]
+  error: string | null
+}
+
 export function DashboardPage() {
   const navigate = useNavigate()
   const { identity, signOut } = useAuth()
   const [busy, setBusy] = useState(false)
-  const [enrollments, setEnrollments] = useState<StudentCourseEnrollment[]>([])
-  const [coursesLoading, setCoursesLoading] = useState(true)
-  const [coursesError, setCoursesError] = useState<string | null>(null)
+  const [courseState, setCourseState] = useState<CourseLoadState>({
+    userId: null,
+    enrollments: [],
+    error: null,
+  })
+
+  const studentId = identity?.userId ?? null
+  const coursesLoading = Boolean(studentId && courseState.userId !== studentId)
+  const enrollments = courseState.userId === studentId ? courseState.enrollments : []
+  const coursesError = courseState.userId === studentId ? courseState.error : null
 
   useEffect(() => {
-    const studentId = identity?.userId
-    if (!studentId) {
-      setEnrollments([])
-      setCoursesLoading(false)
-      return
-    }
+    if (!studentId) return
 
     let active = true
-    setCoursesLoading(true)
-    setCoursesError(null)
 
     void loadStudentCourseEnrollments(studentId)
       .then((rows) => {
-        if (active) setEnrollments(rows)
+        if (active) {
+          setCourseState({ userId: studentId, enrollments: rows, error: null })
+        }
       })
       .catch(() => {
         if (active) {
-          setEnrollments([])
-          setCoursesError('We could not load your courses right now. Please try again.')
+          setCourseState({
+            userId: studentId,
+            enrollments: [],
+            error: 'We could not load your courses right now. Please try again.',
+          })
         }
-      })
-      .finally(() => {
-        if (active) setCoursesLoading(false)
       })
 
     return () => {
       active = false
     }
-  }, [identity?.userId])
+  }, [studentId])
 
   async function handleSignOut() {
     setBusy(true)

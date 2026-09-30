@@ -59,6 +59,9 @@ export function Header() {
           {canManageAcademics && (
             <Link to="/admin/academics" onClick={closeMenu}>Admin</Link>
           )}
+          {canManageAcademics && (
+            <Link to="/admin/content" onClick={closeMenu}>Content</Link>
+          )}
           {canManageEnrollments && (
             <Link to="/admin/enrollments" onClick={closeMenu}>Enrollments</Link>
           )}

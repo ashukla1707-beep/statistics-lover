@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth'
 import {
   loadStudentCourseEnrollments,
@@ -104,8 +104,10 @@ export function DashboardPage() {
               <ul className="portal-course-list">
                 {enrollments.slice(0, 3).map((enrollment) => (
                   <li key={enrollment.enrollmentId}>
-                    <strong>{enrollment.course.title}</strong>
-                    <span>{enrollment.batch.title}</span>
+                    <Link className="portal-course-link" to={`/learn/${enrollment.batch.id}`}>
+                      <strong>{enrollment.course.title}</strong>
+                      <span>{enrollment.batch.title}</span>
+                    </Link>
                   </li>
                 ))}
                 {enrollments.length > 3 && (

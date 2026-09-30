@@ -24,9 +24,7 @@ function humanize(value: string) {
 
 function messageFrom(error: unknown) {
   if (error instanceof Error) return error.message
-  if (typeof error === 'object' && error && 'message' in error && typeof error.message === 'string') {
-    return error.message
-  }
+  if (typeof error === 'object' && error && 'message' in error && typeof error.message === 'string') return error.message
   return 'Something went wrong. Please try again.'
 }
 
@@ -68,24 +66,21 @@ export function StudentEnrollmentsPage() {
   }, [])
 
   useEffect(() => {
-    if (!selectedStudentId) {
-      setEnrollments([])
-      return
-    }
+    if (!selectedStudentId) return
     let active = true
-    setEnrollmentsLoading(true)
     void listStudentEnrollments(selectedStudentId)
       .then((rows) => {
         if (active) {
           setEnrollments(rows)
           setError(null)
+          setEnrollmentsLoading(false)
         }
       })
       .catch((cause) => {
-        if (active) setError(messageFrom(cause))
-      })
-      .finally(() => {
-        if (active) setEnrollmentsLoading(false)
+        if (active) {
+          setError(messageFrom(cause))
+          setEnrollmentsLoading(false)
+        }
       })
     return () => { active = false }
   }, [selectedStudentId])
@@ -109,11 +104,9 @@ export function StudentEnrollmentsPage() {
     () => batches.filter((batch) => batch.courseId === selectedCourseId),
     [batches, selectedCourseId],
   )
-
-  useEffect(() => {
-    if (availableBatches.some((batch) => batch.id === selectedBatchId)) return
-    setSelectedBatchId(availableBatches[0]?.id ?? '')
-  }, [availableBatches, selectedBatchId])
+  const effectiveBatchId = availableBatches.some((batch) => batch.id === selectedBatchId)
+    ? selectedBatchId
+    : availableBatches[0]?.id ?? ''
 
   async function refreshEnrollments() {
     if (!selectedStudentId) return
@@ -121,8 +114,8 @@ export function StudentEnrollmentsPage() {
   }
 
   async function enrollStudent() {
-    if (!selectedStudent || !selectedBatchId || !identity?.userId) return
-    if (enrollments.some((enrollment) => enrollment.batch?.id === selectedBatchId)) {
+    if (!selectedStudent || !effectiveBatchId || !identity?.userId) return
+    if (enrollments.some((enrollment) => enrollment.batch?.id === effectiveBatchId)) {
       setError('This student already has an enrollment record for the selected batch.')
       return
     }
@@ -133,7 +126,7 @@ export function StudentEnrollmentsPage() {
     try {
       await createStudentEnrollment({
         studentId: selectedStudent.id,
-        batchId: selectedBatchId,
+        batchId: effectiveBatchId,
         grantedBy: identity.userId,
         accessEndsAt: accessEndsAt ? new Date(`${accessEndsAt}T23:59:59`).toISOString() : null,
       })
@@ -205,12 +198,7 @@ export function StudentEnrollmentsPage() {
             </div>
             <label className="form-field student-search-field">
               <span>Search students</span>
-              <input
-                type="search"
-                placeholder="Name, email or phone"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
+              <input type="search" placeholder="Name, email or phone" value={search} onChange={(event) => setSearch(event.target.value)} />
             </label>
 
             {loading && <p className="admin-empty">Loading students…</p>}
@@ -224,6 +212,7 @@ export function StudentEnrollmentsPage() {
                   className={`student-directory-row ${student.id === selectedStudentId ? 'is-selected' : ''}`}
                   onClick={() => {
                     setSelectedStudentId(student.id)
+                    setEnrollmentsLoading(true)
                     setNotice(null)
                     setError(null)
                   }}
@@ -233,9 +222,7 @@ export function StudentEnrollmentsPage() {
                     <strong>{student.fullName || 'Unnamed student'}</strong>
                     <small>{student.email || 'No email'}</small>
                   </span>
-                  <span className={`admin-status admin-status-${student.accountStatus === 'active' ? 'published' : 'archived'}`}>
-                    {humanize(student.accountStatus)}
-                  </span>
+                  <span className={`admin-status admin-status-${student.accountStatus === 'active' ? 'published' : 'archived'}`}>{humanize(student.accountStatus)}</span>
                 </button>
               ))}
             </div>
@@ -252,29 +239,23 @@ export function StudentEnrollmentsPage() {
                     <h2>{selectedStudent.fullName || 'Unnamed student'}</h2>
                     <p>{selectedStudent.email || 'No email'}{selectedStudent.phone ? ` · ${selectedStudent.phone}` : ''}</p>
                   </div>
-                  <span className={`admin-status admin-status-${selectedStudent.accountStatus === 'active' ? 'published' : 'archived'}`}>
-                    {humanize(selectedStudent.accountStatus)}
-                  </span>
+                  <span className={`admin-status admin-status-${selectedStudent.accountStatus === 'active' ? 'published' : 'archived'}`}>{humanize(selectedStudent.accountStatus)}</span>
                 </div>
 
                 <section className="enrollment-create-card">
-                  <div className="admin-panel-heading compact">
-                    <div><span>Assign access</span><h3>Enroll in a batch</h3></div>
-                  </div>
+                  <div className="admin-panel-heading compact"><div><span>Assign access</span><h3>Enroll in a batch</h3></div></div>
                   <div className="admin-form-grid enrollment-form-grid">
                     <label className="form-field">
                       <span>Course</span>
-                      <select value={selectedCourseId} onChange={(event) => setSelectedCourseId(event.target.value)}>
+                      <select value={selectedCourseId} onChange={(event) => { setSelectedCourseId(event.target.value); setSelectedBatchId('') }}>
                         {courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
                       </select>
                     </label>
                     <label className="form-field">
                       <span>Batch</span>
-                      <select value={selectedBatchId} onChange={(event) => setSelectedBatchId(event.target.value)} disabled={availableBatches.length === 0}>
+                      <select value={effectiveBatchId} onChange={(event) => setSelectedBatchId(event.target.value)} disabled={availableBatches.length === 0}>
                         {availableBatches.length === 0 && <option value="">No batches in this course</option>}
-                        {availableBatches.map((batch) => (
-                          <option key={batch.id} value={batch.id}>{batch.title}{batch.code ? ` (${batch.code})` : ''}</option>
-                        ))}
+                        {availableBatches.map((batch) => <option key={batch.id} value={batch.id}>{batch.title}{batch.code ? ` (${batch.code})` : ''}</option>)}
                       </select>
                     </label>
                     <label className="form-field">
@@ -282,9 +263,7 @@ export function StudentEnrollmentsPage() {
                       <input type="date" value={accessEndsAt} onChange={(event) => setAccessEndsAt(event.target.value)} />
                     </label>
                     <div className="enrollment-submit-cell">
-                      <button className="button" type="button" onClick={() => void enrollStudent()} disabled={saving || !selectedBatchId || selectedStudent.accountStatus !== 'active'}>
-                        {saving ? 'Saving…' : 'Enroll student'}
-                      </button>
+                      <button className="button" type="button" onClick={() => void enrollStudent()} disabled={saving || !effectiveBatchId || selectedStudent.accountStatus !== 'active'}>{saving ? 'Saving…' : 'Enroll student'}</button>
                     </div>
                   </div>
                 </section>
@@ -294,28 +273,19 @@ export function StudentEnrollmentsPage() {
                     <div><span>Access records</span><h3>Current enrollments</h3></div>
                     <strong className="admin-count-badge">{enrollments.length}</strong>
                   </div>
-
                   {enrollmentsLoading && <p className="admin-empty">Loading enrollments…</p>}
                   {!enrollmentsLoading && enrollments.length === 0 && <p className="admin-empty">This student has no batch enrollments yet.</p>}
-
                   <div className="student-enrollment-list">
                     {enrollments.map((enrollment) => (
                       <article className="student-enrollment-row" key={enrollment.id}>
                         <div className="student-enrollment-main">
-                          <span className={`admin-status admin-status-${enrollment.status === 'active' ? 'active' : enrollment.status === 'completed' ? 'completed' : 'archived'}`}>
-                            {humanize(enrollment.status)}
-                          </span>
+                          <span className={`admin-status admin-status-${enrollment.status === 'active' ? 'active' : enrollment.status === 'completed' ? 'completed' : 'archived'}`}>{humanize(enrollment.status)}</span>
                           <strong>{enrollment.batch?.course?.title || 'Course unavailable'}</strong>
                           <span>{enrollment.batch?.title || 'Batch unavailable'}{enrollment.batch?.code ? ` · ${enrollment.batch.code}` : ''}</span>
                           <small>Enrolled {new Date(enrollment.enrolledAt).toLocaleDateString()}</small>
                         </div>
                         <div className="student-enrollment-actions">
-                          <select
-                            aria-label="Enrollment status"
-                            value={enrollment.status}
-                            disabled={saving}
-                            onChange={(event) => void changeStatus(enrollment, event.target.value as EnrollmentStatus)}
-                          >
+                          <select aria-label="Enrollment status" value={enrollment.status} disabled={saving} onChange={(event) => void changeStatus(enrollment, event.target.value as EnrollmentStatus)}>
                             {enrollmentStatuses.map((status) => <option key={status} value={status}>{humanize(status)}</option>)}
                           </select>
                           <button className="admin-danger-button" type="button" disabled={saving} onClick={() => void removeEnrollment(enrollment)}>Remove</button>

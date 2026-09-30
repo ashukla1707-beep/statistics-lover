@@ -8,6 +8,7 @@ export function Header() {
   const { status, hasAnyRole } = useAuth()
   const closeMenu = () => setIsMenuOpen(false)
   const canManageAcademics = status === 'authenticated' && hasAnyRole(['content_manager', 'admin', 'owner'])
+  const canManageEnrollments = status === 'authenticated' && hasAnyRole(['admin', 'owner'])
 
   const accountTarget = status === 'authenticated'
     ? '/dashboard'
@@ -57,6 +58,9 @@ export function Header() {
           ))}
           {canManageAcademics && (
             <Link to="/admin/academics" onClick={closeMenu}>Admin</Link>
+          )}
+          {canManageEnrollments && (
+            <Link to="/admin/enrollments" onClick={closeMenu}>Enrollments</Link>
           )}
           <Link className="button button-small" to={accountTarget} onClick={closeMenu}>
             {accountLabel}

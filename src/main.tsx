@@ -9,6 +9,7 @@ import './styles/admin.css'
 import './styles/enrollment-admin.css'
 import './styles/content.css'
 import './styles/delivery.css'
+import './styles/drive-player.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -164,12 +164,14 @@ export function LecturePlayerPage() {
           role="region"
           aria-label={`${state.lecture.title} recording`}
         >
-          <iframe
-            src={state.action.actionUrl}
-            title={`${state.lecture.title} recording`}
-            allow="autoplay"
-            referrerPolicy="no-referrer"
-          />
+          <div className="lecture-player-media">
+            <iframe
+              src={state.action.actionUrl}
+              title={`${state.lecture.title} recording`}
+              allow="autoplay"
+              referrerPolicy="no-referrer"
+            />
+          </div>
           {document.fullscreenEnabled && (
             <button
               type="button"

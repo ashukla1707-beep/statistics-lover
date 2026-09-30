@@ -20,6 +20,48 @@ type PlayerContext = {
   loaded: boolean
 }
 
+const DRIVE_DESKTOP_WIDTH = 1024
+const DRIVE_DESKTOP_HEIGHT = 576
+
+function isTouchDevice() {
+  return typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
+}
+
+function unlockOrientation() {
+  const orientation = screen.orientation as typeof screen.orientation & { unlock?: () => void }
+  try {
+    orientation.unlock?.()
+  } catch {
+    // Orientation locking is optional and browser-dependent.
+  }
+}
+
+async function lockLandscapeIfSupported() {
+  const orientation = screen.orientation as typeof screen.orientation & {
+    lock?: (orientation: string) => Promise<void>
+  }
+  try {
+    await orientation.lock?.('landscape')
+  } catch {
+    // Mobile browsers may reject orientation locking; playback still works.
+  }
+}
+
+function syncMobileFullscreenScale(stage: HTMLDivElement | null) {
+  if (!stage) return
+
+  const active = document.fullscreenElement === stage
+  if (!active || !isTouchDevice()) {
+    stage.style.removeProperty('--drive-player-scale')
+    return
+  }
+
+  const viewportWidth = window.visualViewport?.width ?? window.innerWidth
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+  const scale = Math.min(viewportWidth / DRIVE_DESKTOP_WIDTH, viewportHeight / DRIVE_DESKTOP_HEIGHT)
+  stage.style.setProperty('--drive-player-scale', String(Math.max(scale, 0.1)))
+}
+
 export function LecturePlayerPage() {
   const { batchId = '', lectureId = '' } = useParams()
   const { identity } = useAuth()
@@ -100,12 +142,24 @@ export function LecturePlayerPage() {
   }, [batchId, identity?.userId, lectureId])
 
   useEffect(() => {
+    const handleViewportChange = () => syncMobileFullscreenScale(stageRef.current)
     const handleFullscreenChange = () => {
-      setIsFullscreen(document.fullscreenElement === stageRef.current)
+      const active = document.fullscreenElement === stageRef.current
+      setIsFullscreen(active)
+      window.requestAnimationFrame(handleViewportChange)
+      if (!active) unlockOrientation()
     }
 
     document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    window.addEventListener('resize', handleViewportChange)
+    window.visualViewport?.addEventListener('resize', handleViewportChange)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      window.removeEventListener('resize', handleViewportChange)
+      window.visualViewport?.removeEventListener('resize', handleViewportChange)
+      unlockOrientation()
+    }
   }, [])
 
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
@@ -120,6 +174,10 @@ export function LecturePlayerPage() {
       }
 
       await stageRef.current.requestFullscreen({ navigationUI: 'hide' })
+      if (isTouchDevice()) {
+        await lockLandscapeIfSupported()
+        window.requestAnimationFrame(() => syncMobileFullscreenScale(stageRef.current))
+      }
     } catch {
       // Playback remains available inline when fullscreen is unavailable.
     }

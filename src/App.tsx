@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
 import { AcademicManagementPage } from './features/admin/AcademicManagementPage'
+import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
   AuthPage,
   ForgotPasswordPage,
@@ -57,6 +58,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <AcademicManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/enrollments"
+          element={
+            <RequireAuth
+              roles={['admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading enrollment workspace…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <StudentEnrollmentsPage />
             </RequireAuth>
           }
         />

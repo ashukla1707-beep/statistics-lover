@@ -149,8 +149,27 @@ export function AcademicManagementPage() {
   }, [])
 
   useEffect(() => {
-    void refreshCourses()
-  }, [refreshCourses])
+    let active = true
+
+    void listManagedCourses()
+      .then((rows) => {
+        if (!active) return
+        setCourses(rows)
+        setSelectedCourseId(rows[0]?.id ?? null)
+        setBatchesLoading(rows.length > 0)
+        setPageError(null)
+      })
+      .catch((error) => {
+        if (active) setPageError(errorMessage(error))
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!selectedCourseId) return

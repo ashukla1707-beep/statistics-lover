@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { loadStudentCourseEnrollments, type StudentCourseEnrollment } from './courseService'
+import { DriveRecordingFrame } from './DriveRecordingFrame'
 import {
   loadBatchDeliveryActions,
   loadBatchLearningContent,
@@ -151,15 +152,23 @@ export function LearningPage() {
                                     {deliveryActions.length > 0 && (
                                       <div className="learning-delivery-actions">
                                         {deliveryActions.map((action) => (
-                                          <a
-                                            className="button button-small"
-                                            href={action.actionUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            key={`${action.lectureId}-${action.actionKind}`}
-                                          >
-                                            {action.label}
-                                          </a>
+                                          action.provider === 'google_drive' && action.actionKind === 'watch' ? (
+                                            <DriveRecordingFrame
+                                              action={action}
+                                              title={lecture.title}
+                                              key={`${action.lectureId}-${action.actionKind}`}
+                                            />
+                                          ) : (
+                                            <a
+                                              className="button button-small"
+                                              href={action.actionUrl}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              key={`${action.lectureId}-${action.actionKind}`}
+                                            >
+                                              {action.label}
+                                            </a>
+                                          )
                                         ))}
                                       </div>
                                     )}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useAuth } from '../auth'
 import {
   createManagedBatch,
@@ -128,7 +128,7 @@ export function AcademicManagementPage() {
     [courses, selectedCourseId],
   )
 
-  async function refreshCourses(preferredCourseId?: string | null) {
+  const refreshCourses = useCallback(async (preferredCourseId?: string | null) => {
     try {
       const rows = await listManagedCourses()
       setCourses(rows)
@@ -146,19 +146,16 @@ export function AcademicManagementPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     void refreshCourses()
-  }, [])
+  }, [refreshCourses])
 
   useEffect(() => {
     if (!selectedCourseId) return
 
     let active = true
-    setBatchesLoading(true)
-    setBatchForm(null)
-
     void listManagedBatches(selectedCourseId)
       .then((rows) => {
         if (active) {
@@ -177,6 +174,15 @@ export function AcademicManagementPage() {
       active = false
     }
   }, [selectedCourseId])
+
+  function selectCourse(courseId: string) {
+    setSelectedCourseId(courseId)
+    setBatches([])
+    setBatchesLoading(true)
+    setBatchForm(null)
+    setCourseForm(null)
+    setNotice(null)
+  }
 
   function startNewCourse() {
     setCourseForm({ ...emptyCourseForm })
@@ -223,13 +229,14 @@ export function AcademicManagementPage() {
         description: courseForm.description,
         status: courseForm.status,
       }
-
+      const wasEdit = Boolean(courseForm.id)
       const saved = courseForm.id
         ? await updateManagedCourse(courseForm.id, input, courseForm.publishedAt)
         : await createManagedCourse(input)
 
       setCourseForm(null)
-      setNotice(courseForm.id ? 'Course updated.' : 'Course created.')
+      setBatchesLoading(true)
+      setNotice(wasEdit ? 'Course updated.' : 'Course created.')
       await refreshCourses(saved.id)
     } catch (error) {
       setPageError(errorMessage(error))
@@ -268,6 +275,7 @@ export function AcademicManagementPage() {
         startsOn: batchForm.startsOn,
         endsOn: batchForm.endsOn,
       }
+      const wasEdit = Boolean(batchForm.id)
 
       if (batchForm.id) {
         await updateManagedBatch(batchForm.id, input)
@@ -275,7 +283,6 @@ export function AcademicManagementPage() {
         await createManagedBatch(input)
       }
 
-      const wasEdit = Boolean(batchForm.id)
       setBatchForm(null)
       setBatches(await listManagedBatches(selectedCourse.id))
       setNotice(wasEdit ? 'Batch updated.' : 'Batch created.')
@@ -368,11 +375,7 @@ export function AcademicManagementPage() {
                   className={`admin-course-row ${selectedCourseId === course.id ? 'is-selected' : ''}`}
                   type="button"
                   key={course.id}
-                  onClick={() => {
-                    setSelectedCourseId(course.id)
-                    setCourseForm(null)
-                    setNotice(null)
-                  }}
+                  onClick={() => selectCourse(course.id)}
                 >
                   <span className={`admin-status admin-status-${course.status}`}>{humanize(course.status)}</span>
                   <strong>{course.title}</strong>

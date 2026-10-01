@@ -9,7 +9,6 @@ import {
   type StudentLecture,
   type StudentSubject,
 } from './learningService'
-import { resolveStreamPlayback } from './streamPlaybackService'
 
 type PlayerContext = {
   enrollment: StudentCourseEnrollment | null
@@ -21,21 +20,11 @@ type PlayerContext = {
   loaded: boolean
 }
 
-type ResolvedStreamPlayback = {
-  key: string
-  url: string | null
-  error: string | null
-}
-
 const DRIVE_DESKTOP_WIDTH = 1024
 const DRIVE_DESKTOP_HEIGHT = 576
 
 function isTouchDevice() {
   return typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
-}
-
-function humanize(value: string) {
-  return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
 function unlockOrientation() {
@@ -58,9 +47,11 @@ async function lockLandscapeIfSupported() {
   }
 }
 
-function syncTouchPlayerScale(stage: HTMLDivElement | null, isDrivePlayback: boolean) {
-  if (!stage || !isDrivePlayback || !isTouchDevice()) {
-    stage?.style.removeProperty('--drive-player-scale')
+function syncTouchPlayerScale(stage: HTMLDivElement | null) {
+  if (!stage) return
+
+  if (!isTouchDevice()) {
+    stage.style.removeProperty('--drive-player-scale')
     return
   }
 
@@ -76,7 +67,6 @@ export function LecturePlayerPage() {
   const { identity } = useAuth()
   const stageRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [resolvedStreamPlayback, setResolvedStreamPlayback] = useState<ResolvedStreamPlayback | null>(null)
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -122,9 +112,7 @@ export function LecturePlayerPage() {
         }
 
         const action = actions.find(
-          (item) => item.lectureId === lectureId
-            && item.actionKind === 'watch'
-            && (item.provider === 'google_drive' || item.provider === 'cloudflare_stream'),
+          (item) => item.lectureId === lectureId && item.actionKind === 'watch' && item.provider === 'google_drive',
         ) ?? null
 
         if (!lecture || !action) {
@@ -153,37 +141,11 @@ export function LecturePlayerPage() {
     return () => { active = false }
   }, [batchId, identity?.userId, lectureId])
 
-  const streamPlaybackKey = `${batchId}:${lectureId}`
-
-  useEffect(() => {
-    if (state.action?.provider !== 'cloudflare_stream') return
-    let active = true
-    void resolveStreamPlayback(batchId, lectureId)
-      .then((url) => {
-        if (active) setResolvedStreamPlayback({ key: streamPlaybackKey, url, error: null })
-      })
-      .catch((error: unknown) => {
-        if (!active) return
-        setResolvedStreamPlayback({
-          key: streamPlaybackKey,
-          url: null,
-          error: error instanceof Error ? error.message : 'Cloudflare Stream playback could not be opened.',
-        })
-      })
-    return () => { active = false }
-  }, [batchId, lectureId, state.action?.provider, streamPlaybackKey])
-
-  const isDrivePlayback = state.action?.provider === 'google_drive'
-  const playbackUrl = isDrivePlayback
-    ? state.action?.actionUrl ?? null
-    : resolvedStreamPlayback?.key === streamPlaybackKey ? resolvedStreamPlayback.url : null
-  const playbackError = resolvedStreamPlayback?.key === streamPlaybackKey ? resolvedStreamPlayback.error : null
-
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
 
-    const handleViewportChange = () => syncTouchPlayerScale(stage, isDrivePlayback)
+    const handleViewportChange = () => syncTouchPlayerScale(stage)
     const handleFullscreenChange = () => {
       const active = document.fullscreenElement === stage
       setIsFullscreen(active)
@@ -209,7 +171,7 @@ export function LecturePlayerPage() {
       stage.style.removeProperty('--drive-player-scale')
       unlockOrientation()
     }
-  }, [isDrivePlayback, state.loaded])
+  }, [state.loaded])
 
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
 
@@ -225,7 +187,7 @@ export function LecturePlayerPage() {
       await stageRef.current.requestFullscreen({ navigationUI: 'hide' })
       if (isTouchDevice()) {
         await lockLandscapeIfSupported()
-        window.requestAnimationFrame(() => syncTouchPlayerScale(stageRef.current, isDrivePlayback))
+        window.requestAnimationFrame(() => syncTouchPlayerScale(stageRef.current))
       }
     } catch {
       // Playback remains available inline when fullscreen is unavailable.
@@ -268,28 +230,18 @@ export function LecturePlayerPage() {
         <div
           ref={stageRef}
           className="lecture-player-stage"
-          data-provider={state.action.provider}
           role="region"
           aria-label={`${state.lecture.title} recording`}
         >
           <div className="lecture-player-media">
-            {playbackUrl ? (
-              <iframe
-                src={playbackUrl}
-                title={`${state.lecture.title} recording`}
-                allow={state.action.provider === 'cloudflare_stream'
-                  ? 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture'
-                  : 'autoplay'}
-                allowFullScreen={state.action.provider === 'cloudflare_stream'}
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="lecture-player-resolving">
-                {playbackError ? <span>{playbackError}</span> : <span>Verifying secure playback…</span>}
-              </div>
-            )}
+            <iframe
+              src={state.action.actionUrl}
+              title={`${state.lecture.title} recording`}
+              allow="autoplay"
+              referrerPolicy="no-referrer"
+            />
           </div>
-          {isDrivePlayback && document.fullscreenEnabled && (
+          {document.fullscreenEnabled && (
             <button
               type="button"
               className="lecture-player-fullscreen"
@@ -307,7 +259,7 @@ export function LecturePlayerPage() {
             <strong>{state.enrollment.course.title}</strong>
             <span>{state.enrollment.batch.title}</span>
           </div>
-          <small>Access verified for your enrollment · {humanize(state.action.provider)}</small>
+          <small>Access verified for your enrollment · Google Drive</small>
         </div>
       </div>
     </main>

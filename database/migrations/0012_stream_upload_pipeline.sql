@@ -90,19 +90,19 @@ check (
   (
     provider = 'google_meet'::public.delivery_provider
     and action_kind = 'join'::public.delivery_action_kind
-    and provider_reference ~* '^https://meet\.google\.com/'
+    and provider_reference ~* '^https://meet\\.google\\.com/'
   )
   or (
     provider = 'google_drive'::public.delivery_provider
     and action_kind = 'watch'::public.delivery_action_kind
-    and provider_reference ~* '^https://drive\.google\.com/'
+    and provider_reference ~* '^https://drive\\.google\\.com/'
   )
   or (
     provider = 'cloudflare_stream'::public.delivery_provider
     and action_kind = 'watch'::public.delivery_action_kind
     and (
       provider_reference ~ '^stream://[A-Za-z0-9_-]+$'
-      or provider_reference ~* '^https://([a-z0-9-]+\.)*(videodelivery\.net|cloudflarestream\.com)/'
+      or provider_reference ~* '^https://([a-z0-9-]+\\.)*(videodelivery\\.net|cloudflarestream\\.com)/'
     )
   )
   or (

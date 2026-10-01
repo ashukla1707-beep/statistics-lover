@@ -21,6 +21,12 @@ type PlayerContext = {
   loaded: boolean
 }
 
+type ResolvedStreamPlayback = {
+  key: string
+  url: string | null
+  error: string | null
+}
+
 const DRIVE_DESKTOP_WIDTH = 1024
 const DRIVE_DESKTOP_HEIGHT = 576
 
@@ -70,8 +76,7 @@ export function LecturePlayerPage() {
   const { identity } = useAuth()
   const stageRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null)
-  const [playbackError, setPlaybackError] = useState<string | null>(null)
+  const [resolvedStreamPlayback, setResolvedStreamPlayback] = useState<ResolvedStreamPlayback | null>(null)
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -148,34 +153,31 @@ export function LecturePlayerPage() {
     return () => { active = false }
   }, [batchId, identity?.userId, lectureId])
 
+  const streamPlaybackKey = `${batchId}:${lectureId}`
+
   useEffect(() => {
-    const action = state.action
-    if (!action) {
-      setPlaybackUrl(null)
-      setPlaybackError(null)
-      return
-    }
-
-    if (action.provider === 'google_drive') {
-      setPlaybackUrl(action.actionUrl)
-      setPlaybackError(null)
-      return
-    }
-
-    if (action.provider !== 'cloudflare_stream') return
+    if (state.action?.provider !== 'cloudflare_stream') return
     let active = true
-    setPlaybackUrl(null)
-    setPlaybackError(null)
     void resolveStreamPlayback(batchId, lectureId)
-      .then((url) => { if (active) setPlaybackUrl(url) })
+      .then((url) => {
+        if (active) setResolvedStreamPlayback({ key: streamPlaybackKey, url, error: null })
+      })
       .catch((error: unknown) => {
         if (!active) return
-        setPlaybackError(error instanceof Error ? error.message : 'Cloudflare Stream playback could not be opened.')
+        setResolvedStreamPlayback({
+          key: streamPlaybackKey,
+          url: null,
+          error: error instanceof Error ? error.message : 'Cloudflare Stream playback could not be opened.',
+        })
       })
     return () => { active = false }
-  }, [batchId, lectureId, state.action])
+  }, [batchId, lectureId, state.action?.provider, streamPlaybackKey])
 
   const isDrivePlayback = state.action?.provider === 'google_drive'
+  const playbackUrl = isDrivePlayback
+    ? state.action?.actionUrl ?? null
+    : resolvedStreamPlayback?.key === streamPlaybackKey ? resolvedStreamPlayback.url : null
+  const playbackError = resolvedStreamPlayback?.key === streamPlaybackKey ? resolvedStreamPlayback.error : null
 
   useEffect(() => {
     const stage = stageRef.current

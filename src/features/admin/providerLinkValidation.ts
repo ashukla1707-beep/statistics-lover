@@ -11,31 +11,11 @@ function googleDriveFileId(url: URL): string | null {
   return null
 }
 
-function isCloudflareStreamHost(hostname: string) {
-  const host = hostname.toLowerCase()
-  return host === 'videodelivery.net'
-    || host.endsWith('.videodelivery.net')
-    || host === 'cloudflarestream.com'
-    || host.endsWith('.cloudflarestream.com')
-}
-
-function cloudflareStreamVideoId(url: URL): string | null {
-  if (!isCloudflareStreamHost(url.hostname)) return null
-  const segments = url.pathname.split('/').filter(Boolean)
-  if (segments.length === 0) return null
-  return segments[0]
-}
-
-function isInternalStreamReference(reference: string) {
-  return /^stream:\/\/[A-Za-z0-9_-]+$/.test(reference)
-}
-
 export function normalizeDeliveryProviderReference(
   provider: DeliveryProvider,
   rawReference: string,
 ): string {
   const reference = rawReference.trim()
-  if (provider === 'cloudflare_stream' && isInternalStreamReference(reference)) return reference
 
   let url: URL
   try {
@@ -44,19 +24,14 @@ export function normalizeDeliveryProviderReference(
     return reference
   }
 
-  if (provider === 'google_drive' && url.hostname.toLowerCase() === 'drive.google.com') {
-    const fileId = googleDriveFileId(url)
-    if (!fileId) return reference
-    return `https://drive.google.com/file/d/${fileId}/preview`
+  if (provider !== 'google_drive' || url.hostname.toLowerCase() !== 'drive.google.com') {
+    return reference
   }
 
-  if (provider === 'cloudflare_stream' && isCloudflareStreamHost(url.hostname)) {
-    const videoId = cloudflareStreamVideoId(url)
-    if (!videoId) return reference
-    return `${url.origin}/${videoId}/iframe`
-  }
+  const fileId = googleDriveFileId(url)
+  if (!fileId) return reference
 
-  return reference
+  return `https://drive.google.com/file/d/${fileId}/preview`
 }
 
 export function validateDeliveryProviderReference(
@@ -65,10 +40,6 @@ export function validateDeliveryProviderReference(
   rawReference: string,
 ): string | null {
   const reference = rawReference.trim()
-
-  if (provider === 'cloudflare_stream' && isInternalStreamReference(reference)) {
-    return actionKind === 'watch' ? null : 'Cloudflare Stream can only be used for recording access.'
-  }
 
   let url: URL
   try {
@@ -92,8 +63,12 @@ export function validateDeliveryProviderReference(
 
   if (provider === 'cloudflare_stream') {
     if (actionKind !== 'watch') return 'Cloudflare Stream can only be used for recording access.'
-    if (!isCloudflareStreamHost(url.hostname)) return 'Cloudflare Stream links must use videodelivery.net or cloudflarestream.com.'
-    if (!cloudflareStreamVideoId(url)) return 'Use a Cloudflare Stream player link containing a video ID.'
+    const host = url.hostname.toLowerCase()
+    const allowed = host === 'videodelivery.net'
+      || host.endsWith('.videodelivery.net')
+      || host === 'cloudflarestream.com'
+      || host.endsWith('.cloudflarestream.com')
+    if (!allowed) return 'Cloudflare Stream links must use videodelivery.net or cloudflarestream.com.'
   }
 
   return null

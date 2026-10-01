@@ -27,27 +27,6 @@ function isTouchDevice() {
   return typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 }
 
-function unlockOrientation() {
-  const orientation = screen.orientation as typeof screen.orientation & { unlock?: () => void }
-  try {
-    orientation.unlock?.()
-  } catch {
-    // Orientation locking is optional and browser-dependent.
-  }
-}
-
-async function lockLandscapeIfSupported() {
-  const orientation = screen.orientation as typeof screen.orientation & {
-    lock?: (orientation: string) => Promise<void>
-  }
-
-  try {
-    await orientation.lock?.('landscape')
-  } catch {
-    // Some mobile browsers reject orientation locking. Fullscreen still works without it.
-  }
-}
-
 function syncTouchPlayerScale(stage: HTMLDivElement | null) {
   if (!stage) return
 
@@ -74,10 +53,7 @@ export function LecturePlayerPage() {
   const { batchId = '', lectureId = '' } = useParams()
   const { identity } = useAuth()
   const stageRef = useRef<HTMLDivElement>(null)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [engagedLectureId, setEngagedLectureId] = useState<string | null>(null)
-  const isPlayerEngaged = engagedLectureId === lectureId
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -158,11 +134,8 @@ export function LecturePlayerPage() {
 
     const handleViewportChange = () => queuePlayerScaleSync(stage)
     const handleFullscreenChange = () => {
-      const active = document.fullscreenElement === stage
-      setIsFullscreen(active)
-      if (active) setEngagedLectureId(lectureId)
+      setIsFullscreen(document.fullscreenElement === stage)
       queuePlayerScaleSync(stage)
-      if (!active) unlockOrientation()
     }
 
     const resizeObserver = typeof ResizeObserver === 'undefined'
@@ -173,6 +146,7 @@ export function LecturePlayerPage() {
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     window.addEventListener('resize', handleViewportChange)
     window.visualViewport?.addEventListener('resize', handleViewportChange)
+    screen.orientation?.addEventListener('change', handleViewportChange)
     queuePlayerScaleSync(stage)
 
     return () => {
@@ -180,33 +154,10 @@ export function LecturePlayerPage() {
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
       window.removeEventListener('resize', handleViewportChange)
       window.visualViewport?.removeEventListener('resize', handleViewportChange)
+      screen.orientation?.removeEventListener('change', handleViewportChange)
       stage.style.removeProperty('--drive-player-scale')
-      unlockOrientation()
     }
-  }, [lectureId, state.loaded])
-
-  useEffect(() => {
-    if (!state.loaded || isPlayerEngaged) return
-
-    const markPlayerEngagedIfFocused = () => {
-      window.setTimeout(() => {
-        if (document.activeElement === iframeRef.current) setEngagedLectureId(lectureId)
-      }, 0)
-    }
-
-    const focusPoll = window.setInterval(() => {
-      if (document.activeElement === iframeRef.current) setEngagedLectureId(lectureId)
-    }, 250)
-
-    window.addEventListener('blur', markPlayerEngagedIfFocused)
-    document.addEventListener('focusin', markPlayerEngagedIfFocused)
-
-    return () => {
-      window.clearInterval(focusPoll)
-      window.removeEventListener('blur', markPlayerEngagedIfFocused)
-      document.removeEventListener('focusin', markPlayerEngagedIfFocused)
-    }
-  }, [isPlayerEngaged, lectureId, state.loaded])
+  }, [state.loaded])
 
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
 
@@ -220,13 +171,8 @@ export function LecturePlayerPage() {
         return
       }
 
-      setEngagedLectureId(lectureId)
       await stage.requestFullscreen({ navigationUI: 'hide' })
       queuePlayerScaleSync(stage)
-
-      if (isTouchDevice()) {
-        void lockLandscapeIfSupported().finally(() => queuePlayerScaleSync(stage))
-      }
     } catch {
       // Keep inline playback available when the browser refuses fullscreen.
     }
@@ -267,13 +213,12 @@ export function LecturePlayerPage() {
 
         <div
           ref={stageRef}
-          className={`lecture-player-stage${isPlayerEngaged ? ' is-engaged' : ''}`}
+          className="lecture-player-stage"
           role="region"
           aria-label={`${state.lecture.title} recording`}
         >
           <div className="lecture-player-media">
             <iframe
-              ref={iframeRef}
               src={state.action.actionUrl}
               title={`${state.lecture.title} recording`}
               allow="autoplay"

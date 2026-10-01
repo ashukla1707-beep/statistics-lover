@@ -26,11 +26,16 @@ function cloudflareStreamVideoId(url: URL): string | null {
   return segments[0]
 }
 
+function isInternalStreamReference(reference: string) {
+  return /^stream:\/\/[A-Za-z0-9_-]+$/.test(reference)
+}
+
 export function normalizeDeliveryProviderReference(
   provider: DeliveryProvider,
   rawReference: string,
 ): string {
   const reference = rawReference.trim()
+  if (provider === 'cloudflare_stream' && isInternalStreamReference(reference)) return reference
 
   let url: URL
   try {
@@ -60,6 +65,10 @@ export function validateDeliveryProviderReference(
   rawReference: string,
 ): string | null {
   const reference = rawReference.trim()
+
+  if (provider === 'cloudflare_stream' && isInternalStreamReference(reference)) {
+    return actionKind === 'watch' ? null : 'Cloudflare Stream can only be used for recording access.'
+  }
 
   let url: URL
   try {

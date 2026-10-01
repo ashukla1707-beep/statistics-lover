@@ -74,7 +74,9 @@ export function LecturePlayerPage() {
   const { batchId = '', lectureId = '' } = useParams()
   const { identity } = useAuth()
   const stageRef = useRef<HTMLDivElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isPlayerEngaged, setIsPlayerEngaged] = useState(false)
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -84,6 +86,10 @@ export function LecturePlayerPage() {
     error: null,
     loaded: false,
   })
+
+  useEffect(() => {
+    setIsPlayerEngaged(false)
+  }, [lectureId])
 
   useEffect(() => {
     if (!identity?.userId || !batchId || !lectureId) return
@@ -157,6 +163,7 @@ export function LecturePlayerPage() {
     const handleFullscreenChange = () => {
       const active = document.fullscreenElement === stage
       setIsFullscreen(active)
+      if (active) setIsPlayerEngaged(true)
       queuePlayerScaleSync(stage)
       if (!active) unlockOrientation()
     }
@@ -181,6 +188,29 @@ export function LecturePlayerPage() {
     }
   }, [state.loaded])
 
+  useEffect(() => {
+    if (!state.loaded || isPlayerEngaged) return
+
+    const markPlayerEngagedIfFocused = () => {
+      window.setTimeout(() => {
+        if (document.activeElement === iframeRef.current) setIsPlayerEngaged(true)
+      }, 0)
+    }
+
+    const focusPoll = window.setInterval(() => {
+      if (document.activeElement === iframeRef.current) setIsPlayerEngaged(true)
+    }, 250)
+
+    window.addEventListener('blur', markPlayerEngagedIfFocused)
+    document.addEventListener('focusin', markPlayerEngagedIfFocused)
+
+    return () => {
+      window.clearInterval(focusPoll)
+      window.removeEventListener('blur', markPlayerEngagedIfFocused)
+      document.removeEventListener('focusin', markPlayerEngagedIfFocused)
+    }
+  }, [isPlayerEngaged, state.loaded])
+
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
 
   const toggleFullscreen = async () => {
@@ -193,6 +223,7 @@ export function LecturePlayerPage() {
         return
       }
 
+      setIsPlayerEngaged(true)
       await stage.requestFullscreen({ navigationUI: 'hide' })
       queuePlayerScaleSync(stage)
 
@@ -239,12 +270,13 @@ export function LecturePlayerPage() {
 
         <div
           ref={stageRef}
-          className="lecture-player-stage"
+          className={`lecture-player-stage${isPlayerEngaged ? ' is-engaged' : ''}`}
           role="region"
           aria-label={`${state.lecture.title} recording`}
         >
           <div className="lecture-player-media">
             <iframe
+              ref={iframeRef}
               src={state.action.actionUrl}
               title={`${state.lecture.title} recording`}
               allow="autoplay"
@@ -260,6 +292,8 @@ export function LecturePlayerPage() {
                 draggable={false}
               />
             </span>
+
+            <span className="lecture-player-drive-fullscreen-blocker" aria-hidden="true" />
 
             {document.fullscreenEnabled && (
               <button

@@ -27,6 +27,10 @@ function isTouchDevice() {
   return typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 }
 
+function humanize(value: string) {
+  return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
 function unlockOrientation() {
   const orientation = screen.orientation as typeof screen.orientation & { unlock?: () => void }
   try {
@@ -47,11 +51,9 @@ async function lockLandscapeIfSupported() {
   }
 }
 
-function syncTouchPlayerScale(stage: HTMLDivElement | null) {
-  if (!stage) return
-
-  if (!isTouchDevice()) {
-    stage.style.removeProperty('--drive-player-scale')
+function syncTouchPlayerScale(stage: HTMLDivElement | null, isDrivePlayback: boolean) {
+  if (!stage || !isDrivePlayback || !isTouchDevice()) {
+    stage?.style.removeProperty('--drive-player-scale')
     return
   }
 
@@ -112,7 +114,9 @@ export function LecturePlayerPage() {
         }
 
         const action = actions.find(
-          (item) => item.lectureId === lectureId && item.actionKind === 'watch' && item.provider === 'google_drive',
+          (item) => item.lectureId === lectureId
+            && item.actionKind === 'watch'
+            && (item.provider === 'google_drive' || item.provider === 'cloudflare_stream'),
         ) ?? null
 
         if (!lecture || !action) {
@@ -141,11 +145,13 @@ export function LecturePlayerPage() {
     return () => { active = false }
   }, [batchId, identity?.userId, lectureId])
 
+  const isDrivePlayback = state.action?.provider === 'google_drive'
+
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
 
-    const handleViewportChange = () => syncTouchPlayerScale(stage)
+    const handleViewportChange = () => syncTouchPlayerScale(stage, isDrivePlayback)
     const handleFullscreenChange = () => {
       const active = document.fullscreenElement === stage
       setIsFullscreen(active)
@@ -171,7 +177,7 @@ export function LecturePlayerPage() {
       stage.style.removeProperty('--drive-player-scale')
       unlockOrientation()
     }
-  }, [state.loaded])
+  }, [isDrivePlayback, state.loaded])
 
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
 
@@ -187,7 +193,7 @@ export function LecturePlayerPage() {
       await stageRef.current.requestFullscreen({ navigationUI: 'hide' })
       if (isTouchDevice()) {
         await lockLandscapeIfSupported()
-        window.requestAnimationFrame(() => syncTouchPlayerScale(stageRef.current))
+        window.requestAnimationFrame(() => syncTouchPlayerScale(stageRef.current, isDrivePlayback))
       }
     } catch {
       // Playback remains available inline when fullscreen is unavailable.
@@ -230,6 +236,7 @@ export function LecturePlayerPage() {
         <div
           ref={stageRef}
           className="lecture-player-stage"
+          data-provider={state.action.provider}
           role="region"
           aria-label={`${state.lecture.title} recording`}
         >
@@ -237,7 +244,9 @@ export function LecturePlayerPage() {
             <iframe
               src={state.action.actionUrl}
               title={`${state.lecture.title} recording`}
-              allow="autoplay"
+              allow={state.action.provider === 'cloudflare_stream'
+                ? 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture'
+                : 'autoplay'}
               referrerPolicy="no-referrer"
             />
           </div>
@@ -259,7 +268,7 @@ export function LecturePlayerPage() {
             <strong>{state.enrollment.course.title}</strong>
             <span>{state.enrollment.batch.title}</span>
           </div>
-          <small>Access verified for your enrollment · Google Drive</small>
+          <small>Access verified for your enrollment · {humanize(state.action.provider)}</small>
         </div>
       </div>
     </main>

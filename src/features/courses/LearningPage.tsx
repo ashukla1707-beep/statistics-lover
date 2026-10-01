@@ -151,7 +151,7 @@ export function LearningPage() {
                                     {deliveryActions.length > 0 && (
                                       <div className="learning-delivery-actions">
                                         {deliveryActions.map((action) => (
-                                          action.provider === 'google_drive' && action.actionKind === 'watch' ? (
+                                          action.actionKind === 'watch' && (action.provider === 'google_drive' || action.provider === 'cloudflare_stream') ? (
                                             <Link
                                               className="button button-small"
                                               to={`/learn/${batchId}/lecture/${lecture.id}`}

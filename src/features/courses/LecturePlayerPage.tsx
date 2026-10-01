@@ -27,26 +27,6 @@ function isTouchDevice() {
   return typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 }
 
-function unlockOrientation() {
-  const orientation = screen.orientation as typeof screen.orientation & { unlock?: () => void }
-  try {
-    orientation.unlock?.()
-  } catch {
-    // Orientation locking is optional and browser-dependent.
-  }
-}
-
-async function lockLandscapeIfSupported() {
-  const orientation = screen.orientation as typeof screen.orientation & {
-    lock?: (orientation: string) => Promise<void>
-  }
-  try {
-    await orientation.lock?.('landscape')
-  } catch {
-    // Mobile browsers may reject orientation locking; playback still works.
-  }
-}
-
 function syncTouchPlayerScale(stage: HTMLDivElement | null) {
   if (!stage) return
 
@@ -66,7 +46,6 @@ export function LecturePlayerPage() {
   const { batchId = '', lectureId = '' } = useParams()
   const { identity } = useAuth()
   const stageRef = useRef<HTMLDivElement>(null)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -146,53 +125,24 @@ export function LecturePlayerPage() {
     if (!stage) return
 
     const handleViewportChange = () => syncTouchPlayerScale(stage)
-    const handleFullscreenChange = () => {
-      const active = document.fullscreenElement === stage
-      setIsFullscreen(active)
-      window.requestAnimationFrame(handleViewportChange)
-      if (!active) unlockOrientation()
-    }
-
     const resizeObserver = typeof ResizeObserver === 'undefined'
       ? null
       : new ResizeObserver(handleViewportChange)
 
     resizeObserver?.observe(stage)
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
     window.addEventListener('resize', handleViewportChange)
     window.visualViewport?.addEventListener('resize', handleViewportChange)
     window.requestAnimationFrame(handleViewportChange)
 
     return () => {
       resizeObserver?.disconnect()
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
       window.removeEventListener('resize', handleViewportChange)
       window.visualViewport?.removeEventListener('resize', handleViewportChange)
       stage.style.removeProperty('--drive-player-scale')
-      unlockOrientation()
     }
   }, [state.loaded])
 
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
-
-  const toggleFullscreen = async () => {
-    if (!stageRef.current || !document.fullscreenEnabled) return
-
-    try {
-      if (document.fullscreenElement === stageRef.current) {
-        await document.exitFullscreen()
-        return
-      }
-
-      await stageRef.current.requestFullscreen({ navigationUI: 'hide' })
-      if (isTouchDevice()) {
-        await lockLandscapeIfSupported()
-        window.requestAnimationFrame(() => syncTouchPlayerScale(stageRef.current))
-      }
-    } catch {
-      // Playback remains available inline when fullscreen is unavailable.
-    }
-  }
 
   if (!state.loaded) return <div className="lecture-player-loading">Loading recording…</div>
 
@@ -237,7 +187,8 @@ export function LecturePlayerPage() {
             <iframe
               src={state.action.actionUrl}
               title={`${state.lecture.title} recording`}
-              allow="autoplay"
+              allow="autoplay; fullscreen"
+              allowFullScreen
               referrerPolicy="no-referrer"
             />
           </div>
@@ -250,18 +201,6 @@ export function LecturePlayerPage() {
                 draggable={false}
               />
             </span>
-
-            {document.fullscreenEnabled && (
-              <button
-                type="button"
-                className="lecture-player-fullscreen"
-                onClick={toggleFullscreen}
-                aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
-                title={isFullscreen ? 'Exit full screen' : 'Full screen'}
-              >
-                {isFullscreen ? '×' : '⛶'}
-              </button>
-            )}
           </div>
         </div>
 

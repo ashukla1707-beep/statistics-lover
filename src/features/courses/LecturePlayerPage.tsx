@@ -9,6 +9,7 @@ import {
   type StudentLecture,
   type StudentSubject,
 } from './learningService'
+import { resolveStreamPlayback } from './streamPlaybackService'
 
 type PlayerContext = {
   enrollment: StudentCourseEnrollment | null
@@ -18,6 +19,12 @@ type PlayerContext = {
   action: LectureDeliveryAction | null
   error: string | null
   loaded: boolean
+}
+
+type ResolvedStreamPlayback = {
+  key: string
+  url: string | null
+  error: string | null
 }
 
 const DRIVE_DESKTOP_WIDTH = 1024
@@ -69,6 +76,7 @@ export function LecturePlayerPage() {
   const { identity } = useAuth()
   const stageRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [resolvedStreamPlayback, setResolvedStreamPlayback] = useState<ResolvedStreamPlayback | null>(null)
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -145,7 +153,31 @@ export function LecturePlayerPage() {
     return () => { active = false }
   }, [batchId, identity?.userId, lectureId])
 
+  const streamPlaybackKey = `${batchId}:${lectureId}`
+
+  useEffect(() => {
+    if (state.action?.provider !== 'cloudflare_stream') return
+    let active = true
+    void resolveStreamPlayback(batchId, lectureId)
+      .then((url) => {
+        if (active) setResolvedStreamPlayback({ key: streamPlaybackKey, url, error: null })
+      })
+      .catch((error: unknown) => {
+        if (!active) return
+        setResolvedStreamPlayback({
+          key: streamPlaybackKey,
+          url: null,
+          error: error instanceof Error ? error.message : 'Cloudflare Stream playback could not be opened.',
+        })
+      })
+    return () => { active = false }
+  }, [batchId, lectureId, state.action?.provider, streamPlaybackKey])
+
   const isDrivePlayback = state.action?.provider === 'google_drive'
+  const playbackUrl = isDrivePlayback
+    ? state.action?.actionUrl ?? null
+    : resolvedStreamPlayback?.key === streamPlaybackKey ? resolvedStreamPlayback.url : null
+  const playbackError = resolvedStreamPlayback?.key === streamPlaybackKey ? resolvedStreamPlayback.error : null
 
   useEffect(() => {
     const stage = stageRef.current
@@ -241,16 +273,23 @@ export function LecturePlayerPage() {
           aria-label={`${state.lecture.title} recording`}
         >
           <div className="lecture-player-media">
-            <iframe
-              src={state.action.actionUrl}
-              title={`${state.lecture.title} recording`}
-              allow={state.action.provider === 'cloudflare_stream'
-                ? 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture'
-                : 'autoplay'}
-              referrerPolicy="no-referrer"
-            />
+            {playbackUrl ? (
+              <iframe
+                src={playbackUrl}
+                title={`${state.lecture.title} recording`}
+                allow={state.action.provider === 'cloudflare_stream'
+                  ? 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture'
+                  : 'autoplay'}
+                allowFullScreen={state.action.provider === 'cloudflare_stream'}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="lecture-player-resolving">
+                {playbackError ? <span>{playbackError}</span> : <span>Verifying secure playback…</span>}
+              </div>
+            )}
           </div>
-          {document.fullscreenEnabled && (
+          {isDrivePlayback && document.fullscreenEnabled && (
             <button
               type="button"
               className="lecture-player-fullscreen"

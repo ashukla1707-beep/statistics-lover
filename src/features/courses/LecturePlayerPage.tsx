@@ -290,8 +290,6 @@ export function LecturePlayerPage() {
               />
             </span>
 
-            <span className="lecture-player-drive-fullscreen-blocker" aria-hidden="true" />
-
             {document.fullscreenEnabled && (
               <button
                 type="button"

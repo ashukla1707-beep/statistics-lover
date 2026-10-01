@@ -241,17 +241,28 @@ export function LecturePlayerPage() {
               referrerPolicy="no-referrer"
             />
           </div>
-          {document.fullscreenEnabled && (
-            <button
-              type="button"
-              className="lecture-player-fullscreen"
-              onClick={toggleFullscreen}
-              aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
-              title={isFullscreen ? 'Exit full screen' : 'Full screen'}
-            >
-              {isFullscreen ? '×' : '⛶'}
-            </button>
-          )}
+
+          <div className="lecture-player-overlay">
+            <span className="lecture-player-drive-brand-blocker" aria-hidden="true">
+              <img
+                src="/brand/statistics-lover-logo.jpg"
+                alt=""
+                draggable={false}
+              />
+            </span>
+
+            {document.fullscreenEnabled && (
+              <button
+                type="button"
+                className="lecture-player-fullscreen"
+                onClick={toggleFullscreen}
+                aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
+                title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+              >
+                {isFullscreen ? '×' : '⛶'}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="lecture-player-meta">

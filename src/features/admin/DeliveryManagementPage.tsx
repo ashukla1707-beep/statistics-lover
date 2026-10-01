@@ -12,8 +12,11 @@ import {
 } from './contentAdminService'
 import {
   deleteManagedDeliverySource,
+  deleteManagedRecordingArchive,
+  getManagedRecordingArchive,
   listManagedDeliverySources,
   saveManagedDeliverySource,
+  saveManagedRecordingArchive,
   type DeliveryActionKind,
   type DeliveryProvider,
 } from './deliveryAdminService'
@@ -24,8 +27,13 @@ type SourceForm = {
   label: string
 }
 
+type ArchiveForm = {
+  url: string
+}
+
 const emptyJoin: SourceForm = { provider: 'google_meet', url: '', label: 'Join live class' }
-const emptyWatch: SourceForm = { provider: 'google_drive', url: '', label: 'Watch recording' }
+const emptyWatch: SourceForm = { provider: 'cloudflare_stream', url: '', label: 'Watch recording' }
+const emptyArchive: ArchiveForm = { url: '' }
 
 function humanize(value: string) {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
@@ -35,6 +43,12 @@ function errorMessage(error: unknown) {
   if (error instanceof Error) return error.message
   if (typeof error === 'object' && error && 'message' in error && typeof error.message === 'string') return error.message
   return 'Something went wrong. Please try again.'
+}
+
+function recordingPlaceholder(provider: DeliveryProvider) {
+  if (provider === 'cloudflare_stream') return 'https://customer-xxxx.cloudflarestream.com/VIDEO_UID/iframe'
+  if (provider === 'google_drive') return 'https://drive.google.com/file/d/.../view'
+  return 'https://...'
 }
 
 export function DeliveryManagementPage() {
@@ -53,6 +67,7 @@ export function DeliveryManagementPage() {
   const [lectureId, setLectureId] = useState('')
   const [joinForm, setJoinForm] = useState<SourceForm>(emptyJoin)
   const [watchForm, setWatchForm] = useState<SourceForm>(emptyWatch)
+  const [archiveForm, setArchiveForm] = useState<ArchiveForm>(emptyArchive)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,12 +81,18 @@ export function DeliveryManagementPage() {
   async function loadSources(targetLectureId: string) {
     setJoinForm(emptyJoin)
     setWatchForm(emptyWatch)
+    setArchiveForm(emptyArchive)
     if (!targetLectureId) return
-    const sources = await listManagedDeliverySources(targetLectureId)
+
+    const [sources, archive] = await Promise.all([
+      listManagedDeliverySources(targetLectureId),
+      getManagedRecordingArchive(targetLectureId),
+    ])
     const join = sources.find((source) => source.actionKind === 'join')
     const watch = sources.find((source) => source.actionKind === 'watch')
     if (join) setJoinForm({ provider: join.provider, url: join.providerReference, label: join.label ?? 'Join live class' })
     if (watch) setWatchForm({ provider: watch.provider, url: watch.providerReference, label: watch.label ?? 'Watch recording' })
+    if (archive) setArchiveForm({ url: archive.providerReference })
   }
 
   async function chooseLecture(targetLectureId: string, knownLectures = lectures) {
@@ -87,6 +108,7 @@ export function DeliveryManagementPage() {
     setLectureId('')
     setJoinForm(emptyJoin)
     setWatchForm(emptyWatch)
+    setArchiveForm(emptyArchive)
     const rows = await listManagedLectures(targetModuleId)
     setLectures(rows)
     if (rows[0]) await chooseLecture(rows[0].id, rows)
@@ -163,7 +185,32 @@ export function DeliveryManagementPage() {
         label: form.label,
       })
       await loadSources(selectedLecture.id)
-      setNotice(actionKind === 'join' ? 'Live-class access saved.' : 'Recording access saved.')
+      setNotice(actionKind === 'join' ? 'Live-class access saved.' : 'Student playback delivery saved.')
+    } catch (cause) {
+      setError(errorMessage(cause))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function saveArchive() {
+    if (!selectedLecture) return
+    const url = archiveForm.url.trim()
+    if (!url.startsWith('https://')) {
+      setError('Archive links must use HTTPS.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    setNotice(null)
+    try {
+      await saveManagedRecordingArchive({
+        lectureId: selectedLecture.id,
+        provider: 'google_drive',
+        providerReference: url,
+      })
+      await loadSources(selectedLecture.id)
+      setNotice('Google Drive archive source saved. Students cannot read this archive link directly.')
     } catch (cause) {
       setError(errorMessage(cause))
     } finally {
@@ -187,6 +234,22 @@ export function DeliveryManagementPage() {
     }
   }
 
+  async function removeArchive() {
+    if (!selectedLecture || !canDelete || !window.confirm('Remove this archive reference? The Drive file itself will not be deleted.')) return
+    setSaving(true)
+    setError(null)
+    setNotice(null)
+    try {
+      await deleteManagedRecordingArchive(selectedLecture.id)
+      await loadSources(selectedLecture.id)
+      setNotice('Archive reference removed. The original Drive file was not changed.')
+    } catch (cause) {
+      setError(errorMessage(cause))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const canJoin = selectedLecture?.deliveryMode === 'live' || selectedLecture?.deliveryMode === 'hybrid'
   const canWatch = selectedLecture?.deliveryMode === 'recorded' || selectedLecture?.deliveryMode === 'hybrid'
 
@@ -199,7 +262,7 @@ export function DeliveryManagementPage() {
           <div>
             <span className="eyebrow">Protected delivery workspace</span>
             <h1>Live & Recorded Access</h1>
-            <p>Attach provider access to lectures without exposing raw Meet or recording links in the academic-content tables.</p>
+            <p>Keep original recordings archived on Google Drive while choosing a separate, protected provider for student playback.</p>
           </div>
         </header>
 
@@ -224,7 +287,7 @@ export function DeliveryManagementPage() {
                 <h2>{selectedLecture.title}</h2>
                 <p>{humanize(selectedLecture.deliveryMode)} · {humanize(selectedLecture.status)}{selectedLecture.durationMinutes ? ` · ${selectedLecture.durationMinutes} min` : ''}</p>
               </div>
-              <p className="delivery-security-note">Students cannot read the provider-source table directly. The learning page receives a link only after the database verifies active enrollment and lecture availability.</p>
+              <p className="delivery-security-note">Archive links remain staff-only. Students receive only the active playback delivery after the database verifies enrollment and lecture availability.</p>
             </section>
 
             <div className="delivery-source-grid">
@@ -242,14 +305,29 @@ export function DeliveryManagementPage() {
               </section>
 
               <section className={`admin-panel delivery-source-card ${canWatch ? '' : 'is-disabled'}`}>
-                <div className="admin-panel-heading compact"><div><span>Recording adapter</span><h2>Watch recording</h2></div></div>
+                <div className="admin-panel-heading compact"><div><span>Recording architecture</span><h2>Archive + student playback</h2></div></div>
                 {!canWatch && <p className="admin-empty">Change this lecture to Recorded or Hybrid before attaching a recording source.</p>}
                 {canWatch && (
                   <div className="admin-form delivery-source-form">
-                    <label className="form-field"><span>Provider</span><select value={watchForm.provider} onChange={(event) => setWatchForm((current) => ({ ...current, provider: event.target.value as DeliveryProvider }))}><option value="google_drive">Google Drive</option><option value="cloudflare_stream">Cloudflare Stream</option><option value="external">External provider</option></select></label>
-                    <label className="form-field"><span>Protected HTTPS link</span><input type="url" inputMode="url" placeholder="https://drive.google.com/..." value={watchForm.url} onChange={(event) => setWatchForm((current) => ({ ...current, url: event.target.value }))} /></label>
-                    <label className="form-field"><span>Student button label</span><input maxLength={120} value={watchForm.label} onChange={(event) => setWatchForm((current) => ({ ...current, label: event.target.value }))} /></label>
-                    <div className="admin-form-actions"><button className="button button-small" type="button" disabled={saving || !watchForm.url.trim()} onClick={() => void saveSource('watch', watchForm)}>{saving ? 'Saving…' : 'Save recording access'}</button>{canDelete && watchForm.url && <button className="admin-danger-button" type="button" disabled={saving} onClick={() => void removeSource('watch')}>Remove</button>}</div>
+                    <div className="delivery-subsection">
+                      <div className="delivery-subsection-heading">
+                        <div><span className="eyebrow">Archive source</span><strong>Google Drive original</strong></div>
+                        <small>Staff-only. Never returned by the student playback RPC.</small>
+                      </div>
+                      <label className="form-field"><span>Google Drive file link</span><input type="url" inputMode="url" placeholder="https://drive.google.com/file/d/.../view" value={archiveForm.url} onChange={(event) => setArchiveForm({ url: event.target.value })} /></label>
+                      <div className="admin-form-actions"><button className="button button-small button-secondary" type="button" disabled={saving || !archiveForm.url.trim()} onClick={() => void saveArchive()}>{saving ? 'Saving…' : 'Save Drive archive'}</button>{canDelete && archiveForm.url && <button className="admin-danger-button" type="button" disabled={saving} onClick={() => void removeArchive()}>Remove archive reference</button>}</div>
+                    </div>
+
+                    <div className="delivery-subsection">
+                      <div className="delivery-subsection-heading">
+                        <div><span className="eyebrow">Student delivery</span><strong>Playback provider</strong></div>
+                        <small>Use Cloudflare Stream for the cleanest mobile player. Google Drive remains available as a temporary fallback.</small>
+                      </div>
+                      <label className="form-field"><span>Provider</span><select value={watchForm.provider} onChange={(event) => setWatchForm((current) => ({ ...current, provider: event.target.value as DeliveryProvider, url: '' }))}><option value="cloudflare_stream">Cloudflare Stream</option><option value="google_drive">Google Drive fallback</option><option value="external">External provider</option></select></label>
+                      <label className="form-field"><span>Protected playback link</span><input type="url" inputMode="url" placeholder={recordingPlaceholder(watchForm.provider)} value={watchForm.url} onChange={(event) => setWatchForm((current) => ({ ...current, url: event.target.value }))} /></label>
+                      <label className="form-field"><span>Student button label</span><input maxLength={120} value={watchForm.label} onChange={(event) => setWatchForm((current) => ({ ...current, label: event.target.value }))} /></label>
+                      <div className="admin-form-actions"><button className="button button-small" type="button" disabled={saving || !watchForm.url.trim()} onClick={() => void saveSource('watch', watchForm)}>{saving ? 'Saving…' : 'Save student playback'}</button>{canDelete && watchForm.url && <button className="admin-danger-button" type="button" disabled={saving} onClick={() => void removeSource('watch')}>Remove playback</button>}</div>
+                    </div>
                   </div>
                 )}
               </section>

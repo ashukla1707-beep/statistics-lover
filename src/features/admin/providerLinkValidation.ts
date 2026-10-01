@@ -11,6 +11,21 @@ function googleDriveFileId(url: URL): string | null {
   return null
 }
 
+function isCloudflareStreamHost(hostname: string) {
+  const host = hostname.toLowerCase()
+  return host === 'videodelivery.net'
+    || host.endsWith('.videodelivery.net')
+    || host === 'cloudflarestream.com'
+    || host.endsWith('.cloudflarestream.com')
+}
+
+function cloudflareStreamVideoId(url: URL): string | null {
+  if (!isCloudflareStreamHost(url.hostname)) return null
+  const segments = url.pathname.split('/').filter(Boolean)
+  if (segments.length === 0) return null
+  return segments[0]
+}
+
 export function normalizeDeliveryProviderReference(
   provider: DeliveryProvider,
   rawReference: string,
@@ -24,14 +39,19 @@ export function normalizeDeliveryProviderReference(
     return reference
   }
 
-  if (provider !== 'google_drive' || url.hostname.toLowerCase() !== 'drive.google.com') {
-    return reference
+  if (provider === 'google_drive' && url.hostname.toLowerCase() === 'drive.google.com') {
+    const fileId = googleDriveFileId(url)
+    if (!fileId) return reference
+    return `https://drive.google.com/file/d/${fileId}/preview`
   }
 
-  const fileId = googleDriveFileId(url)
-  if (!fileId) return reference
+  if (provider === 'cloudflare_stream' && isCloudflareStreamHost(url.hostname)) {
+    const videoId = cloudflareStreamVideoId(url)
+    if (!videoId) return reference
+    return `${url.origin}/${videoId}/iframe`
+  }
 
-  return `https://drive.google.com/file/d/${fileId}/preview`
+  return reference
 }
 
 export function validateDeliveryProviderReference(
@@ -63,12 +83,8 @@ export function validateDeliveryProviderReference(
 
   if (provider === 'cloudflare_stream') {
     if (actionKind !== 'watch') return 'Cloudflare Stream can only be used for recording access.'
-    const host = url.hostname.toLowerCase()
-    const allowed = host === 'videodelivery.net'
-      || host.endsWith('.videodelivery.net')
-      || host === 'cloudflarestream.com'
-      || host.endsWith('.cloudflarestream.com')
-    if (!allowed) return 'Cloudflare Stream links must use videodelivery.net or cloudflarestream.com.'
+    if (!isCloudflareStreamHost(url.hostname)) return 'Cloudflare Stream links must use videodelivery.net or cloudflarestream.com.'
+    if (!cloudflareStreamVideoId(url)) return 'Use a Cloudflare Stream player link containing a video ID.'
   }
 
   return null

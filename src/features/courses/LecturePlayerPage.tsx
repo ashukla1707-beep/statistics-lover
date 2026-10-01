@@ -76,7 +76,8 @@ export function LecturePlayerPage() {
   const stageRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isPlayerEngaged, setIsPlayerEngaged] = useState(false)
+  const [engagedLectureId, setEngagedLectureId] = useState<string | null>(null)
+  const isPlayerEngaged = engagedLectureId === lectureId
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -86,10 +87,6 @@ export function LecturePlayerPage() {
     error: null,
     loaded: false,
   })
-
-  useEffect(() => {
-    setIsPlayerEngaged(false)
-  }, [lectureId])
 
   useEffect(() => {
     if (!identity?.userId || !batchId || !lectureId) return
@@ -163,7 +160,7 @@ export function LecturePlayerPage() {
     const handleFullscreenChange = () => {
       const active = document.fullscreenElement === stage
       setIsFullscreen(active)
-      if (active) setIsPlayerEngaged(true)
+      if (active) setEngagedLectureId(lectureId)
       queuePlayerScaleSync(stage)
       if (!active) unlockOrientation()
     }
@@ -186,19 +183,19 @@ export function LecturePlayerPage() {
       stage.style.removeProperty('--drive-player-scale')
       unlockOrientation()
     }
-  }, [state.loaded])
+  }, [lectureId, state.loaded])
 
   useEffect(() => {
     if (!state.loaded || isPlayerEngaged) return
 
     const markPlayerEngagedIfFocused = () => {
       window.setTimeout(() => {
-        if (document.activeElement === iframeRef.current) setIsPlayerEngaged(true)
+        if (document.activeElement === iframeRef.current) setEngagedLectureId(lectureId)
       }, 0)
     }
 
     const focusPoll = window.setInterval(() => {
-      if (document.activeElement === iframeRef.current) setIsPlayerEngaged(true)
+      if (document.activeElement === iframeRef.current) setEngagedLectureId(lectureId)
     }, 250)
 
     window.addEventListener('blur', markPlayerEngagedIfFocused)
@@ -209,7 +206,7 @@ export function LecturePlayerPage() {
       window.removeEventListener('blur', markPlayerEngagedIfFocused)
       document.removeEventListener('focusin', markPlayerEngagedIfFocused)
     }
-  }, [isPlayerEngaged, state.loaded])
+  }, [isPlayerEngaged, lectureId, state.loaded])
 
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
 
@@ -223,7 +220,7 @@ export function LecturePlayerPage() {
         return
       }
 
-      setIsPlayerEngaged(true)
+      setEngagedLectureId(lectureId)
       await stage.requestFullscreen({ navigationUI: 'hide' })
       queuePlayerScaleSync(stage)
 

@@ -9,6 +9,7 @@ import {
   type StudentLecture,
   type StudentSubject,
 } from './learningService'
+import { resolveStreamPlayback } from './streamPlaybackService'
 
 type PlayerContext = {
   enrollment: StudentCourseEnrollment | null
@@ -69,6 +70,8 @@ export function LecturePlayerPage() {
   const { identity } = useAuth()
   const stageRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null)
+  const [playbackError, setPlaybackError] = useState<string | null>(null)
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -144,6 +147,33 @@ export function LecturePlayerPage() {
 
     return () => { active = false }
   }, [batchId, identity?.userId, lectureId])
+
+  useEffect(() => {
+    const action = state.action
+    if (!action) {
+      setPlaybackUrl(null)
+      setPlaybackError(null)
+      return
+    }
+
+    if (action.provider === 'google_drive') {
+      setPlaybackUrl(action.actionUrl)
+      setPlaybackError(null)
+      return
+    }
+
+    if (action.provider !== 'cloudflare_stream') return
+    let active = true
+    setPlaybackUrl(null)
+    setPlaybackError(null)
+    void resolveStreamPlayback(batchId, lectureId)
+      .then((url) => { if (active) setPlaybackUrl(url) })
+      .catch((error: unknown) => {
+        if (!active) return
+        setPlaybackError(error instanceof Error ? error.message : 'Cloudflare Stream playback could not be opened.')
+      })
+    return () => { active = false }
+  }, [batchId, lectureId, state.action])
 
   const isDrivePlayback = state.action?.provider === 'google_drive'
 
@@ -241,16 +271,23 @@ export function LecturePlayerPage() {
           aria-label={`${state.lecture.title} recording`}
         >
           <div className="lecture-player-media">
-            <iframe
-              src={state.action.actionUrl}
-              title={`${state.lecture.title} recording`}
-              allow={state.action.provider === 'cloudflare_stream'
-                ? 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture'
-                : 'autoplay'}
-              referrerPolicy="no-referrer"
-            />
+            {playbackUrl ? (
+              <iframe
+                src={playbackUrl}
+                title={`${state.lecture.title} recording`}
+                allow={state.action.provider === 'cloudflare_stream'
+                  ? 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture'
+                  : 'autoplay'}
+                allowFullScreen={state.action.provider === 'cloudflare_stream'}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="lecture-player-resolving">
+                {playbackError ? <span>{playbackError}</span> : <span>Verifying secure playback…</span>}
+              </div>
+            )}
           </div>
-          {document.fullscreenEnabled && (
+          {isDrivePlayback && document.fullscreenEnabled && (
             <button
               type="button"
               className="lecture-player-fullscreen"

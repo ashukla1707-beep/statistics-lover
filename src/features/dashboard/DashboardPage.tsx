@@ -68,6 +68,8 @@ export function DashboardPage() {
   }
 
   const displayName = identity?.profile?.fullName || identity?.email || 'Student'
+  const isTeacher = identity?.roles.includes('teacher') ?? false
+  const canAdmin = identity?.roles.some((role) => role === 'admin' || role === 'owner' || role === 'content_manager') ?? false
 
   return (
     <section className="portal-page">
@@ -88,6 +90,13 @@ export function DashboardPage() {
             <span className="role-badge" key={role}>{formatRole(role)}</span>
           ))}
         </div>
+
+        {(isTeacher || canAdmin) && (
+          <div className="portal-role-actions">
+            {isTeacher && <Link className="button button-small" to="/teacher">Open teacher workspace</Link>}
+            {canAdmin && <Link className="button button-small button-secondary" to="/admin/academics">Open admin workspace</Link>}
+          </div>
+        )}
 
         <div className="portal-grid">
           <article className="portal-card">

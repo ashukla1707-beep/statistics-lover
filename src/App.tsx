@@ -29,6 +29,8 @@ import { StudentTestAttemptPage } from './features/courses/StudentTestAttemptPag
 import { LecturePlayerPage } from './features/courses/LecturePlayerPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { HomePage } from './features/home/HomePage'
+import { StorePage } from './features/commerce/StorePage'
+import { MyOrdersPage } from './features/commerce/MyOrdersPage'
 import { TeacherWorkspacePage } from './features/teacher/TeacherWorkspacePage'
 
 function SiteLayout() {
@@ -74,11 +76,24 @@ export default function App() {
 
       <Route element={<SiteLayout />}>
         <Route index element={<HomePage />} />
+        <Route path="store" element={<StorePage />} />
         <Route path="login" element={<AuthPage mode="login" />} />
         <Route path="register" element={<AuthPage mode="register" />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="account-suspended" element={<SuspendedPage />} />
+        <Route
+          path="orders"
+          element={
+            <RequireAuth
+              loadingFallback={<div className="auth-state">Loading orders…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <MyOrdersPage />
+            </RequireAuth>
+          }
+        />
         <Route
           path="dashboard"
           element={

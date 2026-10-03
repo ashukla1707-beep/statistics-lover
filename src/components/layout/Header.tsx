@@ -51,6 +51,8 @@ export function Header() {
           className={`primary-nav ${isMenuOpen ? 'is-open' : ''}`}
           aria-label="Primary navigation"
         >
+          <Link to="/store" onClick={closeMenu}>Courses</Link>
+          {status === 'authenticated' && <Link to="/orders" onClick={closeMenu}>My Orders</Link>}
           {navigationItems.map((item) => (
             <a key={item.href} href={`/${item.href}`} onClick={closeMenu}>
               {item.label}

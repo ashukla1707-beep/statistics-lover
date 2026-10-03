@@ -40,6 +40,21 @@ function canUseFullscreen(stage: FullscreenStage | null) {
   return typeof stage.requestFullscreen === 'function' || typeof stage.webkitRequestFullscreen === 'function'
 }
 
+type NavigatorWithUserAgentData = Navigator & {
+  userAgentData?: {
+    mobile?: boolean
+  }
+}
+
+function isMobileBrowserMode() {
+  if (typeof navigator === 'undefined') return false
+
+  const mobileFlag = (navigator as NavigatorWithUserAgentData).userAgentData?.mobile
+  if (typeof mobileFlag === 'boolean') return mobileFlag
+
+  return /Android|Mobi|iPhone|iPad|iPod/i.test(navigator.userAgent)
+}
+
 const DRIVE_DESKTOP_WIDTH = 1024
 const DRIVE_DESKTOP_HEIGHT = 576
 
@@ -75,6 +90,7 @@ export function LecturePlayerPage() {
   const stageRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [canFullscreen, setCanFullscreen] = useState(false)
+  const requiresDesktopSite = isMobileBrowserMode()
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -228,6 +244,28 @@ export function LecturePlayerPage() {
     )
   }
 
+  if (requiresDesktopSite) {
+    return (
+      <main className="lecture-player-page">
+        <div className="lecture-player-shell lecture-player-shell-error">
+          <Link className="lecture-player-back" to={backPath}>← Back to course</Link>
+
+          <section className="lecture-player-desktop-gate" aria-labelledby="desktop-playback-title">
+            <span className="lecture-player-kicker">Desktop playback required</span>
+            <h1 id="desktop-playback-title">{state.lecture.title}</h1>
+            <p>
+              Open your browser menu and enable <strong>Desktop site</strong>
+              {' '}or <strong>Request Desktop Website</strong>. The page will reload with the desktop Google Drive player.
+            </p>
+            <button type="button" onClick={() => window.location.reload()}>
+              Reload after enabling Desktop site
+            </button>
+          </section>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="lecture-player-page">
       <div className="lecture-player-shell">
@@ -263,11 +301,6 @@ export function LecturePlayerPage() {
 
           <div className="lecture-player-overlay">
             <div className="lecture-player-corner-controls">
-              <span
-                className="lecture-player-drive-actions-blocker"
-                aria-hidden="true"
-              />
-
               {canFullscreen && (
                 <button
                   type="button"

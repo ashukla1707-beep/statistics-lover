@@ -155,3 +155,14 @@ At the time this handoff was written:
 - Admin/owner can grant teacher/content-manager roles and manage teacher assignments from `/admin/staff`.
 - Teacher workspace is available at `/teacher`, with scoped delivery and resource tools.
 - Teacher/staff layer passed GitHub typecheck, lint and build; latest develop Vercel preview is READY.
+
+
+### Teaching checkpoint — attendance
+
+- Supabase migration `lecture_attendance` applied; repository migration `0016_lecture_attendance.sql` added.
+- One validated attendance record per lecture/enrollment with statuses present/absent/late/excused.
+- Admin/owner and assignment-scoped teachers can load rosters and mark attendance; students can read only their own records.
+- Attendance workspaces: `/admin/attendance` and `/teacher/attendance`.
+- Student learning space shows attendance percentage/history.
+- Attendance layer passed GitHub typecheck, lint and build; latest develop Vercel preview is READY.
+- Supabase advisors currently show no new RLS security findings; leaked-password protection remains an Auth-level warning to address in final security hardening. Performance advisors also flagged several missing creator/marker FK indexes and multiple permissive RLS policies; these are scheduled for the final DB optimization pass.

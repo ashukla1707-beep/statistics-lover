@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Assessment layer — C7 PYQ assessment integration
+- Current focus: Layer D — Commerce & Communication
 
 ## Deployment
 
@@ -238,3 +238,14 @@ At the time this handoff was written:
 - C6 GitHub Quality passed on develop commit `eff3934c8f70e9dfbd20c353d0758ca2ad238d26` (typecheck, lint, build).
 - Deployment note: the Vercel connector currently resolves the stable develop alias to older commit `0347d050...` despite later GitHub CI success; latest preview deployment must be resynchronized/verified before release.
 - Next assessment checkpoint: C7 PYQ assessment integration.
+
+
+### Assessment checkpoint C7 — PYQ integration / Assessment layer complete
+
+- Test Builder now carries Question Bank source metadata through saved test placements so existing tests can report their PYQ question count.
+- Builder question picker supports All / Original / PYQ filtering and PYQ year filtering; source label/year are visible for both selected and available questions.
+- One-click `+ PYQ test` starts a PYQ-focused practice-test workflow while retaining normal subject/batch sections, scheduling, secure runner, scoring and analytics.
+- PYQ questions use the same protected answer-key, immutable-attempt snapshot, result-release and performance-analytics pipeline as original questions.
+- C7 GitHub Quality passed on develop commit `61fbdb6c6928156c04709070d9d7c58736cb6dca` (typecheck, lint, build).
+- Assessment execution-plan items C1–C7 are complete. Next layer: D Commerce & Communication, beginning with orders/payments/provider adapter and enrollment activation.
+- Vercel stable develop alias remains known to lag behind current GitHub develop and must be resynchronized before release acceptance.

@@ -117,10 +117,7 @@ public final class RecordingActivity extends AppCompatActivity {
         fullscreenButton.setOnClickListener(v->{
             if(fullscreen) exitFullscreen(); else enterFullscreen();
         });
-        FrameLayout.LayoutParams fullParams=new FrameLayout.LayoutParams(ui.dp(154),ui.dp(48));
-        fullParams.gravity=Gravity.BOTTOM|Gravity.END;
-        fullParams.setMargins(ui.dp(12),ui.dp(12),ui.dp(14),ui.dp(14));
-        root.addView(fullscreenButton,fullParams);
+        root.addView(fullscreenButton,fullscreenLayoutParams(false));
 
         ViewCompat.setOnApplyWindowInsetsListener(root,(v,insets)->{
             Insets bars=insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -151,6 +148,7 @@ public final class RecordingActivity extends AppCompatActivity {
         fullscreen=true;
         toolbar.setVisibility(View.GONE);
         fullscreenButton.setText("Exit fullscreen");
+        fullscreenButton.setLayoutParams(fullscreenLayoutParams(true));
 
         WindowInsetsControllerCompat controller=
                 new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView());
@@ -167,6 +165,7 @@ public final class RecordingActivity extends AppCompatActivity {
         fullscreen=false;
         toolbar.setVisibility(View.VISIBLE);
         fullscreenButton.setText("⛶ Fullscreen");
+        fullscreenButton.setLayoutParams(fullscreenLayoutParams(false));
 
         WindowInsetsControllerCompat controller=
                 new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView());
@@ -174,6 +173,14 @@ public final class RecordingActivity extends AppCompatActivity {
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         ViewCompat.requestApplyInsets(root);
+    }
+
+    private FrameLayout.LayoutParams fullscreenLayoutParams(boolean active){
+        NativeUi ui=new NativeUi(this);
+        FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(ui.dp(154),ui.dp(48));
+        params.gravity=(active?Gravity.TOP:Gravity.BOTTOM)|Gravity.END;
+        params.setMargins(ui.dp(12),ui.dp(12),ui.dp(14),ui.dp(14));
+        return params;
     }
 
     @Override

@@ -34,8 +34,8 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Question bank and options
 - [x] Test/section builder
 - [x] Scheduling/assignment
-- [ ] Student test-taking
-- [ ] Attempts/submission/scoring/results
+- [x] Student test-taking
+- [x] Attempts/submission/scoring/results
 - [ ] Performance analytics
 - [ ] PYQ assessment integration
 

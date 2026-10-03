@@ -74,6 +74,13 @@ function isTouchDevice() {
 
 function shouldShowPhoneFullscreen() {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
+
+  // Inside the Android APK, use Google Drive's own fullscreen control. Android
+  // WebChromeClient handles the resulting custom view and landscape rotation.
+  // Keeping the outer custom fullscreen here makes Drive believe it is still an
+  // embedded player and can hide/clip parts of its native control bar.
+  if (isStatisticsLoverAndroidApp()) return false
+
   return navigator.maxTouchPoints > 0
     && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 }

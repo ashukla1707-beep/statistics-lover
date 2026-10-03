@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
+import { CollectionPager,CollectionToolbar,useCollectionPagination } from './CollectionControls'
 import { listManagedLectures, listManagedModules, listManagedSubjects, type ManagedLecture, type ManagedModule, type ManagedSubject } from './contentAdminService'
 import { deleteManagedQuestion, listManagedQuestions, saveManagedQuestion, type AssessmentDifficulty, type AssessmentQuestionSource, type AssessmentQuestionStatus, type AssessmentQuestionType, type ManagedQuestion } from './questionBankService'
 
@@ -36,10 +37,11 @@ export function QuestionBankPage({teacherMode=false}:{teacherMode?:boolean}){
   const [subjects,setSubjects]=useState<ManagedSubject[]>([]),[modules,setModules]=useState<ManagedModule[]>([]),[lectures,setLectures]=useState<ManagedLecture[]>([])
   const [questions,setQuestions]=useState<ManagedQuestion[]>([]),[form,setForm]=useState<FormState|null>(null)
   const [courseId,setCourseId]=useState(''),[batchId,setBatchId]=useState(''),[subjectId,setSubjectId]=useState(''),[moduleId,setModuleId]=useState(''),[lectureId,setLectureId]=useState('')
-  const [typeFilter,setTypeFilter]=useState<'all'|AssessmentQuestionType>('all'),[sourceFilter,setSourceFilter]=useState<'all'|AssessmentQuestionSource>('all')
+  const [typeFilter,setTypeFilter]=useState<'all'|AssessmentQuestionType>('all'),[sourceFilter,setSourceFilter]=useState<'all'|AssessmentQuestionSource>('all'),[questionQuery,setQuestionQuery]=useState('')
   const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState<string|null>(null),[notice,setNotice]=useState<string|null>(null)
 
-  const visible=useMemo(()=>questions.filter((q)=>(!moduleId||q.moduleId===moduleId||q.moduleId===null)&&(!lectureId||q.lectureId===lectureId||q.lectureId===null)&&(typeFilter==='all'||q.type===typeFilter)&&(sourceFilter==='all'||q.source===sourceFilter)),[questions,moduleId,lectureId,typeFilter,sourceFilter])
+  const visible=useMemo(()=>{const query=questionQuery.trim().toLowerCase();return questions.filter((q)=>(!moduleId||q.moduleId===moduleId||q.moduleId===null)&&(!lectureId||q.lectureId===lectureId||q.lectureId===null)&&(typeFilter==='all'||q.type===typeFilter)&&(sourceFilter==='all'||q.source===sourceFilter)&&(!query||[q.prompt,q.explanation??'',q.sourceLabel??'',q.sourceYear?.toString()??''].some((value)=>value.toLowerCase().includes(query))))},[questions,moduleId,lectureId,typeFilter,sourceFilter,questionQuery])
+  const questionPager=useCollectionPagination(visible,20,`${subjectId}|${moduleId}|${lectureId}|${typeFilter}|${sourceFilter}|${questionQuery}`)
 
   async function refresh(id=subjectId){setQuestions(id?await listManagedQuestions(id):[])}
   async function chooseLecture(id:string,known=lectures){setLectures(known);setLectureId(id);setForm(null)}
@@ -88,8 +90,10 @@ export function QuestionBankPage({teacherMode=false}:{teacherMode?:boolean}){
       <label className="form-field"><span>Source</span><select value={sourceFilter} onChange={(e)=>setSourceFilter(e.target.value as 'all'|AssessmentQuestionSource)}><option value="all">All sources</option><option value="original">Original</option><option value="pyq">PYQ</option></select></label>
     </div>
     <section className="admin-panel question-list-panel"><div className="admin-panel-heading compact"><div><span>{visible.length} questions</span><h2>{subjects.find((x)=>x.id===subjectId)?.title??'Select subject'}</h2></div><button className="admin-icon-button" disabled={!subjectId} onClick={()=>setForm(blankForm(subjectId,moduleId||null,lectureId||null))}>+</button></div>
+      {subjectId&&<CollectionToolbar query={questionQuery} onQueryChange={setQuestionQuery} placeholder="Search question, explanation or PYQ source" shown={visible.length} total={questions.length}/>}
       {!subjectId&&<p className="admin-empty">Select a subject to open its question bank.</p>}{subjectId&&!visible.length&&<p className="admin-empty">No matching questions yet.</p>}
-      <div className="question-bank-list">{visible.map((q)=><article className="question-bank-row" key={q.id}><div><div className="question-tags"><span>{humanize(q.type)}</span><span>{humanize(q.difficulty)}</span><span>{q.source==='pyq'?`PYQ ${q.sourceYear??''}`:'Original'}</span><span>{q.marks} mark{q.marks===1?'':'s'}</span></div><strong>{q.prompt}</strong><small>{humanize(q.status)}{q.negativeMarks>0?` · -${q.negativeMarks} negative`:''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" onClick={()=>setForm(fromQuestion(q))}>Edit</button>{canDelete&&<button className="admin-danger-button" disabled={saving} onClick={()=>void remove(q)}>Delete</button>}</div></article>)}</div>
+      <div className="question-bank-list">{questionPager.pageItems.map((q)=><article className="question-bank-row" key={q.id}><div><div className="question-tags"><span>{humanize(q.type)}</span><span>{humanize(q.difficulty)}</span><span>{q.source==='pyq'?`PYQ ${q.sourceYear??''}`:'Original'}</span><span>{q.marks} mark{q.marks===1?'':'s'}</span></div><strong>{q.prompt}</strong><small>{humanize(q.status)}{q.negativeMarks>0?` · -${q.negativeMarks} negative`:''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" onClick={()=>setForm(fromQuestion(q))}>Edit</button>{canDelete&&<button className="admin-danger-button" disabled={saving} onClick={()=>void remove(q)}>Delete</button>}</div></article>)}</div>
+      <CollectionPager page={questionPager.page} totalPages={questionPager.totalPages} pageSize={questionPager.pageSize} totalItems={visible.length} onPageChange={questionPager.setPage} onPageSizeChange={questionPager.setPageSize}/>
     </section>
     {form&&<section className="admin-panel question-editor"><form className="admin-form" onSubmit={save}>
       <div className="admin-form-subheading"><strong>{form.id?'Edit question':'New question'}</strong><button type="button" className="admin-text-button" onClick={()=>setForm(null)}>Close</button></div>

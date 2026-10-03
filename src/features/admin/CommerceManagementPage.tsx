@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState,type FormEvent } from 'react'
 import { listManagedBatches,listManagedCourses,type ManagedBatch,type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
+import { CollectionPager,CollectionToolbar,useCollectionPagination } from './CollectionControls'
 import {
   deleteManagedCoupon,listManagedCoupons,listManagedOffers,listManagedOrders,markManagedOrderPaid,saveManagedCoupon,saveManagedOffer,
   type CommerceDiscountType,type CommerceOfferStatus,type ManagedCoupon,type ManagedOffer,type ManagedOrder,
@@ -19,11 +20,13 @@ export function CommerceManagementPage(){
   const [courses,setCourses]=useState<ManagedCourse[]>([]),[batches,setBatches]=useState<ManagedBatch[]>([])
   const [offers,setOffers]=useState<ManagedOffer[]>([]),[coupons,setCoupons]=useState<ManagedCoupon[]>([]),[orders,setOrders]=useState<ManagedOrder[]>([])
   const [offerForm,setOfferForm]=useState<OfferForm|null>(null),[couponForm,setCouponForm]=useState<CouponForm|null>(null)
-  const [tab,setTab]=useState<'pricing'|'coupons'|'orders'>('pricing'),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false)
+  const [tab,setTab]=useState<'pricing'|'coupons'|'orders'>('pricing'),[orderQuery,setOrderQuery]=useState(''),[orderStatus,setOrderStatus]=useState<'all'|ManagedOrder['status']>('all'),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false)
   const [error,setError]=useState<string|null>(null),[notice,setNotice]=useState<string|null>(null)
 
   const batchMap=useMemo(()=>new Map(batches.map((b)=>[b.id,b])),[batches])
   const courseMap=useMemo(()=>new Map(courses.map((c)=>[c.id,c])),[courses])
+  const filteredOrders=useMemo(()=>{const query=orderQuery.trim().toLowerCase();return orders.filter((order)=>(orderStatus==='all'||order.status===orderStatus)&&(!query||[order.orderNumber,order.studentName??'',order.studentEmail??'',order.courseTitle,order.batchTitle,order.couponCode??'',order.paymentReference??''].some((value)=>value.toLowerCase().includes(query))))},[orders,orderQuery,orderStatus])
+  const orderPager=useCollectionPagination(filteredOrders,20,`${orderQuery}|${orderStatus}`)
 
   async function refreshCommerce(){
     const [offerRows,couponRows,orderRows]=await Promise.all([listManagedOffers(),listManagedCoupons(),listManagedOrders()])
@@ -115,10 +118,12 @@ export function CommerceManagementPage(){
         <label className="staff-check"><input type="checkbox" checked={couponForm.isActive} onChange={e=>setCouponForm(x=>x&&({...x,isActive:e.target.checked}))}/><span>Coupon active</span></label>
       </div><div className="admin-form-actions"><button className="button button-small" disabled={saving}>{saving?'Saving…':'Save coupon'}</button><button type="button" className="admin-text-button" onClick={()=>setCouponForm(null)}>Cancel</button></div></form>}
       <div className="commerce-list">{coupons.map((coupon)=><article key={coupon.id}><div><span className={`admin-status admin-status-${coupon.isActive?'active':'archived'}`}>{coupon.isActive?'active':'inactive'}</span><strong>{coupon.code}</strong><small>{coupon.discountType==='percent'?`${coupon.discountValue}% off`:`${money(coupon.discountValue,'INR')} off`}{coupon.description?` · ${coupon.description}`:''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" onClick={()=>startCoupon(coupon)}>Edit</button><button className="admin-danger-button" disabled={saving} onClick={()=>void removeCoupon(coupon.id)}>Delete</button></div></article>)}</div>
+      <CollectionPager page={orderPager.page} totalPages={orderPager.totalPages} pageSize={orderPager.pageSize} totalItems={filteredOrders.length} onPageChange={orderPager.setPage} onPageSizeChange={orderPager.setPageSize}/>
     </section>}
 
     {tab==='orders'&&<section className="admin-panel commerce-panel"><div className="admin-panel-heading"><div><span>{orders.length} latest orders</span><h2>Orders & payments</h2></div></div>
-      <div className="commerce-order-list">{orders.map((order)=><article key={order.id}><div><span className={`admin-status admin-status-${order.status==='paid'?'active':order.status==='pending'?'scheduled':'archived'}`}>{order.status}</span><strong>{order.orderNumber} · {order.studentName||order.studentEmail||'Student'}</strong><small>{order.courseTitle} · {order.batchTitle} · {money(order.totalMinor,order.currency)}{order.couponCode?` · Coupon ${order.couponCode}`:''}</small><small>{new Date(order.createdAt).toLocaleString()}{order.receiptNumber?` · Receipt ${order.receiptNumber}`:''}</small></div><div className="commerce-order-actions">{order.status==='pending'&&<button className="button button-small" disabled={saving} onClick={()=>void markPaid(order)}>Verify manual payment</button>}{order.paymentReference&&<small>{order.paymentReference}</small>}</div></article>)}</div>
+      <CollectionToolbar query={orderQuery} onQueryChange={setOrderQuery} placeholder="Search order, student, course or payment reference" shown={filteredOrders.length} total={orders.length}><select aria-label="Order status" value={orderStatus} onChange={(e)=>setOrderStatus(e.target.value as 'all'|ManagedOrder['status'])}><option value="all">All statuses</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="failed">Failed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></CollectionToolbar>
+      <div className="commerce-order-list">{orderPager.pageItems.map((order)=><article key={order.id}><div><span className={`admin-status admin-status-${order.status==='paid'?'active':order.status==='pending'?'scheduled':'archived'}`}>{order.status}</span><strong>{order.orderNumber} · {order.studentName||order.studentEmail||'Student'}</strong><small>{order.courseTitle} · {order.batchTitle} · {money(order.totalMinor,order.currency)}{order.couponCode?` · Coupon ${order.couponCode}`:''}</small><small>{new Date(order.createdAt).toLocaleString()}{order.receiptNumber?` · Receipt ${order.receiptNumber}`:''}</small></div><div className="commerce-order-actions">{order.status==='pending'&&<button className="button button-small" disabled={saving} onClick={()=>void markPaid(order)}>Verify manual payment</button>}{order.paymentReference&&<small>{order.paymentReference}</small>}</div></article>)}</div>
     </section>}
   </div></section>
 }

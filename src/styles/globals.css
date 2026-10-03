@@ -5,3 +5,4 @@
 @media (max-width:620px){input,select,textarea{font-size:16px}.system-error-card,.not-found-card{padding:22px}.system-error-actions,.system-error-actions .button{width:100%}}
 @media (pointer:coarse){.menu-toggle,.button-small,.admin-text-button,.admin-danger-button{min-height:44px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+.route-loading{min-height:42vh;display:grid;place-items:center;padding:36px;color:var(--muted);font-weight:800;background:var(--paper)}

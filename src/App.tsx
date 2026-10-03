@@ -1,25 +1,9 @@
+import { lazy,Suspense } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
 import { RouteFocus } from './components/layout/RouteFocus'
 import { NotFoundPage } from './features/system/NotFoundPage'
-import { AcademicManagementPage } from './features/admin/AcademicManagementPage'
-import { AttendanceManagementPage } from './features/admin/AttendanceManagementPage'
-import { AssignmentManagementPage } from './features/admin/AssignmentManagementPage'
-import { ContentManagementPage } from './features/admin/ContentManagementPage'
-import { DeliveryManagementPage } from './features/admin/DeliveryManagementPage'
-import { ResourceManagementPage } from './features/admin/ResourceManagementPage'
-import { QuestionBankPage } from './features/admin/QuestionBankPage'
-import { TestBuilderPage } from './features/admin/TestBuilderPage'
-import { TestSchedulePage } from './features/admin/TestSchedulePage'
-import { AssessmentAnalyticsPage } from './features/admin/AssessmentAnalyticsPage'
-import { CommerceManagementPage } from './features/admin/CommerceManagementPage'
-import { AdminOverviewPage } from './features/admin/AdminOverviewPage'
-import { AdminAuditPage } from './features/admin/AdminAuditPage'
-import { AdminSettingsPage } from './features/admin/AdminSettingsPage'
-import { AnnouncementManagementPage } from './features/admin/AnnouncementManagementPage'
-import { StaffManagementPage } from './features/admin/StaffManagementPage'
-import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
   AuthPage,
   ForgotPasswordPage,
@@ -27,18 +11,37 @@ import {
   ResetPasswordPage,
   SuspendedPage,
 } from './features/auth'
-import { LearningPage } from './features/courses/LearningPage'
-import { StudentAssignmentsPage } from './features/courses/StudentAssignmentsPage'
-import { StudentTestsPage } from './features/courses/StudentTestsPage'
-import { StudentPerformancePage } from './features/courses/StudentPerformancePage'
-import { StudentTestAttemptPage } from './features/courses/StudentTestAttemptPage'
-import { LecturePlayerPage } from './features/courses/LecturePlayerPage'
-import { DashboardPage } from './features/dashboard/DashboardPage'
 import { HomePage } from './features/home/HomePage'
-import { StorePage } from './features/commerce/StorePage'
-import { MyOrdersPage } from './features/commerce/MyOrdersPage'
-import { NotificationsPage } from './features/communications/NotificationsPage'
-import { TeacherWorkspacePage } from './features/teacher/TeacherWorkspacePage'
+
+
+const AcademicManagementPage=lazy(()=>import('./features/admin/AcademicManagementPage').then((module)=>({default:module.AcademicManagementPage})))
+const AttendanceManagementPage=lazy(()=>import('./features/admin/AttendanceManagementPage').then((module)=>({default:module.AttendanceManagementPage})))
+const AssignmentManagementPage=lazy(()=>import('./features/admin/AssignmentManagementPage').then((module)=>({default:module.AssignmentManagementPage})))
+const ContentManagementPage=lazy(()=>import('./features/admin/ContentManagementPage').then((module)=>({default:module.ContentManagementPage})))
+const DeliveryManagementPage=lazy(()=>import('./features/admin/DeliveryManagementPage').then((module)=>({default:module.DeliveryManagementPage})))
+const ResourceManagementPage=lazy(()=>import('./features/admin/ResourceManagementPage').then((module)=>({default:module.ResourceManagementPage})))
+const QuestionBankPage=lazy(()=>import('./features/admin/QuestionBankPage').then((module)=>({default:module.QuestionBankPage})))
+const TestBuilderPage=lazy(()=>import('./features/admin/TestBuilderPage').then((module)=>({default:module.TestBuilderPage})))
+const TestSchedulePage=lazy(()=>import('./features/admin/TestSchedulePage').then((module)=>({default:module.TestSchedulePage})))
+const AssessmentAnalyticsPage=lazy(()=>import('./features/admin/AssessmentAnalyticsPage').then((module)=>({default:module.AssessmentAnalyticsPage})))
+const CommerceManagementPage=lazy(()=>import('./features/admin/CommerceManagementPage').then((module)=>({default:module.CommerceManagementPage})))
+const AdminOverviewPage=lazy(()=>import('./features/admin/AdminOverviewPage').then((module)=>({default:module.AdminOverviewPage})))
+const AdminAuditPage=lazy(()=>import('./features/admin/AdminAuditPage').then((module)=>({default:module.AdminAuditPage})))
+const AdminSettingsPage=lazy(()=>import('./features/admin/AdminSettingsPage').then((module)=>({default:module.AdminSettingsPage})))
+const AnnouncementManagementPage=lazy(()=>import('./features/admin/AnnouncementManagementPage').then((module)=>({default:module.AnnouncementManagementPage})))
+const StaffManagementPage=lazy(()=>import('./features/admin/StaffManagementPage').then((module)=>({default:module.StaffManagementPage})))
+const StudentEnrollmentsPage=lazy(()=>import('./features/admin/StudentEnrollmentsPage').then((module)=>({default:module.StudentEnrollmentsPage})))
+const LearningPage=lazy(()=>import('./features/courses/LearningPage').then((module)=>({default:module.LearningPage})))
+const StudentAssignmentsPage=lazy(()=>import('./features/courses/StudentAssignmentsPage').then((module)=>({default:module.StudentAssignmentsPage})))
+const StudentTestsPage=lazy(()=>import('./features/courses/StudentTestsPage').then((module)=>({default:module.StudentTestsPage})))
+const StudentPerformancePage=lazy(()=>import('./features/courses/StudentPerformancePage').then((module)=>({default:module.StudentPerformancePage})))
+const StudentTestAttemptPage=lazy(()=>import('./features/courses/StudentTestAttemptPage').then((module)=>({default:module.StudentTestAttemptPage})))
+const LecturePlayerPage=lazy(()=>import('./features/courses/LecturePlayerPage').then((module)=>({default:module.LecturePlayerPage})))
+const DashboardPage=lazy(()=>import('./features/dashboard/DashboardPage').then((module)=>({default:module.DashboardPage})))
+const StorePage=lazy(()=>import('./features/commerce/StorePage').then((module)=>({default:module.StorePage})))
+const MyOrdersPage=lazy(()=>import('./features/commerce/MyOrdersPage').then((module)=>({default:module.MyOrdersPage})))
+const NotificationsPage=lazy(()=>import('./features/communications/NotificationsPage').then((module)=>({default:module.NotificationsPage})))
+const TeacherWorkspacePage=lazy(()=>import('./features/teacher/TeacherWorkspacePage').then((module)=>({default:module.TeacherWorkspacePage})))
 
 function SiteLayout() {
   return (
@@ -56,7 +59,8 @@ function SiteLayout() {
 
 export default function App() {
   return (
-    <Routes>
+    <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading page…</div>}>
+      <Routes>
       <Route
         path="learn/:batchId/test/:scheduleId"
         element={
@@ -543,6 +547,7 @@ export default function App() {
         />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   )
 }

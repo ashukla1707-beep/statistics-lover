@@ -1,0 +1,29 @@
+{
+  "name": "Statistics Lover",
+  "short_name": "Statistics Lover",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffdfd",
+  "theme_color": "#071f46",
+  "description": "Learn statistics through live classes, recorded lectures, tests, PYQs and study material.",
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/brand/statistics-lover-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/statistics-lover-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}

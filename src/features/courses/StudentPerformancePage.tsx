@@ -1,5 +1,6 @@
 import { useEffect,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { loadMyAssessmentAnalytics,type StudentAssessmentAnalytics } from '../admin/assessmentAnalyticsService'
 import { loadStudentCourseEnrollments,type StudentCourseEnrollment } from './courseService'
@@ -16,7 +17,7 @@ export function StudentPerformancePage(){
 
   if(loading)return <div className="auth-state">Loading performance…</div>
   return <section className="student-performance-page"><div className="container student-performance-shell">
-    <Link className="learning-back-link" to={`/learn/${batchId}`}>← Learning space</Link>
+    <BackLink className="learning-back-link" to={`/learn/${batchId}`}>Learning space</BackLink>
     <header className="student-performance-hero"><span className="eyebrow">My performance</span><h1>Assessment Analytics</h1><p>{enrollment?.course.title} · {enrollment?.batch.title}</p></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}
     {analytics&&<>

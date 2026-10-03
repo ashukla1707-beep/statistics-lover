@@ -1,33 +1,61 @@
-import { useState } from 'react'
+import { useEffect,useState } from 'react'
+import { Link } from 'react-router-dom'
 import { navigationItems, siteConfig } from '../../config/site'
+import { useAuth } from '../../features/auth'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
+  const { status, hasAnyRole } = useAuth()
   const closeMenu = () => setIsMenuOpen(false)
+
+  useEffect(()=>{
+    if(!isMenuOpen)return
+    const onKeyDown=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){
+        setIsMenuOpen(false)
+        document.querySelector<HTMLButtonElement>('.menu-toggle')?.focus()
+      }
+    }
+    document.addEventListener('keydown',onKeyDown)
+    return()=>document.removeEventListener('keydown',onKeyDown)
+  },[isMenuOpen])
+  const canManageAcademics = status === 'authenticated' && hasAnyRole(['content_manager', 'admin', 'owner'])
+  const canManageEnrollments = status === 'authenticated' && hasAnyRole(['admin', 'owner'])
+
+  const accountTarget = status === 'authenticated'
+    ? '/dashboard'
+    : status === 'suspended'
+      ? '/account-suspended'
+      : '/login'
+
+  const accountLabel = status === 'authenticated'
+    ? 'Dashboard'
+    : status === 'suspended'
+      ? 'Account'
+      : 'Student Login'
 
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <a className="brand" href="#home" onClick={closeMenu} aria-label="Statistics Lover home">
+        <Link className="brand" to="/" onClick={closeMenu} aria-label="Statistics Lover home">
           <img className="brand-logo" src={siteConfig.logoPath} alt="Statistics Lover logo" />
           <span className="brand-copy">
             <strong>{siteConfig.name}</strong>
             <small>{siteConfig.tagline}</small>
           </span>
-        </a>
+        </Link>
 
         <button
           className="menu-toggle"
           type="button"
           aria-expanded={isMenuOpen}
           aria-controls="primary-navigation"
-          aria-label="Toggle navigation"
+          aria-label={isMenuOpen ? 'Close navigation' : 'Open navigation'}
           onClick={() => setIsMenuOpen((open) => !open)}
         >
-          <span />
-          <span />
-          <span />
+          <span aria-hidden="true" />
+          <span aria-hidden="true" />
+          <span aria-hidden="true" />
         </button>
 
         <nav
@@ -35,14 +63,26 @@ export function Header() {
           className={`primary-nav ${isMenuOpen ? 'is-open' : ''}`}
           aria-label="Primary navigation"
         >
+          <Link to="/store" onClick={closeMenu}>Courses</Link>
+          {status === 'authenticated' && <Link to="/orders" onClick={closeMenu}>My Orders</Link>}
+          {status === 'authenticated' && <Link to="/notifications" onClick={closeMenu}>Notifications</Link>}
           {navigationItems.map((item) => (
-            <a key={item.href} href={item.href} onClick={closeMenu}>
+            <a key={item.href} href={`/${item.href}`} onClick={closeMenu}>
               {item.label}
             </a>
           ))}
-          <a className="button button-small" href="#login" onClick={closeMenu}>
-            Student Login
-          </a>
+          {canManageAcademics && (
+            <Link to="/admin/overview" onClick={closeMenu}>Admin</Link>
+          )}
+          {canManageAcademics && (
+            <Link to="/admin/content" onClick={closeMenu}>Content</Link>
+          )}
+          {canManageEnrollments && (
+            <Link to="/admin/enrollments" onClick={closeMenu}>Enrollments</Link>
+          )}
+          <Link className="button button-small" to={accountTarget} onClick={closeMenu}>
+            {accountLabel}
+          </Link>
         </nav>
       </div>
     </header>

@@ -26,7 +26,7 @@
 - recordings
 - study material
 - PYQs
-- assignments
+- assignments ✅ private submissions + grading
 - release scheduling
 
 ## Phase 4 — Assessment

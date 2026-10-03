@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth'
+import { loadMyBatchAttendance, type StudentAttendanceRecord } from '../admin/attendanceService'
 import { loadStudentCourseEnrollments, type StudentCourseEnrollment } from './courseService'
 import {
   loadBatchDeliveryActions,
@@ -16,6 +17,7 @@ type LearningState = {
   subjects: StudentSubject[]
   deliveryActions: LectureDeliveryAction[]
   resources: StudentLearningResource[]
+  attendance: StudentAttendanceRecord[]
   error: string | null
   loaded: boolean
 }
@@ -45,7 +47,7 @@ function ResourceLinks({ resources, title = 'Study material' }: { resources: Stu
 export function LearningPage() {
   const { batchId = '' } = useParams()
   const { identity } = useAuth()
-  const [state, setState] = useState<LearningState>({ enrollment: null, subjects: [], deliveryActions: [], resources: [], error: null, loaded: false })
+  const [state, setState] = useState<LearningState>({ enrollment: null, subjects: [], deliveryActions: [], resources: [], attendance: [], error: null, loaded: false })
 
   useEffect(() => {
     if (!identity?.userId || !batchId) return
@@ -54,18 +56,19 @@ export function LearningPage() {
       .then(async (enrollments) => {
         const enrollment = enrollments.find((item) => item.batch.id === batchId) ?? null
         if (!enrollment) {
-          if (active) setState({ enrollment: null, subjects: [], deliveryActions: [], resources: [], error: 'This batch is not assigned to your account.', loaded: true })
+          if (active) setState({ enrollment: null, subjects: [], deliveryActions: [], resources: [], attendance: [], error: 'This batch is not assigned to your account.', loaded: true })
           return
         }
-        const [subjects, deliveryActions, resources] = await Promise.all([
+        const [subjects, deliveryActions, resources, attendance] = await Promise.all([
           loadBatchLearningContent(batchId),
           loadBatchDeliveryActions(batchId),
           loadBatchLearningResources(batchId),
+          loadMyBatchAttendance(batchId),
         ])
-        if (active) setState({ enrollment, subjects, deliveryActions, resources, error: null, loaded: true })
+        if (active) setState({ enrollment, subjects, deliveryActions, resources, attendance, error: null, loaded: true })
       })
       .catch(() => {
-        if (active) setState({ enrollment: null, subjects: [], deliveryActions: [], resources: [], error: 'We could not load this learning space right now.', loaded: true })
+        if (active) setState({ enrollment: null, subjects: [], deliveryActions: [], resources: [], attendance: [], error: 'We could not load this learning space right now.', loaded: true })
       })
     return () => { active = false }
   }, [batchId, identity?.userId])
@@ -94,6 +97,9 @@ export function LearningPage() {
 
   const { enrollment } = state
   const batchResources = resourcesByScope.get(`batch:${batchId}`) ?? []
+  const countedAttendance = state.attendance.filter((record) => record.status !== 'excused')
+  const attendedCount = countedAttendance.filter((record) => record.status === 'present' || record.status === 'late').length
+  const attendanceRate = countedAttendance.length > 0 ? Math.round((attendedCount / countedAttendance.length) * 100) : null
 
   return (
     <section className="learning-page">
@@ -109,6 +115,29 @@ export function LearningPage() {
         </header>
 
         {batchResources.length > 0 && <section className="learning-batch-resources"><ResourceLinks resources={batchResources} title="Batch resources" /></section>}
+
+        {state.attendance.length > 0 && (
+          <section className="student-attendance-card">
+            <div className="student-attendance-heading">
+              <div>
+                <span className="eyebrow">My attendance</span>
+                <h2>Lecture attendance</h2>
+              </div>
+              {attendanceRate !== null && <div className="student-attendance-rate">{attendanceRate}%</div>}
+            </div>
+            <div className="student-attendance-list">
+              {state.attendance.slice(0, 6).map((record) => (
+                <div className="student-attendance-row" key={record.lectureId}>
+                  <div>
+                    <strong>{record.lectureTitle}</strong>
+                    <small>{record.subjectTitle} · {record.moduleTitle}{record.scheduledAt ? ` · ${new Date(record.scheduledAt).toLocaleDateString()}` : ''}</small>
+                  </div>
+                  <span className={`student-attendance-status student-attendance-status-${record.status}`}>{humanize(record.status)}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {state.subjects.length === 0 ? (
           <div className="learning-empty-card"><h2>Content is being prepared</h2><p>No published subjects are available in this batch yet.</p></div>

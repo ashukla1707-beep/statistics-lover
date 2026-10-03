@@ -40,7 +40,7 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 
 - profiles ✅
 - user roles ✅
-- teacher assignments
+- teacher assignments ✅
 
 ### Academics
 
@@ -52,6 +52,12 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 - live sessions
 - lecture resources
 - enrollments ✅
+
+### Teaching access
+
+- teacher assignments ✅
+- assignment-scoped teacher authorization ✅
+- delivery availability windows ✅
 
 ### Learning resources
 

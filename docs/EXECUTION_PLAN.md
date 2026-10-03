@@ -28,7 +28,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Teacher assignments and teacher workspace
 - [x] Attendance
 - [x] Assignments and submissions
-- [ ] Teaching-layer acceptance tests
+- [x] Teaching-layer acceptance tests
 
 ## C — Assessment
 - [x] Question bank and options
@@ -60,7 +60,7 @@ This is the execution ledger for finishing the website layer by layer without re
 ## F — Security, QA and release
 - [x] RLS/privilege/browser-secret/provider-link audit
 - [x] Data-integrity audit
-- [ ] Cross-role acceptance scenarios
+- [x] Cross-role acceptance scenarios
 - [ ] Production migration/build verification
 - [ ] Release `develop` -> `main`
 - [ ] Production smoke test/final handover

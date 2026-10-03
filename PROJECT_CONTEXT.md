@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer F3 — Cross-role acceptance scenarios
+- Current focus: Layer F4 — Production migration/build verification
 
 ## Deployment
 
@@ -400,3 +400,16 @@ At the time this handoff was written:
 - Verified core uniqueness/check/foreign-key constraints for enrollment, assessment, commerce and teaching entities.
 - Added migration `receipt_integrity_constraints` / repository migration `0032_receipt_integrity_constraints.sql` so receipt snapshots independently enforce currency format, nonnegative amounts, discount caps and arithmetic equality instead of relying only on trusted server creation.
 - Next: F3 cross-role acceptance scenarios.
+
+
+### Release checkpoint F3 — cross-role acceptance complete
+
+- Used an existing active student identity inside rollback-only transactions and temporarily swapped app roles so no permanent account or permission changes were made.
+- Student-only: active enrollment/batch access succeeds; direct raw delivery sources, assessment answer keys, audit logs and app settings return no rows.
+- Subject-scoped teacher: teacher role and subject access succeed; scoped lecture delivery source is readable; whole-batch management remains false; audit/settings stay inaccessible.
+- Content manager: academic/content delivery data is accessible; admin/owner scope remains false and audit/settings stay inaccessible.
+- Admin and owner: admin scope is true and audit/settings are readable.
+- Suspended account: active-user check, batch access, published subject visibility and notification visibility are all denied.
+- Frontend route guards already mirror this split: teacher routes require teacher role; admin-sensitive commerce/enrollment/staff/audit/settings routes require admin/owner; content management routes permit content-manager/admin/owner.
+- This matrix also closes the Teaching-layer acceptance-test item because it verifies student access, teacher subject scoping and whole-batch management denial under live RLS.
+- Next: F4 production migration/build/deployment verification.

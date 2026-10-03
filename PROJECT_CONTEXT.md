@@ -144,3 +144,14 @@ At the time this handoff was written:
 - Student resources render at batch, subject, module and lecture scope.
 - Resource links are released only through enrollment-gated RPC and support `release_at` scheduling.
 - GitHub Quality passed and the `develop` Vercel preview deployed successfully.
+
+
+### Teaching checkpoint — live delivery + teacher assignments
+
+- Live/recorded delivery admin now manages `available_from` / `available_until` windows; student RPC enforcement already existed and is now fully exposed in admin UX.
+- Scheduled live lectures prefill a practical availability window (15 minutes before start through 30 minutes after planned duration), still editable by staff.
+- Supabase migration `teacher_assignments` applied and repository migration `0015_teacher_assignments.sql` added.
+- Teacher permissions are server-authoritative and scoped to assigned batch/subject through RLS helpers.
+- Admin/owner can grant teacher/content-manager roles and manage teacher assignments from `/admin/staff`.
+- Teacher workspace is available at `/teacher`, with scoped delivery and resource tools.
+- Teacher/staff layer passed GitHub typecheck, lint and build; latest develop Vercel preview is READY.

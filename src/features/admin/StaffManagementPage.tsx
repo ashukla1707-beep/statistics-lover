@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { listManagedSubjects, type ManagedSubject } from './contentAdminService'
 import { AdminSubnav } from './AdminSubnav'
+import { CollectionPager,CollectionToolbar,useCollectionPagination } from './CollectionControls'
 import { deleteTeacherAssignment, grantStaffRole, listStaffUsers, listTeacherAssignments, revokeStaffRole, saveTeacherAssignment, type StaffUser, type TeacherAssignment } from './staffAdminService'
 
 type AssignmentForm={id:string|null;batchId:string;subjectId:string;startsAt:string;endsAt:string;isActive:boolean}
@@ -16,6 +17,7 @@ export function StaffManagementPage(){
   const [busy,setBusy]=useState(false);const [loading,setLoading]=useState(true);const [error,setError]=useState<string|null>(null);const [notice,setNotice]=useState<string|null>(null)
   const selected=users.find((u)=>u.id===selectedId)??null
   const filtered=useMemo(()=>users.filter((u)=>`${u.fullName??''} ${u.email??''}`.toLowerCase().includes(query.toLowerCase())),[users,query])
+  const staffPager=useCollectionPagination(filtered,20,query)
 
   async function refreshUsers(preferred=selectedId){const rows=await listStaffUsers();setUsers(rows);const id=rows.some((u)=>u.id===preferred)?preferred:rows[0]?.id??'';setSelectedId(id);return rows.find((u)=>u.id===id)??null}
   async function loadAssignments(user:StaffUser|null){if(!user?.roles.includes('teacher')){setAssignments([]);return}setAssignments(await listTeacherAssignments(user.id))}
@@ -58,7 +60,7 @@ export function StaffManagementPage(){
     <header className="admin-page-heading"><div><span className="eyebrow">People & permissions</span><h1>Staff & Teacher Assignments</h1><p>Grant teaching/content roles and restrict teachers to only the batches or subjects they are responsible for.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}{notice&&<div className="admin-alert admin-alert-success">{notice}</div>}
     <div className="staff-grid">
-      <section className="admin-panel staff-list-panel"><div className="staff-search"><input type="search" placeholder="Search name or email" value={query} onChange={(e)=>setQuery(e.target.value)}/></div><div className="staff-list">{loading?<p className="admin-empty">Loading people…</p>:filtered.map((u)=><button className={`staff-user-row ${u.id===selectedId?'is-selected':''}`} key={u.id} onClick={()=>void chooseUser(u.id)}><strong>{u.fullName||u.email||'Unnamed account'}</strong><small>{u.email}</small><span>{u.roles.join(' · ')||'No roles'}</span></button>)}</div></section>
+      <section className="admin-panel staff-list-panel"><CollectionToolbar query={query} onQueryChange={setQuery} placeholder="Search name or email" shown={filtered.length} total={users.length}/><div className="staff-list">{loading?<p className="admin-empty">Loading people…</p>:staffPager.pageItems.map((u)=><button className={`staff-user-row ${u.id===selectedId?'is-selected':''}`} key={u.id} onClick={()=>void chooseUser(u.id)}><strong>{u.fullName||u.email||'Unnamed account'}</strong><small>{u.email}</small><span>{u.roles.join(' · ')||'No roles'}</span></button>)}</div><CollectionPager page={staffPager.page} totalPages={staffPager.totalPages} pageSize={staffPager.pageSize} totalItems={filtered.length} onPageChange={staffPager.setPage} onPageSizeChange={staffPager.setPageSize}/></section>
       <div className="staff-detail">
         {!selected?<section className="admin-panel staff-empty"><p>Select an account.</p></section>:<>
           <section className="admin-panel staff-role-card"><div><span className="eyebrow">Selected account</span><h2>{selected.fullName||selected.email}</h2><p>{selected.email} · {selected.accountStatus}</p></div><div className="staff-role-actions"><button type="button" className={selected.roles.includes('teacher')?'button button-small':'button button-small button-secondary'} disabled={busy} onClick={()=>void toggleRole('teacher')}>{selected.roles.includes('teacher')?'Remove teacher role':'Grant teacher role'}</button><button type="button" className={selected.roles.includes('content_manager')?'button button-small':'button button-small button-secondary'} disabled={busy} onClick={()=>void toggleRole('content_manager')}>{selected.roles.includes('content_manager')?'Remove content manager':'Grant content manager'}</button></div></section>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
+import { CollectionPager,CollectionToolbar,useCollectionPagination } from './CollectionControls'
 import {
   createStudentEnrollment,
   deleteStudentEnrollment,
@@ -100,6 +101,8 @@ export function StudentEnrollmentsPage() {
     )
   }, [students, search])
 
+  const studentPager = useCollectionPagination(filteredStudents,20,search)
+
   const availableBatches = useMemo(
     () => batches.filter((batch) => batch.courseId === selectedCourseId),
     [batches, selectedCourseId],
@@ -196,16 +199,13 @@ export function StudentEnrollmentsPage() {
               <div><span>Directory</span><h2>Students</h2></div>
               <strong className="admin-count-badge">{students.length}</strong>
             </div>
-            <label className="form-field student-search-field">
-              <span>Search students</span>
-              <input type="search" placeholder="Name, email or phone" value={search} onChange={(event) => setSearch(event.target.value)} />
-            </label>
+            <CollectionToolbar query={search} onQueryChange={setSearch} placeholder="Name, email or phone" shown={filteredStudents.length} total={students.length}/>
 
             {loading && <p className="admin-empty">Loading students…</p>}
             {!loading && filteredStudents.length === 0 && <p className="admin-empty">No matching students found.</p>}
 
             <div className="student-directory-list">
-              {filteredStudents.map((student) => (
+              {studentPager.pageItems.map((student) => (
                 <button
                   type="button"
                   key={student.id}
@@ -226,6 +226,7 @@ export function StudentEnrollmentsPage() {
                 </button>
               ))}
             </div>
+            <CollectionPager page={studentPager.page} totalPages={studentPager.totalPages} pageSize={studentPager.pageSize} totalItems={filteredStudents.length} onPageChange={studentPager.setPage} onPageSizeChange={studentPager.setPageSize}/>
           </aside>
 
           <main className="admin-panel enrollment-detail-panel">

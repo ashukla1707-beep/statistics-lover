@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Android A3 — native client device validation
+- Current handoff base before this documentation commit: `bd14eac3b6ce9c81a973cde5995dc68ca6a8e3d9`
+- Current focus: **public Home + cross-device web UI stabilization and deployed-device validation**. Resume Android A3 native-client work after this web UI baseline is verified on real devices.
 
 ## Deployment
 
@@ -94,16 +94,12 @@
   - later move active videos to a stronger private delivery layer if needed.
 - No player can fully prevent screen recording.
 
-## Future APK direction
+## Android direction
 
-After the web app is complete, the plan is to build an Android APK.
-
-For the APK:
-- Use a dedicated recording WebView/activity.
-- Set a desktop-style user agent for the recording screen so Google Drive can serve desktop controls there.
-- Handle fullscreen natively through Android WebView / `WebChromeClient`.
-- Lock landscape during fullscreen video and restore orientation on exit.
-- This should provide much more reliable playback/control behavior than the mobile web workaround.
+- The older plan to make the whole APK a WebView shell is **superseded** by Android checkpoint A3 below.
+- The current application shell is a true native Android client (`SplashActivity -> NativeMainActivity`) and must remain native rather than reverting the entire app to a website wrapper.
+- Google Drive recording delivery remains a special integration problem. If an embedded recording surface is needed later, keep any WebView/provider-specific player isolated to the recording experience rather than using it as the architecture for the whole app.
+- Android real-device validation and the missing native teacher/admin editing workflows remain pending after the current web UI stabilization pass.
 
 ## General project working principles
 
@@ -127,13 +123,15 @@ When continuing in a new chat:
 
 ## Immediate next state
 
-At the time this handoff was written:
-- Watch Recording is the active feature.
-- Desktop-site gating is enabled for mobile browser mode.
-- Logo overlay is enlarged.
-- Custom fullscreen is phone-only.
-- Phone fullscreen requests landscape and re-syncs alignment.
-- The latest `develop` deployment for commit `8e1ef72` was READY on Vercel.
+At the latest handoff:
+- The active workstream is the **public Home page and cross-device UI stabilization**, based on user screenshots showing authenticated-header overlap, narrow/mobile button/card overflow and misaligned text-arrow back links.
+- The public Home page now represents the implemented product rather than the old foundation placeholder and uses working Store/Login/current-section navigation.
+- A shared responsive hardening layer is loaded last to provide min-width/wrapping guardrails, earlier compact header behavior and narrow-screen action/card layouts across product areas.
+- Back navigation now uses a reusable icon/text component so the arrow is vertically aligned instead of relying on a text glyph baseline.
+- The prior experimental Android/player scaling changes were rolled back before this UI pass; do not reintroduce the rejected scaling race fixes without new evidence.
+- GitHub Quality is green through UI code commit `bd14eac3b6ce9c81a973cde5995dc68ca6a8e3d9`.
+- Vercel's connector still shows the newest READY `develop` preview at `c0f58a9b932c41ad06fe9dc1469befe7305a104f`, so the complete UI layer has **not yet surfaced as a verified READY preview**. Do not claim full deployed-device acceptance until the later commits appear on Vercel and are checked.
+- After the latest UI build is deployed, verify Home, Login, Store, Dashboard and Learning pages on real 320/360/390/430px phones plus tablet/desktop-width layouts, then resume Android A3 work.
 
 
 ### Teaching checkpoint — protected study material
@@ -485,3 +483,17 @@ At the time this handoff was written:
 - GitHub APK artifact id `11277210361`; artifact ZIP digest `sha256:9783bf3e20ff69eedf2c0170e9df3fc9d885e622fc70b96ccaf5cac025fbf318`.
 - Extracted APK SHA-256: `c72b271f93ae25b991d64cb4fcf2525ac111adb02cb8f53a22f1e8d7f62e549f`.
 - Next: install A3 on a real phone and validate native login/session restore, course learning hierarchy, inbox/orders/store, provider action routing and role-specific screens. Teacher/admin edit workflows remain the next native Android layer after device validation.
+
+
+### UI stabilization checkpoint — Home, responsive shell & navigation
+
+- Replaced the obsolete public Home foundation copy with current product-facing content for courses/batches, student dashboard, live/recorded learning, tests/performance, assignments/resources and PYQ/study-resource workflows.
+- Home CTAs now route to the real Store and Student Login; public section IDs/navigation were simplified to Home, Platform, Assessments, PYQs & Resources and About.
+- Repaired Footer links that still targeted removed Home anchors; footer Platform links now use the real Store, Assessments, Resources and Student Login destinations.
+- Authenticated Header no longer renders the full marketing navigation alongside account/role links. Medium/tablet layouts now switch to the hamburger navigation at 1180px to prevent the branding/navigation collision seen in user testing.
+- Added `src/styles/responsive.css`, imported last, as a cross-product responsive safety layer: flex/grid children receive `min-width: 0`, text/buttons can wrap safely, common action groups wrap, narrow learning/dashboard/assignment actions stack full-width, KPI helper text no longer forces nowrap overflow, and tablet/narrow card headings/actions collapse predictably.
+- Added reusable `BackLink` with a dedicated arrow element and applied it to student learning/tests/performance/assignments/results, teacher dashboard, and teacher-mode admin workspaces so back arrows align consistently with their labels.
+- Service-worker static cache advanced to `statistics-lover-static-v7` so the stabilized shell is not held behind an old cached UI.
+- GitHub Quality passed typecheck, lint and build on `bd14eac3b6ce9c81a973cde5995dc68ca6a8e3d9`. Earlier transient CI failures during the BackLink refactor were only unused-import errors on intermediate commits and were resolved by the final green head.
+- Deployment caveat at this checkpoint: Vercel still exposes `c0f58a9b932c41ad06fe9dc1469befe7305a104f` as the newest READY `develop` preview surfaced by the connector. The remaining Home/responsive/BackLink/footer/cache commits are CI-green in GitHub but still require a fresh Vercel preview before visual acceptance.
+- Next: wait for/resynchronize the latest `develop` preview, smoke-test Home/Store/Login and perform real-device visual checks at phone/tablet/desktop widths; fix any remaining screenshot-specific issues before returning to Android A3 native-client validation.

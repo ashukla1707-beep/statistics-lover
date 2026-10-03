@@ -4,6 +4,7 @@ import { Header } from './components/layout/Header'
 import { AcademicManagementPage } from './features/admin/AcademicManagementPage'
 import { ContentManagementPage } from './features/admin/ContentManagementPage'
 import { DeliveryManagementPage } from './features/admin/DeliveryManagementPage'
+import { ResourceManagementPage } from './features/admin/ResourceManagementPage'
 import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
   AuthPage,
@@ -115,6 +116,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <DeliveryManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/resources"
+          element={
+            <RequireAuth
+              roles={['content_manager', 'admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading resource workspace…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <ResourceManagementPage />
             </RequireAuth>
           }
         />

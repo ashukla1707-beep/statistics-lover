@@ -134,3 +134,13 @@ At the time this handoff was written:
 - Custom fullscreen is phone-only.
 - Phone fullscreen requests landscape and re-syncs alignment.
 - The latest `develop` deployment for commit `8e1ef72` was READY on Vercel.
+
+
+### Teaching checkpoint — protected study material
+
+- Supabase migration `learning_resources_foundation` applied successfully.
+- Repository migration: `database/migrations/0014_learning_resources_foundation.sql`.
+- Admin/content-manager workspace: `/admin/resources`.
+- Student resources render at batch, subject, module and lecture scope.
+- Resource links are released only through enrollment-gated RPC and support `release_at` scheduling.
+- GitHub Quality passed and the `develop` Vercel preview deployed successfully.

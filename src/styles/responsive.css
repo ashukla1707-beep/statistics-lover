@@ -1,0 +1,285 @@
+/* Cross-product responsive hardening.
+   Imported last so shared guardrails can repair feature-specific layouts without
+   weakening desktop composition or the standalone lecture player. */
+
+.app-shell main,
+.app-shell main > *,
+.app-shell main :where(section,article,header,div,nav,form,label){
+  min-width:0;
+}
+
+.app-shell :where(h1,h2,h3,p,strong,small,span,label,a,button){
+  overflow-wrap:break-word;
+}
+
+.app-shell .button{
+  max-width:100%;
+  white-space:normal;
+  line-height:1.2;
+  text-align:center;
+}
+
+.app-shell .learning-hero-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:18px;
+}
+
+.app-shell .learning-back-link,
+.app-shell .back-link{
+  display:inline-flex;
+  width:max-content;
+  max-width:100%;
+  align-items:center;
+  gap:8px;
+  color:var(--magenta-700);
+  font-weight:800;
+  line-height:1.2;
+  text-decoration:none;
+}
+
+.app-shell .back-link-icon{
+  display:grid;
+  width:1.15em;
+  height:1.15em;
+  flex:0 0 1.15em;
+  place-items:center;
+  line-height:1;
+}
+
+.app-shell :where(
+  .student-dashboard-actions,
+  .student-course-actions,
+  .student-assignment-actions,
+  .learning-delivery-actions,
+  .lecture-admin-actions,
+  .content-column-actions,
+  .student-assignment-summary,
+  .student-test-meta,
+  .student-assignment-meta,
+  .student-dashboard-account>div:last-child
+){
+  max-width:100%;
+  flex-wrap:wrap;
+}
+
+.app-shell :where(
+  .student-dashboard-hero,
+  .student-dashboard-heading,
+  .student-dashboard-account,
+  .student-course-card-grid article>div,
+  .student-dashboard-list article>div,
+  .student-attendance-summary article>div,
+  .learning-hero,
+  .learning-subject-card,
+  .learning-module,
+  .learning-lecture-copy,
+  .student-assignment-hero,
+  .student-assignment-card,
+  .student-tests-hero,
+  .student-test-card,
+  .student-performance-hero,
+  .student-subject-performance>article,
+  .notifications-hero,
+  .notification-title-row
+)>*{
+  min-width:0;
+}
+
+.app-shell .student-dashboard-kpis small{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+}
+
+.app-shell :where(.learning-meta-row span,.student-test-meta span,.student-assignment-meta span){
+  max-width:100%;
+}
+
+@media (max-width:1180px){
+  .app-shell:not(.android-app-mode) .header-inner{
+    gap:16px;
+  }
+
+  .app-shell:not(.android-app-mode) .menu-toggle{
+    display:block;
+    flex:0 0 auto;
+  }
+
+  .app-shell:not(.android-app-mode) .primary-nav{
+    position:absolute;
+    top:calc(100% + 1px);
+    left:0;
+    right:0;
+    display:none;
+    max-height:calc(100dvh - 78px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    align-items:stretch;
+    padding:18px 20px 24px;
+    border-bottom:1px solid var(--line);
+    background:rgba(255,253,253,.99);
+    box-shadow:0 20px 40px rgba(8,29,62,.08);
+  }
+
+  .app-shell:not(.android-app-mode) .primary-nav.is-open{
+    display:grid;
+    gap:2px;
+  }
+
+  .app-shell:not(.android-app-mode) .primary-nav>a:not(.button){
+    padding:11px 4px;
+  }
+
+  .app-shell:not(.android-app-mode) .primary-nav>a:not(.button)::after{
+    display:none;
+  }
+
+  .app-shell:not(.android-app-mode) .primary-nav>.button{
+    width:100%;
+    margin-top:8px;
+  }
+}
+
+@media (max-width:720px){
+  .app-shell :where(
+    .admin-page-heading,
+    .admin-panel-heading,
+    .admin-batch-heading,
+    .student-dashboard-heading,
+    .notifications-hero,
+    .notification-title-row,
+    .student-attendance-heading,
+    .teacher-mode-nav,
+    .delivery-lecture-summary,
+    .attendance-summary,
+    .selected-student-header,
+    .staff-role-card
+  ){
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .app-shell :where(.teacher-mode-nav,.lecture-admin-actions,.content-column-actions){
+    width:100%;
+    flex-wrap:wrap;
+  }
+
+  .app-shell :where(
+    .learning-hero h1,
+    .student-dashboard-hero h1,
+    .student-assignment-hero h1,
+    .student-tests-hero h1,
+    .student-performance-hero h1,
+    .teacher-dashboard-hero h1,
+    .admin-page-heading h1
+  ){
+    max-width:100%;
+    line-height:1.05;
+    overflow-wrap:anywhere;
+  }
+
+  .app-shell .student-attendance-row{
+    align-items:flex-start;
+  }
+
+  .app-shell .student-attendance-row>div{
+    min-width:0;
+  }
+}
+
+@media (max-width:520px){
+  .app-shell .learning-hero,
+  .app-shell .learning-subject-card,
+  .app-shell .student-dashboard-hero,
+  .app-shell .student-dashboard-section,
+  .app-shell .student-dashboard-panel,
+  .app-shell .student-dashboard-account,
+  .app-shell .student-assignment-hero,
+  .app-shell .student-assignment-card,
+  .app-shell .student-tests-hero,
+  .app-shell .student-test-card,
+  .app-shell .student-performance-hero{
+    padding-left:18px;
+    padding-right:18px;
+  }
+
+  .app-shell .learning-hero h1{
+    font-size:clamp(2rem,11vw,3rem);
+    letter-spacing:-.03em;
+  }
+
+  .app-shell :where(
+    .learning-hero-actions,
+    .student-dashboard-actions,
+    .student-course-actions,
+    .student-assignment-actions
+  ){
+    display:grid;
+    grid-template-columns:1fr;
+    width:100%;
+    gap:9px;
+  }
+
+  .app-shell :where(
+    .learning-hero-actions,
+    .student-dashboard-actions,
+    .student-course-actions,
+    .student-assignment-actions
+  ) > :where(.button,a,button){
+    width:100%;
+    min-width:0;
+  }
+
+  .app-shell .student-assignment-summary{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    width:100%;
+  }
+
+  .app-shell .student-assignment-summary span{
+    min-width:0;
+  }
+
+  .app-shell .student-test-card>.button{
+    width:100%;
+  }
+
+  .app-shell .student-attendance-row{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .app-shell .student-attendance-row>span{
+    align-self:flex-start;
+  }
+
+  .app-shell .learning-resource-link{
+    min-width:0;
+    max-width:100%;
+  }
+}
+
+@media (max-width:380px){
+  .app-shell .container{
+    width:min(calc(100% - 20px),var(--container));
+  }
+
+  .app-shell .brand{
+    gap:9px;
+  }
+
+  .app-shell .brand-copy strong{
+    font-size:.9rem;
+  }
+
+  .app-shell .brand-copy small{
+    max-width:130px;
+    font-size:.56rem;
+  }
+
+  .app-shell .student-assignment-summary{
+    grid-template-columns:1fr;
+  }
+}

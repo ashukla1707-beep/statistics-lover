@@ -1,5 +1,5 @@
 import { listManagedAssignments,type ManagedAssignment } from '../admin/assignmentService'
-import { listManagedLectures,listManagedModules,listManagedSubjects,type ManagedLecture } from '../admin/contentAdminService'
+import { listManagedLectures,listManagedModules,listManagedSubjects } from '../admin/contentAdminService'
 import { listManagedTests,type ManagedTest } from '../admin/testBuilderService'
 import { listManagedAnnouncements,type ManagedAnnouncement } from '../communications/announcementService'
 import { loadMyTeacherAssignments,type MyTeacherAssignment } from './teacherService'

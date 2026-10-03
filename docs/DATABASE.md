@@ -86,8 +86,9 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 - protected question options / answer keys ✅
 - MCQ / MSQ / numeric / short-text question types ✅
 - PYQ metadata foundation ✅
-- tests
-- test sections
+- tests ✅
+- test sections ✅
+- ordered test question placement ✅
 - attempts
 - answers
 - results

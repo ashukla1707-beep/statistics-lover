@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
 import { AcademicManagementPage } from './features/admin/AcademicManagementPage'
+import { AttendanceManagementPage } from './features/admin/AttendanceManagementPage'
 import { ContentManagementPage } from './features/admin/ContentManagementPage'
 import { DeliveryManagementPage } from './features/admin/DeliveryManagementPage'
 import { ResourceManagementPage } from './features/admin/ResourceManagementPage'
@@ -136,6 +137,20 @@ export default function App() {
           }
         />
         <Route
+          path="admin/attendance"
+          element={
+            <RequireAuth
+              roles={['admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading attendance workspace…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <AttendanceManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="admin/staff"
           element={
             <RequireAuth
@@ -174,6 +189,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <DeliveryManagementPage teacherMode />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="teacher/attendance"
+          element={
+            <RequireAuth
+              roles={['teacher']}
+              loadingFallback={<div className="auth-state">Loading attendance workspace…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <AttendanceManagementPage teacherMode />
             </RequireAuth>
           }
         />

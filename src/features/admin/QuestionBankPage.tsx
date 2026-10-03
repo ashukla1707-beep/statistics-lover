@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
@@ -77,7 +78,7 @@ export function QuestionBankPage({teacherMode=false}:{teacherMode?:boolean}){
   async function remove(q:ManagedQuestion){if(!canDelete||!window.confirm('Delete this question from the bank?'))return;setSaving(true);try{await deleteManagedQuestion(q.id);await refresh(q.subjectId);setNotice('Question deleted.')}catch(e){setError(errorMessage(e))}finally{setSaving(false)}}
 
   return <section className="admin-page question-bank-page"><div className="container admin-shell">
-    {teacherMode?<div className="teacher-mode-nav"><Link to="/teacher">← Teacher workspace</Link><span>Subject-scoped access</span></div>:<AdminSubnav active="questions"/>}
+    {teacherMode?<div className="teacher-mode-nav"><BackLink to="/teacher">Teacher workspace</BackLink><span>Subject-scoped access</span></div>:<AdminSubnav active="questions"/>}
     <header className="admin-page-heading"><div><span className="eyebrow">Assessment foundation</span><h1>Question Bank</h1><p>Create reusable questions and protected answer keys. Correct answers never flow through the student-facing tables.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}{notice&&<div className="admin-alert admin-alert-success">{notice}</div>}
     <div className="question-context-grid">

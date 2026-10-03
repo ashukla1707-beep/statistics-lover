@@ -21,6 +21,7 @@ export function StudentAssignmentsPage(){
   const [drafts,setDrafts]=useState<Record<string,Draft>>({})
   const [loading,setLoading]=useState(true),[savingId,setSavingId]=useState<string|null>(null)
   const [error,setError]=useState<string|null>(null),[notice,setNotice]=useState<string|null>(null)
+  const [currentTime]=useState(()=>Date.now())
 
   async function refresh(){
     if(!identity?.userId||!batchId)return
@@ -33,7 +34,22 @@ export function StudentAssignmentsPage(){
     setDrafts(Object.fromEntries(rows.map((a)=>[a.id,{text:a.submissionText,file:null}])))
   }
 
-  useEffect(()=>{let active=true;void refresh().catch((cause)=>active&&setError(errorMessage(cause))).finally(()=>active&&setLoading(false));return()=>{active=false}},[batchId,identity?.userId])
+  useEffect(()=>{
+    if(!identity?.userId||!batchId)return
+    let active=true
+    void Promise.all([
+      loadStudentCourseEnrollments(identity.userId),
+      loadStudentAssignments(batchId),
+    ]).then(([enrollments,rows])=>{
+      if(!active)return
+      const found=enrollments.find((item)=>item.batch.id===batchId)??null
+      if(!found) throw new Error('This batch is not assigned to your account.')
+      setEnrollment(found)
+      setAssignments(rows)
+      setDrafts(Object.fromEntries(rows.map((a)=>[a.id,{text:a.submissionText,file:null}])))
+    }).catch((cause)=>{if(active)setError(errorMessage(cause))}).finally(()=>{if(active)setLoading(false)})
+    return()=>{active=false}
+  },[batchId,identity?.userId])
 
   const summary=useMemo(()=>({
     total:assignments.length,
@@ -69,7 +85,7 @@ export function StudentAssignmentsPage(){
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}{notice&&<div className="admin-alert admin-alert-success">{notice}</div>}
     {!assignments.length?<div className="learning-empty-card"><h2>No assignments yet</h2><p>Published assignments will appear here when they are released.</p></div>:<div className="student-assignment-list">{assignments.map((a)=>{
       const draft=drafts[a.id]??{text:a.submissionText,file:null}
-      const duePassed=Boolean(a.dueAt&&new Date(a.dueAt).getTime()<Date.now())
+      const duePassed=Boolean(a.dueAt&&new Date(a.dueAt).getTime()<currentTime)
       const locked=(a.submissionStatus==='graded'||a.submissionStatus==='returned')||(!a.allowLate&&duePassed)
       return <article className="student-assignment-card" key={a.id}>
         <div className="student-assignment-card-head"><div><span>{a.contextTitle}</span><h2>{a.title}</h2></div><span className={`student-assignment-status student-assignment-status-${a.submissionStatus??'open'}`}>{humanize(a.submissionStatus??'open')}</span></div>

@@ -4,9 +4,9 @@ import { useAuth } from '../auth'
 import { listManagedBatches,listManagedCourses,type ManagedBatch,type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
 import { listManagedSubjects,type ManagedSubject } from './contentAdminService'
-import { deleteAnnouncement,listManagedAnnouncements,saveAnnouncement,type AnnouncementScope,type AnnouncementStatus,type ManagedAnnouncement } from '../communications/announcementService'
+import { deleteAnnouncement,listManagedAnnouncements,saveAnnouncement,setAnnouncementDeliveryChannels,type AnnouncementScope,type AnnouncementStatus,type ManagedAnnouncement } from '../communications/announcementService'
 
-type FormState={id:string|null;scope:AnnouncementScope;batchId:string;subjectId:string;title:string;body:string;status:AnnouncementStatus;publishAt:string;expiresAt:string}
+type FormState={id:string|null;scope:AnnouncementScope;batchId:string;subjectId:string;title:string;body:string;status:AnnouncementStatus;publishAt:string;expiresAt:string;emailRequested:boolean;whatsappRequested:boolean}
 const errorMessage=(error:unknown)=>error instanceof Error?error.message:'Something went wrong.'
 const toLocal=(value:string|null)=>{if(!value)return'';const date=new Date(value);return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16)}
 const humanize=(value:string)=>value.replaceAll('_',' ').replace(/\b\w/g,(letter)=>letter.toUpperCase())
@@ -42,21 +42,22 @@ export function AnnouncementManagementPage({teacherMode=false}:{teacherMode?:boo
     const scope:AnnouncementScope=teacherMode?'batch':'global'
     if(teacherMode&&!firstBatch){setError('No assigned batch is available for announcements.');return}
     setSubjects(firstBatch?await loadSubjects(firstBatch.id):[])
-    setForm({id:null,scope,batchId:firstBatch?.id??'',subjectId:'',title:'',body:'',status:'draft',publishAt:'',expiresAt:''})
+    setForm({id:null,scope,batchId:firstBatch?.id??'',subjectId:'',title:'',body:'',status:'draft',publishAt:'',expiresAt:'',emailRequested:false,whatsappRequested:false})
     setError(null);setNotice(null)
   }
   async function edit(item:ManagedAnnouncement){
     const rows=item.batchId?await loadSubjects(item.batchId):[]
     setSubjects(rows)
-    setForm({id:item.id,scope:item.scope,batchId:item.batchId??'',subjectId:item.subjectId??'',title:item.title,body:item.body,status:item.status,publishAt:toLocal(item.publishAt),expiresAt:toLocal(item.expiresAt)})
+    setForm({id:item.id,scope:item.scope,batchId:item.batchId??'',subjectId:item.subjectId??'',title:item.title,body:item.body,status:item.status,publishAt:toLocal(item.publishAt),expiresAt:toLocal(item.expiresAt),emailRequested:item.emailRequested,whatsappRequested:item.whatsappRequested})
     setError(null);setNotice(null)
   }
   async function save(event:FormEvent){
     event.preventDefault();if(!form)return
     setSaving(true);setError(null);setNotice(null)
     try{
-      await saveAnnouncement({id:form.id,scope:form.scope,batchId:form.scope==='global'?null:form.batchId||null,subjectId:form.scope==='subject'?form.subjectId||null:null,title:form.title,body:form.body,status:form.status,publishAt:form.publishAt?new Date(form.publishAt).toISOString():null,expiresAt:form.expiresAt?new Date(form.expiresAt).toISOString():null})
-      await refresh();setForm(null);setNotice(form.status==='published'?'Announcement published and in-app notifications queued.':'Announcement saved.')
+      const announcementId=await saveAnnouncement({id:form.id,scope:form.scope,batchId:form.scope==='global'?null:form.batchId||null,subjectId:form.scope==='subject'?form.subjectId||null:null,title:form.title,body:form.body,status:form.status,publishAt:form.publishAt?new Date(form.publishAt).toISOString():null,expiresAt:form.expiresAt?new Date(form.expiresAt).toISOString():null})
+      const queued=await setAnnouncementDeliveryChannels(announcementId,form.emailRequested,form.whatsappRequested)
+      await refresh();setForm(null);setNotice(form.status==='published'?`Announcement published. In-app notifications are ready${queued>0?` and ${queued} external deliveries were queued`:''}.`:'Announcement saved.')
     }catch(e){setError(errorMessage(e))}finally{setSaving(false)}
   }
   async function remove(id:string){if(!canDelete||!window.confirm('Delete this announcement?'))return;setSaving(true);try{await deleteAnnouncement(id);await refresh();setNotice('Announcement deleted.')}catch(e){setError(errorMessage(e))}finally{setSaving(false)}}
@@ -83,9 +84,12 @@ export function AnnouncementManagementPage({teacherMode=false}:{teacherMode?:boo
         <label className="form-field"><span>Expires at</span><input type="datetime-local" value={form.expiresAt} onChange={e=>setForm(current=>current&&({...current,expiresAt:e.target.value}))}/></label>
         <label className="form-field admin-field-wide"><span>Title</span><input required minLength={2} maxLength={180} value={form.title} onChange={e=>setForm(current=>current&&({...current,title:e.target.value}))}/></label>
         <label className="form-field admin-field-wide"><span>Message</span><textarea required minLength={2} maxLength={10000} rows={6} value={form.body} onChange={e=>setForm(current=>current&&({...current,body:e.target.value}))}/></label>
+        <label className="staff-check"><input type="checkbox" checked={form.emailRequested} onChange={e=>setForm(current=>current&&({...current,emailRequested:e.target.checked}))}/><span>Queue email delivery</span></label>
+        <label className="staff-check"><input type="checkbox" checked={form.whatsappRequested} onChange={e=>setForm(current=>current&&({...current,whatsappRequested:e.target.checked}))}/><span>Queue WhatsApp delivery</span></label>
+        {(form.emailRequested||form.whatsappRequested)&&<p className="announcement-channel-note admin-field-wide">External messages enter the secure delivery outbox and are sent when the corresponding provider worker is configured. In-app delivery works immediately.</p>}
       </div><div className="admin-form-actions"><button className="button button-small" disabled={saving}>{saving?'Saving…':form.status==='published'?'Publish announcement':'Save announcement'}</button><button type="button" className="admin-text-button" onClick={()=>setForm(null)}>Cancel</button></div></form>}
       {!announcements.length&&!loading&&<p className="admin-empty">No announcements in your scope yet.</p>}
-      <div className="announcement-admin-list">{announcements.map((item)=>{const batch=item.batchId?batchMap.get(item.batchId):null;const subject=item.subjectId?subjectMap.get(item.subjectId):null;return <article key={item.id}><div><div className="announcement-badges"><span className={`admin-status admin-status-${item.status==='published'?'active':item.status==='draft'?'scheduled':'archived'}`}>{item.status}</span><span>{humanize(item.scope)}</span></div><strong>{item.title}</strong><p>{item.body}</p><small>{item.scope==='global'?'All active students':item.scope==='batch'?(batch?.title??'Batch'):`${batch?.title??'Batch'} · ${subject?.title??'Subject'}`}{item.publishAt?` · Publishes ${new Date(item.publishAt).toLocaleString()}`:''}{item.expiresAt?` · Expires ${new Date(item.expiresAt).toLocaleString()}`:''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" onClick={()=>void edit(item)}>Edit</button>{canDelete&&<button className="admin-danger-button" disabled={saving} onClick={()=>void remove(item.id)}>Delete</button>}</div></article>})}</div>
+      <div className="announcement-admin-list">{announcements.map((item)=>{const batch=item.batchId?batchMap.get(item.batchId):null;const subject=item.subjectId?subjectMap.get(item.subjectId):null;return <article key={item.id}><div><div className="announcement-badges"><span className={`admin-status admin-status-${item.status==='published'?'active':item.status==='draft'?'scheduled':'archived'}`}>{item.status}</span><span>{humanize(item.scope)}</span></div><strong>{item.title}</strong><p>{item.body}</p><small>{item.scope==='global'?'All active students':item.scope==='batch'?(batch?.title??'Batch'):`${batch?.title??'Batch'} · ${subject?.title??'Subject'}`}{item.emailRequested?' · Email queued':''}{item.whatsappRequested?' · WhatsApp queued':''}{item.publishAt?` · Publishes ${new Date(item.publishAt).toLocaleString()}`:''}{item.expiresAt?` · Expires ${new Date(item.expiresAt).toLocaleString()}`:''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" onClick={()=>void edit(item)}>Edit</button>{canDelete&&<button className="admin-danger-button" disabled={saving} onClick={()=>void remove(item.id)}>Delete</button>}</div></article>})}</div>
     </section>
   </div></section>
 }

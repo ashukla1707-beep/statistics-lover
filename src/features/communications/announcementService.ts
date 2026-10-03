@@ -15,6 +15,8 @@ export interface ManagedAnnouncement{
   expiresAt:string|null
   createdAt:string
   updatedAt:string
+  emailRequested:boolean
+  whatsappRequested:boolean
 }
 export interface InAppNotification{
   id:string
@@ -30,14 +32,14 @@ export interface InAppNotification{
   createdAt:string
 }
 
-type AnnouncementRow={id:string;scope:AnnouncementScope;batch_id:string|null;subject_id:string|null;title:string;body:string;status:AnnouncementStatus;publish_at:string|null;expires_at:string|null;created_at:string;updated_at:string}
+type AnnouncementRow={id:string;scope:AnnouncementScope;batch_id:string|null;subject_id:string|null;title:string;body:string;status:AnnouncementStatus;publish_at:string|null;expires_at:string|null;created_at:string;updated_at:string;email_requested:boolean;whatsapp_requested:boolean}
 type NotificationRow={id:string;kind:string;source_type:string|null;source_id:string|null;title:string;body:string;action_url:string|null;available_at:string;expires_at:string|null;read_at:string|null;created_at:string}
 type SummaryRow={unread_count:number;total_count:number}
 
 export async function listManagedAnnouncements():Promise<ManagedAnnouncement[]>{
-  const {data,error}=await requireSupabase().from('announcements').select('id,scope,batch_id,subject_id,title,body,status,publish_at,expires_at,created_at,updated_at').order('created_at',{ascending:false})
+  const {data,error}=await requireSupabase().from('announcements').select('id,scope,batch_id,subject_id,title,body,status,publish_at,expires_at,created_at,updated_at,email_requested,whatsapp_requested').order('created_at',{ascending:false})
   if(error)throw error
-  return ((data??[]) as AnnouncementRow[]).map((r)=>({id:r.id,scope:r.scope,batchId:r.batch_id,subjectId:r.subject_id,title:r.title,body:r.body,status:r.status,publishAt:r.publish_at,expiresAt:r.expires_at,createdAt:r.created_at,updatedAt:r.updated_at}))
+  return ((data??[]) as AnnouncementRow[]).map((r)=>({id:r.id,scope:r.scope,batchId:r.batch_id,subjectId:r.subject_id,title:r.title,body:r.body,status:r.status,publishAt:r.publish_at,expiresAt:r.expires_at,createdAt:r.created_at,updatedAt:r.updated_at,emailRequested:r.email_requested,whatsappRequested:r.whatsapp_requested}))
 }
 
 export async function saveAnnouncement(input:{id:string|null;scope:AnnouncementScope;batchId:string|null;subjectId:string|null;title:string;body:string;status:AnnouncementStatus;publishAt:string|null;expiresAt:string|null}){
@@ -73,5 +75,23 @@ export async function markNotificationRead(id:string){
 }
 export async function markAllNotificationsRead(){
   const {error}=await requireSupabase().rpc('mark_all_notifications_read')
+  if(error)throw error
+}
+
+export async function setAnnouncementDeliveryChannels(announcementId:string,emailRequested:boolean,whatsappRequested:boolean){
+  const {data,error}=await requireSupabase().rpc('set_announcement_delivery_channels',{target_announcement:announcementId,target_email:emailRequested,target_whatsapp:whatsappRequested})
+  if(error)throw error
+  return Number(data??0)
+}
+
+export async function loadMyNotificationPreferences(){
+  const {data,error}=await requireSupabase().rpc('get_my_notification_preferences')
+  if(error)throw error
+  const row=((data??[]) as Array<{email_enabled:boolean;whatsapp_enabled:boolean}>)[0]
+  return{emailEnabled:row?.email_enabled??true,whatsappEnabled:row?.whatsapp_enabled??false}
+}
+
+export async function saveMyNotificationPreferences(emailEnabled:boolean,whatsappEnabled:boolean){
+  const {error}=await requireSupabase().rpc('save_my_notification_preferences',{target_email_enabled:emailEnabled,target_whatsapp_enabled:whatsappEnabled})
   if(error)throw error
 }

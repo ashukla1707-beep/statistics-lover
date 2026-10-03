@@ -16,16 +16,19 @@ import {
   saveManagedDeliverySource,
   type DeliveryActionKind,
   type DeliveryProvider,
+  type ManagedDeliverySource,
 } from './deliveryAdminService'
 
 type SourceForm = {
   provider: DeliveryProvider
   url: string
   label: string
+  availableFrom: string
+  availableUntil: string
 }
 
-const emptyJoin: SourceForm = { provider: 'google_meet', url: '', label: 'Join live class' }
-const emptyWatch: SourceForm = { provider: 'google_drive', url: '', label: 'Watch recording' }
+const emptyJoin: SourceForm = { provider: 'google_meet', url: '', label: 'Join live class', availableFrom: '', availableUntil: '' }
+const emptyWatch: SourceForm = { provider: 'google_drive', url: '', label: 'Watch recording', availableFrom: '', availableUntil: '' }
 
 function humanize(value: string) {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
@@ -35,6 +38,32 @@ function errorMessage(error: unknown) {
   if (error instanceof Error) return error.message
   if (typeof error === 'object' && error && 'message' in error && typeof error.message === 'string') return error.message
   return 'Something went wrong. Please try again.'
+}
+
+function toLocalDateTime(value: string | null) {
+  if (!value) return ''
+  const date = new Date(value)
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+  return local.toISOString().slice(0, 16)
+}
+
+function sourceForm(source: ManagedDeliverySource, fallbackLabel: string): SourceForm {
+  return {
+    provider: source.provider,
+    url: source.providerReference,
+    label: source.label ?? fallbackLabel,
+    availableFrom: toLocalDateTime(source.availableFrom),
+    availableUntil: toLocalDateTime(source.availableUntil),
+  }
+}
+
+function defaultLiveWindow(lecture: ManagedLecture | null): Pick<SourceForm, 'availableFrom' | 'availableUntil'> {
+  if (!lecture?.scheduledAt) return { availableFrom: '', availableUntil: '' }
+  const scheduled = new Date(lecture.scheduledAt)
+  const start = new Date(scheduled.getTime() - 15 * 60_000)
+  const duration = lecture.durationMinutes ?? 60
+  const end = new Date(scheduled.getTime() + (duration + 30) * 60_000)
+  return { availableFrom: toLocalDateTime(start.toISOString()), availableUntil: toLocalDateTime(end.toISOString()) }
 }
 
 export function DeliveryManagementPage() {
@@ -63,22 +92,24 @@ export function DeliveryManagementPage() {
     [lectures, lectureId],
   )
 
-  async function loadSources(targetLectureId: string) {
-    setJoinForm(emptyJoin)
+  async function loadSources(targetLectureId: string, lecture: ManagedLecture | null = selectedLecture) {
+    const liveWindow = defaultLiveWindow(lecture)
+    setJoinForm({ ...emptyJoin, ...liveWindow })
     setWatchForm(emptyWatch)
     if (!targetLectureId) return
     const sources = await listManagedDeliverySources(targetLectureId)
     const join = sources.find((source) => source.actionKind === 'join')
     const watch = sources.find((source) => source.actionKind === 'watch')
-    if (join) setJoinForm({ provider: join.provider, url: join.providerReference, label: join.label ?? 'Join live class' })
-    if (watch) setWatchForm({ provider: watch.provider, url: watch.providerReference, label: watch.label ?? 'Watch recording' })
+    if (join) setJoinForm(sourceForm(join, 'Join live class'))
+    if (watch) setWatchForm(sourceForm(watch, 'Watch recording'))
   }
 
   async function chooseLecture(targetLectureId: string, knownLectures = lectures) {
     setLectures(knownLectures)
     setLectureId(targetLectureId)
     setError(null)
-    await loadSources(targetLectureId)
+    const lecture = knownLectures.find((item) => item.id === targetLectureId) ?? null
+    await loadSources(targetLectureId, lecture)
   }
 
   async function chooseModule(targetModuleId: string, knownModules = modules) {
@@ -151,6 +182,14 @@ export function DeliveryManagementPage() {
       setError('Provider links must use HTTPS.')
       return
     }
+
+    const availableFrom = form.availableFrom ? new Date(form.availableFrom).toISOString() : null
+    const availableUntil = form.availableUntil ? new Date(form.availableUntil).toISOString() : null
+    if (availableFrom && availableUntil && new Date(availableFrom) > new Date(availableUntil)) {
+      setError('Available until must be after available from.')
+      return
+    }
+
     setSaving(true)
     setError(null)
     setNotice(null)
@@ -161,8 +200,10 @@ export function DeliveryManagementPage() {
         provider: form.provider,
         providerReference: url,
         label: form.label,
+        availableFrom,
+        availableUntil,
       })
-      await loadSources(selectedLecture.id)
+      await loadSources(selectedLecture.id, selectedLecture)
       setNotice(actionKind === 'join' ? 'Live-class access saved.' : 'Recording access saved.')
     } catch (cause) {
       setError(errorMessage(cause))
@@ -178,7 +219,7 @@ export function DeliveryManagementPage() {
     setNotice(null)
     try {
       await deleteManagedDeliverySource(selectedLecture.id, actionKind)
-      await loadSources(selectedLecture.id)
+      await loadSources(selectedLecture.id, selectedLecture)
       setNotice('Delivery source removed.')
     } catch (cause) {
       setError(errorMessage(cause))
@@ -190,6 +231,19 @@ export function DeliveryManagementPage() {
   const canJoin = selectedLecture?.deliveryMode === 'live' || selectedLecture?.deliveryMode === 'hybrid'
   const canWatch = selectedLecture?.deliveryMode === 'recorded' || selectedLecture?.deliveryMode === 'hybrid'
 
+  const availabilityFields = (form: SourceForm, setForm: (value: SourceForm) => void) => (
+    <div className="delivery-window-grid">
+      <label className="form-field">
+        <span>Available from</span>
+        <input type="datetime-local" value={form.availableFrom} onChange={(event) => setForm({ ...form, availableFrom: event.target.value })} />
+      </label>
+      <label className="form-field">
+        <span>Available until</span>
+        <input type="datetime-local" value={form.availableUntil} onChange={(event) => setForm({ ...form, availableUntil: event.target.value })} />
+      </label>
+    </div>
+  )
+
   return (
     <section className="admin-page delivery-admin-page">
       <div className="container admin-shell">
@@ -199,7 +253,7 @@ export function DeliveryManagementPage() {
           <div>
             <span className="eyebrow">Protected delivery workspace</span>
             <h1>Live & Recorded Access</h1>
-            <p>Attach provider access to lectures without exposing raw Meet or recording links in the academic-content tables.</p>
+            <p>Attach protected provider access and control exactly when enrolled students can join or watch each lecture.</p>
           </div>
         </header>
 
@@ -222,9 +276,9 @@ export function DeliveryManagementPage() {
               <div>
                 <span className="eyebrow">Selected lecture</span>
                 <h2>{selectedLecture.title}</h2>
-                <p>{humanize(selectedLecture.deliveryMode)} · {humanize(selectedLecture.status)}{selectedLecture.durationMinutes ? ` · ${selectedLecture.durationMinutes} min` : ''}</p>
+                <p>{humanize(selectedLecture.deliveryMode)} · {humanize(selectedLecture.status)}{selectedLecture.scheduledAt ? ` · ${new Date(selectedLecture.scheduledAt).toLocaleString()}` : ''}{selectedLecture.durationMinutes ? ` · ${selectedLecture.durationMinutes} min` : ''}</p>
               </div>
-              <p className="delivery-security-note">Students cannot read the provider-source table directly. The learning page receives a link only after the database verifies active enrollment and lecture availability.</p>
+              <p className="delivery-security-note">Links stay in the protected source table. Students receive them only after enrollment, release and availability-window checks pass.</p>
             </section>
 
             <div className="delivery-source-grid">
@@ -236,6 +290,8 @@ export function DeliveryManagementPage() {
                     <label className="form-field"><span>Provider</span><select value={joinForm.provider} onChange={(event) => setJoinForm((current) => ({ ...current, provider: event.target.value as DeliveryProvider }))}><option value="google_meet">Google Meet</option><option value="external">External provider</option></select></label>
                     <label className="form-field"><span>Protected HTTPS link</span><input type="url" inputMode="url" placeholder="https://meet.google.com/..." value={joinForm.url} onChange={(event) => setJoinForm((current) => ({ ...current, url: event.target.value }))} /></label>
                     <label className="form-field"><span>Student button label</span><input maxLength={120} value={joinForm.label} onChange={(event) => setJoinForm((current) => ({ ...current, label: event.target.value }))} /></label>
+                    {availabilityFields(joinForm, setJoinForm)}
+                    <p className="delivery-window-note">For scheduled classes the default window opens 15 minutes before class and closes 30 minutes after the planned duration. You can change it.</p>
                     <div className="admin-form-actions"><button className="button button-small" type="button" disabled={saving || !joinForm.url.trim()} onClick={() => void saveSource('join', joinForm)}>{saving ? 'Saving…' : 'Save live access'}</button>{canDelete && joinForm.url && <button className="admin-danger-button" type="button" disabled={saving} onClick={() => void removeSource('join')}>Remove</button>}</div>
                   </div>
                 )}
@@ -249,6 +305,8 @@ export function DeliveryManagementPage() {
                     <label className="form-field"><span>Provider</span><select value={watchForm.provider} onChange={(event) => setWatchForm((current) => ({ ...current, provider: event.target.value as DeliveryProvider }))}><option value="google_drive">Google Drive</option><option value="cloudflare_stream">Cloudflare Stream</option><option value="external">External provider</option></select></label>
                     <label className="form-field"><span>Protected HTTPS link</span><input type="url" inputMode="url" placeholder="https://drive.google.com/..." value={watchForm.url} onChange={(event) => setWatchForm((current) => ({ ...current, url: event.target.value }))} /></label>
                     <label className="form-field"><span>Student button label</span><input maxLength={120} value={watchForm.label} onChange={(event) => setWatchForm((current) => ({ ...current, label: event.target.value }))} /></label>
+                    {availabilityFields(watchForm, setWatchForm)}
+                    <p className="delivery-window-note">Leave the window blank for normal published-recording access, or use it for temporary availability.</p>
                     <div className="admin-form-actions"><button className="button button-small" type="button" disabled={saving || !watchForm.url.trim()} onClick={() => void saveSource('watch', watchForm)}>{saving ? 'Saving…' : 'Save recording access'}</button>{canDelete && watchForm.url && <button className="admin-danger-button" type="button" disabled={saving} onClick={() => void removeSource('watch')}>Remove</button>}</div>
                   </div>
                 )}

@@ -40,6 +40,35 @@ function canUseFullscreen(stage: FullscreenStage | null) {
   return typeof stage.requestFullscreen === 'function' || typeof stage.webkitRequestFullscreen === 'function'
 }
 
+const DRIVE_DESKTOP_WIDTH = 1024
+const DRIVE_DESKTOP_HEIGHT = 576
+
+function isTouchDevice() {
+  return typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
+}
+
+function syncTouchPlayerScale(stage: HTMLDivElement | null) {
+  if (!stage) return
+
+  if (!isTouchDevice()) {
+    stage.style.removeProperty('--drive-player-scale')
+    return
+  }
+
+  const rect = stage.getBoundingClientRect()
+  if (rect.width <= 0 || rect.height <= 0) return
+
+  const scale = Math.min(rect.width / DRIVE_DESKTOP_WIDTH, rect.height / DRIVE_DESKTOP_HEIGHT)
+  stage.style.setProperty('--drive-player-scale', String(Math.max(scale, 0.1)))
+}
+
+function queuePlayerScaleSync(stage: HTMLDivElement | null) {
+  window.requestAnimationFrame(() => {
+    syncTouchPlayerScale(stage)
+    window.requestAnimationFrame(() => syncTouchPlayerScale(stage))
+  })
+}
+
 export function LecturePlayerPage() {
   const { batchId = '', lectureId = '' } = useParams()
   const { identity } = useAuth()
@@ -121,45 +150,36 @@ export function LecturePlayerPage() {
   }, [batchId, identity?.userId, lectureId])
 
   useEffect(() => {
-    const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]')
-    const previousViewport = viewport?.getAttribute('content') ?? null
-
-    if (viewport) {
-      viewport.setAttribute('content', 'width=1024')
-    }
-
-    document.documentElement.classList.add('lecture-player-desktop-viewport')
-    document.body.classList.add('lecture-player-desktop-viewport')
-
-    return () => {
-      if (viewport) {
-        if (previousViewport === null) {
-          viewport.removeAttribute('content')
-        } else {
-          viewport.setAttribute('content', previousViewport)
-        }
-      }
-
-      document.documentElement.classList.remove('lecture-player-desktop-viewport')
-      document.body.classList.remove('lecture-player-desktop-viewport')
-    }
-  }, [])
-
-  useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
 
+    const handleViewportChange = () => queuePlayerScaleSync(stage)
     const handleFullscreenChange = () => {
       setIsFullscreen(getFullscreenElement() === stage)
+      queuePlayerScaleSync(stage)
     }
 
+    const resizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(handleViewportChange)
+
     setCanFullscreen(canUseFullscreen(stage))
+    resizeObserver?.observe(stage)
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    window.addEventListener('resize', handleViewportChange)
+    window.visualViewport?.addEventListener('resize', handleViewportChange)
+    screen.orientation?.addEventListener('change', handleViewportChange)
+    queuePlayerScaleSync(stage)
 
     return () => {
+      resizeObserver?.disconnect()
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      window.removeEventListener('resize', handleViewportChange)
+      window.visualViewport?.removeEventListener('resize', handleViewportChange)
+      screen.orientation?.removeEventListener('change', handleViewportChange)
+      stage.style.removeProperty('--drive-player-scale')
     }
   }, [state.loaded])
 
@@ -186,6 +206,7 @@ export function LecturePlayerPage() {
       } else {
         await stage.webkitRequestFullscreen?.()
       }
+      queuePlayerScaleSync(stage)
     } catch {
       // Keep inline playback available when the browser refuses fullscreen.
     }
@@ -242,6 +263,11 @@ export function LecturePlayerPage() {
 
           <div className="lecture-player-overlay">
             <div className="lecture-player-corner-controls">
+              <span
+                className="lecture-player-drive-actions-blocker"
+                aria-hidden="true"
+              />
+
               {canFullscreen && (
                 <button
                   type="button"

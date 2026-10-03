@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
+import { CollectionPager,CollectionToolbar,useCollectionPagination } from './CollectionControls'
 import { listManagedLectures, listManagedModules, listManagedSubjects, type ManagedLecture, type ManagedModule, type ManagedSubject } from './contentAdminService'
 import { deleteManagedLearningResource, listManagedLearningResources, saveManagedLearningResource, type LearningResourceKind, type LearningResourceProvider, type LearningResourceScope, type LearningResourceStatus, type ManagedLearningResource } from './resourceAdminService'
 
@@ -33,11 +34,13 @@ export function ResourceManagementPage({ teacherMode = false }: { teacherMode?: 
   const [courseId,setCourseId]=useState('');const [batchId,setBatchId]=useState('');const [subjectId,setSubjectId]=useState('')
   const [moduleId,setModuleId]=useState('');const [lectureId,setLectureId]=useState('')
   const [scope,setScope]=useState<LearningResourceScope>('lecture')
+  const [resourceQuery,setResourceQuery]=useState(''),[resourceKindFilter,setResourceKindFilter]=useState<'all'|LearningResourceKind>('all'),[resourceStatusFilter,setResourceStatusFilter]=useState<'all'|LearningResourceStatus>('all')
   const [form,setForm]=useState<ResourceForm|null>(null)
   const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false)
   const [error,setError]=useState<string|null>(null);const [notice,setNotice]=useState<string|null>(null)
 
-  const visible=useMemo(()=>resources.filter((r)=>r.scope===scope&&(scope==='batch'||(scope==='subject'&&r.subjectId===subjectId)||(scope==='module'&&r.moduleId===moduleId)||(scope==='lecture'&&r.lectureId===lectureId))),[resources,scope,subjectId,moduleId,lectureId])
+  const visible=useMemo(()=>{const query=resourceQuery.trim().toLowerCase();return resources.filter((r)=>r.scope===scope&&(scope==='batch'||(scope==='subject'&&r.subjectId===subjectId)||(scope==='module'&&r.moduleId===moduleId)||(scope==='lecture'&&r.lectureId===lectureId))&&(resourceKindFilter==='all'||r.kind===resourceKindFilter)&&(resourceStatusFilter==='all'||r.status===resourceStatusFilter)&&(!query||[r.title,r.description??'',r.kind,r.status,r.fileName??''].some((value)=>value.toLowerCase().includes(query))))},[resources,scope,subjectId,moduleId,lectureId,resourceQuery,resourceKindFilter,resourceStatusFilter])
+  const resourcePager=useCollectionPagination(visible,20,`${batchId}|${scope}|${subjectId}|${moduleId}|${lectureId}|${resourceQuery}|${resourceKindFilter}|${resourceStatusFilter}`)
   const ready=scope==='batch'||(scope==='subject'&&!!subjectId)||(scope==='module'&&!!moduleId)||(scope==='lecture'&&!!lectureId)
 
   async function refresh(id=batchId){setResources(id?await listManagedLearningResources(id):[])}
@@ -74,8 +77,10 @@ export function ResourceManagementPage({ teacherMode = false }: { teacherMode?: 
     </div>
 
     <section className="admin-panel resource-list-panel"><div className="admin-panel-heading compact"><div><span>{humanize(scope)} resources</span><h2>Files & links</h2></div><button className="admin-icon-button" type="button" disabled={!ready} onClick={newResource}>+</button></div>
+      {ready&&<CollectionToolbar query={resourceQuery} onQueryChange={setResourceQuery} placeholder="Search title, description or file name" shown={visible.length} total={resources.filter((r)=>r.scope===scope).length}><select aria-label="Resource type" value={resourceKindFilter} onChange={(e)=>setResourceKindFilter(e.target.value as 'all'|LearningResourceKind)}><option value="all">All types</option>{kinds.map((kind)=><option key={kind} value={kind}>{humanize(kind)}</option>)}</select><select aria-label="Resource status" value={resourceStatusFilter} onChange={(e)=>setResourceStatusFilter(e.target.value as 'all'|LearningResourceStatus)}><option value="all">All statuses</option>{statuses.map((status)=><option key={status} value={status}>{humanize(status)}</option>)}</select></CollectionToolbar>}
       {!ready&&<p className="admin-empty">Select the required academic level first.</p>}{ready&&!visible.length&&<p className="admin-empty">No resources attached here yet.</p>}
-      <div className="resource-admin-list">{visible.map((r)=><article className="resource-admin-row" key={r.id}><div><span className={`admin-status admin-status-${r.status}`}>{humanize(r.status)}</span><strong>{r.title}</strong><small>{humanize(r.kind)} · {r.provider?humanize(r.provider):'Source missing'}{r.releaseAt?` · Releases ${new Date(r.releaseAt).toLocaleString()}`:''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" type="button" onClick={()=>setForm(formFrom(r))}>Edit</button>{canDelete&&<button className="admin-danger-button" type="button" disabled={saving} onClick={()=>void remove(r)}>Delete</button>}</div></article>)}</div>
+      <div className="resource-admin-list">{resourcePager.pageItems.map((r)=><article className="resource-admin-row" key={r.id}><div><span className={`admin-status admin-status-${r.status}`}>{humanize(r.status)}</span><strong>{r.title}</strong><small>{humanize(r.kind)} · {r.provider?humanize(r.provider):'Source missing'}{r.releaseAt?` · Releases ${new Date(r.releaseAt).toLocaleString()}`:''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" type="button" onClick={()=>setForm(formFrom(r))}>Edit</button>{canDelete&&<button className="admin-danger-button" type="button" disabled={saving} onClick={()=>void remove(r)}>Delete</button>}</div></article>)}</div>
+      <CollectionPager page={resourcePager.page} totalPages={resourcePager.totalPages} pageSize={resourcePager.pageSize} totalItems={visible.length} onPageChange={resourcePager.setPage} onPageSizeChange={resourcePager.setPageSize}/>
     </section>
 
     {form&&<section className="admin-panel resource-editor-card"><form className="admin-form" onSubmit={save}><div className="admin-form-subheading"><strong>{form.id?'Edit resource':'New resource'}</strong><button className="admin-text-button" type="button" onClick={()=>setForm(null)}>Close</button></div><div className="admin-form-grid">

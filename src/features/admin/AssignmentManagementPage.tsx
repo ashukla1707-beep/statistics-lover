@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
+import { CollectionPager,CollectionToolbar,useCollectionPagination } from './CollectionControls'
 import { listManagedLectures, listManagedModules, listManagedSubjects, type ManagedLecture, type ManagedModule, type ManagedSubject } from './contentAdminService'
 import {
   createSubmissionSignedUrl,
@@ -43,11 +44,13 @@ export function AssignmentManagementPage({teacherMode=false}:{teacherMode?:boole
   const [lectures,setLectures]=useState<ManagedLecture[]>([]),[assignments,setAssignments]=useState<ManagedAssignment[]>([])
   const [courseId,setCourseId]=useState(''),[batchId,setBatchId]=useState(''),[subjectId,setSubjectId]=useState('')
   const [moduleId,setModuleId]=useState(''),[lectureId,setLectureId]=useState(''),[scope,setScope]=useState<LearningResourceScope>('lecture')
+  const [assignmentQuery,setAssignmentQuery]=useState(''),[assignmentStatusFilter,setAssignmentStatusFilter]=useState<'all'|AssignmentStatus>('all')
   const [form,setForm]=useState<FormState|null>(null),[selectedId,setSelectedId]=useState<string|null>(null)
   const [submissions,setSubmissions]=useState<AssignmentSubmission[]>([]),[grades,setGrades]=useState<Record<string,GradeDraft>>({})
   const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState<string|null>(null),[notice,setNotice]=useState<string|null>(null)
 
-  const visible=useMemo(()=>assignments.filter((a)=>a.scope===scope&&(scope==='batch'||(scope==='subject'&&a.subjectId===subjectId)||(scope==='module'&&a.moduleId===moduleId)||(scope==='lecture'&&a.lectureId===lectureId))),[assignments,scope,subjectId,moduleId,lectureId])
+  const visible=useMemo(()=>{const query=assignmentQuery.trim().toLowerCase();return assignments.filter((a)=>a.scope===scope&&(scope==='batch'||(scope==='subject'&&a.subjectId===subjectId)||(scope==='module'&&a.moduleId===moduleId)||(scope==='lecture'&&a.lectureId===lectureId))&&(assignmentStatusFilter==='all'||a.status===assignmentStatusFilter)&&(!query||[a.title,a.instructions??'',a.status].some((value)=>value.toLowerCase().includes(query))))},[assignments,scope,subjectId,moduleId,lectureId,assignmentQuery,assignmentStatusFilter])
+  const assignmentPager=useCollectionPagination(visible,20,`${batchId}|${scope}|${subjectId}|${moduleId}|${lectureId}|${assignmentQuery}|${assignmentStatusFilter}`)
   const targetReady=scope==='batch'||(scope==='subject'&&!!subjectId)||(scope==='module'&&!!moduleId)||(scope==='lecture'&&!!lectureId)
   const selected=assignments.find((a)=>a.id===selectedId)??null
 
@@ -117,8 +120,10 @@ export function AssignmentManagementPage({teacherMode=false}:{teacherMode?:boole
     </div>
 
     <section className="admin-panel assignment-list-panel"><div className="admin-panel-heading compact"><div><span>{humanize(scope)} assignments</span><h2>Published work</h2></div><button className="admin-icon-button" type="button" disabled={!targetReady} onClick={newAssignment}>+</button></div>
+      {targetReady&&<CollectionToolbar query={assignmentQuery} onQueryChange={setAssignmentQuery} placeholder="Search assignments" shown={visible.length} total={assignments.filter((a)=>a.scope===scope).length}><select aria-label="Assignment status" value={assignmentStatusFilter} onChange={(e)=>setAssignmentStatusFilter(e.target.value as 'all'|AssignmentStatus)}><option value="all">All statuses</option>{statuses.map((status)=><option key={status} value={status}>{humanize(status)}</option>)}</select></CollectionToolbar>}
       {!targetReady&&<p className="admin-empty">Select the target academic level first.</p>}{targetReady&&!visible.length&&<p className="admin-empty">No assignments attached here yet.</p>}
-      <div className="assignment-admin-list">{visible.map((a)=><article key={a.id} className={`assignment-admin-row ${selectedId===a.id?'is-selected':''}`}><div><span className={`admin-status admin-status-${a.status}`}>{humanize(a.status)}</span><strong>{a.title}</strong><small>{a.dueAt?`Due ${new Date(a.dueAt).toLocaleString()}`:'No due date'}{a.maxScore!==null?` · ${a.maxScore} points`:''}{a.allowLate?' · Late allowed':''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" onClick={()=>setForm(toForm(a))}>Edit</button><button className="admin-text-button" onClick={()=>void openSubmissions(a)}>Submissions</button>{canDelete&&<button className="admin-danger-button" disabled={saving} onClick={()=>void remove(a)}>Delete</button>}</div></article>)}</div>
+      <div className="assignment-admin-list">{assignmentPager.pageItems.map((a)=><article key={a.id} className={`assignment-admin-row ${selectedId===a.id?'is-selected':''}`}><div><span className={`admin-status admin-status-${a.status}`}>{humanize(a.status)}</span><strong>{a.title}</strong><small>{a.dueAt?`Due ${new Date(a.dueAt).toLocaleString()}`:'No due date'}{a.maxScore!==null?` · ${a.maxScore} points`:''}{a.allowLate?' · Late allowed':''}</small></div><div className="lecture-admin-actions"><button className="admin-text-button" onClick={()=>setForm(toForm(a))}>Edit</button><button className="admin-text-button" onClick={()=>void openSubmissions(a)}>Submissions</button>{canDelete&&<button className="admin-danger-button" disabled={saving} onClick={()=>void remove(a)}>Delete</button>}</div></article>)}</div>
+      <CollectionPager page={assignmentPager.page} totalPages={assignmentPager.totalPages} pageSize={assignmentPager.pageSize} totalItems={visible.length} onPageChange={assignmentPager.setPage} onPageSizeChange={assignmentPager.setPageSize}/>
     </section>
 
     {form&&<section className="admin-panel assignment-editor"><form className="admin-form" onSubmit={saveAssignment}>

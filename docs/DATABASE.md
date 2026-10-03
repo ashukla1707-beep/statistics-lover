@@ -95,6 +95,8 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 - answers ✅
 - automatic scoring / negative marking ✅
 - result release policies / review ✅
+- immutable attempt-based test analytics ✅
+- student subject performance analytics ✅
 
 ### Operations
 

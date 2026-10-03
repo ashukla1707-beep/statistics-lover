@@ -463,21 +463,41 @@ public class NativeMainActivity extends AppCompatActivity {
         for(int i=0;i<teacherAssignments.length();i++){
             JSONObject row=teacherAssignments.optJSONObject(i);
             if(row==null)continue;
+
+            JSONObject batch=row.optJSONObject("batch");
+            JSONObject course=batch==null?null:batch.optJSONObject("course");
+            JSONObject subject=row.optJSONObject("subject");
+
+            String batchId=row.optString("batch_id","");
+            String subjectId=row.isNull("subject_id")?"":row.optString("subject_id","");
+
             LinearLayout card=ui.card();
             card.addView(ui.text(
-                    row.isNull("subject_id")?"Whole-batch scope":"Subject scope",
+                    subjectId.isBlank()?"Whole-batch scope":"Subject scope",
                     12,NativeUi.MAGENTA,true));
-            card.addView(ui.text("Batch: "+row.optString("batch_id",""),13,NativeUi.NAVY,false));
-            if(!row.isNull("subject_id")){
-                card.addView(ui.text("Subject: "+row.optString("subject_id",""),13,NativeUi.NAVY,false));
+            card.addView(ui.text(
+                    course==null?"Course":course.optString("title","Course"),
+                    17,NativeUi.NAVY,true));
+            card.addView(ui.text(
+                    batch==null?batchId:batch.optString("title",batchId),
+                    13,NativeUi.MUTED,false));
+            if(!subjectId.isBlank()){
+                card.addView(ui.text(
+                        subject==null?subjectId:subject.optString("title",subjectId),
+                        13,NativeUi.NAVY,true));
             }
+
+            Button attendance=ui.button("Take attendance",true);
+            attendance.setOnClickListener(v->
+                    showAttendanceLectures(batchId,subjectId,this::showTeacher));
+            ui.add(card,attendance,10);
             body.addView(card);
         }
 
         LinearLayout note=ui.card();
         note.addView(ui.text("Native teaching modules",16,NativeUi.NAVY,true));
         note.addView(ui.text(
-                "Attendance, grading, tests and content-management workflows are the next native Android layer.",
+                "Attendance is available now. Grading, tests and content-management workflows follow in the next native layers.",
                 12,NativeUi.MUTED,false));
         body.addView(note);
 
@@ -511,6 +531,13 @@ public class NativeMainActivity extends AppCompatActivity {
         access.addView(ui.text(courses.length()+" courses visible in your scope",12,NativeUi.MUTED,false));
         body.addView(access);
 
+        if(roles.contains("admin")||roles.contains("owner")){
+            Button attendance=ui.button("Manage attendance",true);
+            attendance.setOnClickListener(v->
+                    showAttendanceLectures("","",this::showOperations));
+            ui.add(body,attendance,4);
+        }
+
         String[] modules=(roles.contains("admin")||roles.contains("owner"))
                 ? new String[]{"Academics","Content","Enrollments","Assignments","Attendance","Tests","Announcements","Commerce","Staff","Audit","Settings"}
                 : new String[]{"Academics","Content","Assignments","Attendance","Tests","Announcements"};
@@ -523,6 +550,99 @@ public class NativeMainActivity extends AppCompatActivity {
         }
 
         replace(scroll);
+    }
+
+    private void showAttendanceLectures(
+            String batchId,
+            String subjectId,
+            Runnable back
+    ){
+        busy("Loading attendance lectures…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.attendanceLectures(batchId,subjectId);
+                runOnUiThread(()->renderAttendanceLectures(data,back));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderAttendanceLectures(JSONObject data,Runnable back){
+        screen="attendance";
+        replace(AttendanceScreen.buildLectures(
+                this,ui,data,back,
+                (lectureId,lectureTitle)->
+                        showAttendanceRoster(
+                                lectureId,
+                                lectureTitle,
+                                ()->renderAttendanceLectures(data,back)
+                        )
+        ));
+    }
+
+    private void showAttendanceRoster(
+            String lectureId,
+            String lectureTitle,
+            Runnable back
+    ){
+        busy("Loading attendance roster…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.attendanceRoster(lectureId);
+                JSONArray roster=array(data,"roster");
+                runOnUiThread(()->renderAttendanceRoster(
+                        lectureId,lectureTitle,roster,back
+                ));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderAttendanceRoster(
+            String lectureId,
+            String lectureTitle,
+            JSONArray roster,
+            Runnable back
+    ){
+        screen="attendance";
+        replace(AttendanceScreen.buildRoster(
+                this,ui,lectureTitle,roster,back,
+                rows->saveAttendance(lectureId,lectureTitle,rows,back)
+        ));
+    }
+
+    private void saveAttendance(
+            String lectureId,
+            String lectureTitle,
+            JSONArray rows,
+            Runnable back
+    ){
+        busy("Saving attendance…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.saveAttendance(lectureId,rows);
+                JSONArray roster=array(data,"roster");
+                runOnUiThread(()->{
+                    toast("Attendance saved.");
+                    renderAttendanceRoster(
+                            lectureId,lectureTitle,roster,back
+                    );
+                });
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    showAttendanceRoster(lectureId,lectureTitle,back);
+                    toast(message(error));
+                });
+            }
+        });
     }
 
     private boolean hasOperationsRole(){

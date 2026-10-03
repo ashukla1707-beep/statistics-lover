@@ -2,6 +2,7 @@ package com.statisticslover.app;
 
 import android.content.Context;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -84,6 +85,29 @@ final class NativeApiClient {
         JSONObject body = action("learning");
         body.put("accessToken", session.accessToken());
         body.put("batchId", batchId);
+        return withRefresh(body);
+    }
+
+    JSONObject attendanceLectures(String batchId, String subjectId) throws Exception {
+        JSONObject body = action("attendanceLectures");
+        body.put("accessToken", session.accessToken());
+        body.put("batchId", batchId == null ? "" : batchId);
+        body.put("subjectId", subjectId == null ? "" : subjectId);
+        return withRefresh(body);
+    }
+
+    JSONObject attendanceRoster(String lectureId) throws Exception {
+        JSONObject body = action("attendanceRoster");
+        body.put("accessToken", session.accessToken());
+        body.put("lectureId", lectureId);
+        return withRefresh(body);
+    }
+
+    JSONObject saveAttendance(String lectureId, JSONArray rows) throws Exception {
+        JSONObject body = action("saveAttendance");
+        body.put("accessToken", session.accessToken());
+        body.put("lectureId", lectureId);
+        body.put("rows", rows);
         return withRefresh(body);
     }
 

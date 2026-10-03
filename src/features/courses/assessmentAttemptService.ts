@@ -1,5 +1,5 @@
 import { requireSupabase } from '../../services/supabase/client'
-import type { AssessmentQuestionType } from './questionBankService'
+import type { AssessmentQuestionType } from '../admin/questionBankService'
 
 export interface AttemptOption{ id:string;text:string;position:number }
 export interface AttemptAnswer{selected_option_ids:string[];answer_text:string|null;numeric_answer:number|null;saved_at:string|null}

@@ -114,6 +114,7 @@ export function LearningPage() {
           </div>
           <div className="learning-hero-actions">
             <Link className="button button-small" to={`/learn/${batchId}/tests`}>Open tests</Link>
+            <Link className="button button-small button-secondary" to={`/learn/${batchId}/performance`}>Performance</Link>
             <Link className="button button-small button-secondary" to={`/learn/${batchId}/assignments`}>Open assignments</Link>
           </div>
         </header>

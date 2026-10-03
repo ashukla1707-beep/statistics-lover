@@ -1,5 +1,6 @@
 import { useEffect,useState,type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { listManagedBatches,listManagedCourses,type ManagedBatch,type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
 import { listManagedTests,type ManagedTest } from './testBuilderService'
@@ -56,7 +57,7 @@ export function TestSchedulePage({teacherMode=false}:{teacherMode?:boolean}){
 
   const selectedTest=tests.find((t)=>t.id===testId)??null
   return <section className="admin-page test-schedule-page"><div className="container admin-shell">
-    {teacherMode?<div className="teacher-mode-nav"><Link to="/teacher">← Teacher workspace</Link><span>Assignment-scoped access</span></div>:<AdminSubnav active="schedules"/>}
+    {teacherMode?<div className="teacher-mode-nav"><BackLink to="/teacher">Teacher workspace</BackLink><span>Assignment-scoped access</span></div>:<AdminSubnav active="schedules"/>}
     <header className="admin-page-heading"><div><span className="eyebrow">Assessment delivery</span><h1>Test Scheduling</h1><p>Open and close exam windows, choose batch-wide or selected-student access, and control when results may be released.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}{notice&&<div className="admin-alert admin-alert-success">{notice}</div>}
     <div className="test-schedule-context"><label className="form-field"><span>Course</span><select value={courseId} disabled={loading||!courses.length} onChange={e=>void chooseCourse(e.target.value)}>{courses.map(x=><option key={x.id} value={x.id}>{x.title}</option>)}</select></label><label className="form-field"><span>Batch</span><select value={batchId} disabled={!batches.length} onChange={e=>void chooseBatch(e.target.value)}>{batches.map(x=><option key={x.id} value={x.id}>{x.title}</option>)}</select></label><label className="form-field"><span>Published test</span><select value={testId} disabled={!tests.length} onChange={e=>void chooseTest(e.target.value)}>{tests.map(x=><option key={x.id} value={x.id}>{x.title}</option>)}</select></label></div>

@@ -166,3 +166,15 @@ At the time this handoff was written:
 - Student learning space shows attendance percentage/history.
 - Attendance layer passed GitHub typecheck, lint and build; latest develop Vercel preview is READY.
 - Supabase advisors currently show no new RLS security findings; leaked-password protection remains an Auth-level warning to address in final security hardening. Performance advisors also flagged several missing creator/marker FK indexes and multiple permissive RLS policies; these are scheduled for the final DB optimization pass.
+
+
+### Teaching checkpoint — assignments & submissions
+
+- Supabase migrations `assignments_and_submissions` and `teacher_scope_hardening` are applied; repository migrations `0017_assignments_and_submissions.sql` and `0018_teacher_scope_hardening.sql` are committed.
+- Assignments can be scoped to batch, subject, module or lecture with release/due dates, late-submission rules, score limits and draft/published/archive status.
+- Student submissions are private and stored in the non-public `assignment-submissions` Supabase Storage bucket (25 MB file limit), with student-owned upload paths and protected signed access.
+- Student workflow: `/learn/:batchId/assignments` supports response text, attachment upload, draft saving, submission/resubmission while open, and viewing grades/feedback.
+- Staff workflow: `/admin/assignments`; teacher workflow: `/teacher/assignments`. Staff can publish assignments, review submissions, open protected attachments and grade/return work.
+- Teacher scope hardening separates batch read access from whole-batch management, preventing subject-only teachers from publishing/editing batch-wide resources or assignments.
+- Assignment layer passed GitHub typecheck, lint and build. Latest develop Vercel deployment for commit `aa8d806d5e381aa4035c636bb4ab36fe9ab7ff7e` is READY.
+- Supabase security advisor has no new database/RLS security findings; leaked-password protection remains the known Auth-level warning for final hardening.

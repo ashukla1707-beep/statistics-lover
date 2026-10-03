@@ -11,6 +11,7 @@ import { QuestionBankPage } from './features/admin/QuestionBankPage'
 import { TestBuilderPage } from './features/admin/TestBuilderPage'
 import { TestSchedulePage } from './features/admin/TestSchedulePage'
 import { AssessmentAnalyticsPage } from './features/admin/AssessmentAnalyticsPage'
+import { CommerceManagementPage } from './features/admin/CommerceManagementPage'
 import { StaffManagementPage } from './features/admin/StaffManagementPage'
 import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
@@ -275,6 +276,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <AttendanceManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/commerce"
+          element={
+            <RequireAuth
+              roles={['admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading commerce…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <CommerceManagementPage />
             </RequireAuth>
           }
         />

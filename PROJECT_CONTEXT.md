@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer E5 — Audit logs & settings
+- Current focus: Layer E6 — Accessibility, responsive and error-state pass
 
 ## Deployment
 
@@ -325,3 +325,17 @@ At the time this handoff was written:
 - React lint initially rejected effect-driven pagination resets; the hook was redesigned to derive page state from a reset key with no synchronous setState effects.
 - Final E4 GitHub Quality passed on `249b37d7d6810563854ed03e42f7fba85b77da76` (typecheck, lint, build).
 - Next: E5 audit logs and operational settings.
+
+
+### Product checkpoint E5 — audit logs & settings complete
+
+- Supabase migration `audit_logs_app_settings` applied and repository migration `0030_audit_logs_app_settings.sql` committed.
+- Critical operational changes on courses, batches, profiles, enrollments, teacher assignments, assignments, tests/schedules, commerce and announcements now emit immutable audit events with actor/action/entity metadata and changed-column names only; full private row snapshots are intentionally not stored.
+- Admin/owner Audit workspace: `/admin/audit`, with search, entity/action filters and shared pagination controls.
+- Admin/owner Settings workspace: `/admin/settings`, managing non-secret operational values only. Provider/API secrets remain outside browser-visible data.
+- Settings updates are themselves audited.
+- Initial E5 frontend commit `20ec1e33...` had one missing parenthesis in the settings state initializer; corrected in `6f91e612cd9bd21224f592127dfa6cd323121491`.
+- Supabase migration `audit_settings_security_hardening` applied and repository migration `0031_audit_settings_security_hardening.sql` committed: settings RPCs now use SECURITY INVOKER, admin/owner update rights are enforced by RLS, and anonymous settings RPC execution is removed.
+- Supabase security advisor after E5 reports only the pre-existing Auth leaked-password-protection warning; no audit/settings-specific findings remain.
+- E5 final GitHub Quality passed typecheck, lint and build on `6f91e612cd9bd21224f592127dfa6cd323121491`.
+- Next: E6 accessibility, responsive and error-state pass.

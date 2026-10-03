@@ -53,7 +53,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Teacher dashboard
 - [x] Admin operations dashboard
 - [x] Search/filter/pagination
-- [ ] Audit logs/settings
+- [x] Audit logs/settings
 - [ ] Accessibility/responsive/error-state pass
 - [ ] PWA/performance
 

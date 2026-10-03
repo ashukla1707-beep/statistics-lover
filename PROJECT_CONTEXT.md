@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer E1 — Student dashboard completion
+- Current focus: Layer E2 — Teacher dashboard completion
 
 ## Deployment
 
@@ -282,3 +282,14 @@ At the time this handoff was written:
 - GitHub Quality passed for announcement foundation `bccc7d7851acd9ed7bd4a7247803791f4ca6565f`, announcement/inbox UI `c321ef761025fc7e44a9854a09755bc732030db6`, and channel-outbox UI `0aa7ceefcdc4858d58e45d2b8dd1a6a0e038e765`.
 - Layer D feature implementation is complete except for live external email/WhatsApp provider credentials/template verification, which is an external release configuration dependency.
 - Next product layer: E1 student dashboard completion.
+
+
+### Product checkpoint E1 — student dashboard complete
+
+- Student dashboard now aggregates real enrolled batches, upcoming/live lecture actions, scheduled tests, released assignments, attendance summaries, pending orders and unread notification counts.
+- Dashboard uses existing enrollment-gated/scoped services and `Promise.allSettled` per batch so one failing widget does not blank the whole portal; partial refresh failures are surfaced non-destructively.
+- Course cards link directly to learning space and performance; live lecture actions use protected delivery-action URLs; tests, assignments, orders and notification inbox are directly reachable.
+- Responsive dashboard styling is in `src/styles/dashboard.css`.
+- Initial E1 commit `98ad3963...` exposed a React purity lint on render-time `Date.now()`; fixed in `1aeb15e47773bdb7f12399ce1d1f397c452ae4b7` using stable state initialization.
+- E1 final GitHub Quality passed typecheck, lint and build on `1aeb15e47773bdb7f12399ce1d1f397c452ae4b7`.
+- Next: E2 teacher dashboard completion.

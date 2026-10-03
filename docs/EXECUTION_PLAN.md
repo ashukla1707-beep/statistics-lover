@@ -49,7 +49,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [ ] Email/WhatsApp production credentials/templates + live delivery verification
 
 ## E — Product completion
-- [ ] Student dashboard completion
+- [x] Student dashboard completion
 - [ ] Teacher dashboard
 - [ ] Admin operations dashboard
 - [ ] Search/filter/pagination

@@ -75,11 +75,10 @@ function isTouchDevice() {
 function shouldShowPhoneFullscreen() {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
 
-  // Inside the Android APK, use Google Drive's own fullscreen control. Android
-  // WebChromeClient handles the resulting custom view and landscape rotation.
-  // Keeping the outer custom fullscreen here makes Drive believe it is still an
-  // embedded player and can hide/clip parts of its native control bar.
-  if (isStatisticsLoverAndroidApp()) return false
+  // The Android APK intentionally keeps the Statistics Lover custom fullscreen
+  // control. Android-specific fullscreen CSS lets the Drive iframe occupy the
+  // real fullscreen viewport instead of scaling the old 1024x576 workaround.
+  if (isStatisticsLoverAndroidApp()) return true
 
   return navigator.maxTouchPoints > 0
     && window.matchMedia('(hover: none) and (pointer: coarse)').matches
@@ -354,7 +353,7 @@ export function LecturePlayerPage() {
 
         <div
           ref={stageRef}
-          className="lecture-player-stage"
+          className={`lecture-player-stage${isStatisticsLoverAndroidApp() ? ' lecture-player-stage-android' : ''}`}
           role="region"
           aria-label={`${state.lecture.title} recording`}
         >

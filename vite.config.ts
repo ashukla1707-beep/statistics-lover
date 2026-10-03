@@ -8,9 +8,15 @@ export default defineConfig({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'supabase-vendor': ['@supabase/supabase-js'],
+        manualChunks(id) {
+          if (id.includes('/node_modules/@supabase/')) return 'supabase-vendor'
+          if (
+            id.includes('/node_modules/react/') ||
+            id.includes('/node_modules/react-dom/') ||
+            id.includes('/node_modules/react-router') ||
+            id.includes('/node_modules/scheduler/')
+          ) return 'react-vendor'
+          return undefined
         },
       },
     },

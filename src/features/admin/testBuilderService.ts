@@ -12,6 +12,9 @@ export interface ManagedTestQuestion{
   negativeMarks:number
   prompt:string
   type:ManagedQuestion['type']
+  source:ManagedQuestion['source']
+  sourceLabel:string|null
+  sourceYear:number|null
 }
 export interface ManagedTestSection{
   id:string
@@ -41,7 +44,7 @@ export interface ManagedTest{
 type TestRow={id:string;batch_id:string;scope:AssessmentTestScope;subject_id:string|null;title:string;description:string|null;instructions:string|null;status:AssessmentTestStatus;duration_minutes:number|null;max_attempts:number;shuffle_questions:boolean;shuffle_options:boolean}
 type SectionRow={id:string;test_id:string;subject_id:string;title:string;instructions:string|null;position:number;duration_minutes:number|null}
 type TQRow={id:string;section_id:string;question_id:string;position:number;marks:number;negative_marks:number}
-type QRow={id:string;prompt:string;question_type:ManagedQuestion['type']}
+type QRow={id:string;prompt:string;question_type:ManagedQuestion['type'];source_type:ManagedQuestion['source'];source_label:string|null;source_year:number|null}
 
 export async function listManagedTests(batchId:string):Promise<ManagedTest[]>{
   const client=requireSupabase()
@@ -58,13 +61,13 @@ export async function listManagedTests(batchId:string):Promise<ManagedTest[]>{
   if(tqError)throw tqError
   const placements=(tqData??[]) as TQRow[]
   const questionIds=[...new Set(placements.map((p)=>p.question_id))]
-  const {data:qData,error:qError}=questionIds.length?await client.from('assessment_questions').select('id,prompt,question_type').in('id',questionIds):{data:[],error:null}
+  const {data:qData,error:qError}=questionIds.length?await client.from('assessment_questions').select('id,prompt,question_type,source_type,source_label,source_year').in('id',questionIds):{data:[],error:null}
   if(qError)throw qError
   const qMap=new Map(((qData??[]) as QRow[]).map((q)=>[q.id,q]))
   const placementMap=new Map<string,ManagedTestQuestion[]>()
   for(const p of placements){
     const q=qMap.get(p.question_id)
-    placementMap.set(p.section_id,[...(placementMap.get(p.section_id)??[]),{id:p.id,questionId:p.question_id,position:p.position,marks:p.marks,negativeMarks:p.negative_marks,prompt:q?.prompt??'Question',type:q?.question_type??'single_choice'}])
+    placementMap.set(p.section_id,[...(placementMap.get(p.section_id)??[]),{id:p.id,questionId:p.question_id,position:p.position,marks:p.marks,negativeMarks:p.negative_marks,prompt:q?.prompt??'Question',type:q?.question_type??'single_choice',source:q?.source_type??'original',sourceLabel:q?.source_label??null,sourceYear:q?.source_year??null}])
   }
   const sectionMap=new Map<string,ManagedTestSection[]>()
   for(const s of sections){

@@ -178,3 +178,15 @@ At the time this handoff was written:
 - Teacher scope hardening separates batch read access from whole-batch management, preventing subject-only teachers from publishing/editing batch-wide resources or assignments.
 - Assignment layer passed GitHub typecheck, lint and build. Latest develop Vercel deployment for commit `aa8d806d5e381aa4035c636bb4ab36fe9ab7ff7e` is READY.
 - Supabase security advisor has no new database/RLS security findings; leaked-password protection remains the known Auth-level warning for final hardening.
+
+
+### Assessment checkpoint C1 — question bank
+
+- Supabase migrations `assessment_question_bank` and `assessment_question_bank_save_rpc` applied; repository migrations `0019_assessment_question_bank.sql` and `0020_assessment_question_bank_save_rpc.sql` committed.
+- Question bank supports single-choice, multiple-choice, numeric and short-text questions with difficulty, marks, negative marks, explanations and draft/published/archive lifecycle.
+- Correctness data is kept in staff-only option/key tables; students have no direct table access to `is_correct`, numeric keys or expected text answers.
+- Atomic RPC saves question + options/key in one transaction and validates answer shape before commit.
+- PYQ metadata fields (source type/label/year) are present for the later PYQ assessment integration layer.
+- Workspaces: `/admin/questions` for content-manager/admin/owner and `/teacher/questions` for assignment-scoped teachers.
+- GitHub Quality passed for develop commit `61de69552e888f6f2339bff2a69a1781061edef2`; Vercel develop alias is READY.
+- Next assessment checkpoint: C2 Test & Section Builder.

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { loadMyBatchAttendance, type StudentAttendanceRecord } from '../admin/attendanceService'
 import { loadStudentCourseEnrollments, type StudentCourseEnrollment } from './courseService'
@@ -104,7 +105,7 @@ export function LearningPage() {
   return (
     <section className="learning-page">
       <div className="container learning-shell">
-        <Link className="learning-back-link" to="/dashboard">← Dashboard</Link>
+        <BackLink className="learning-back-link" to="/dashboard">Dashboard</BackLink>
         <header className="learning-hero">
           <span className="eyebrow">My course</span><h1>{enrollment.course.title}</h1><p>{enrollment.batch.title}</p>
           <div className="learning-meta-row">

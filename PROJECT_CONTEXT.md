@@ -212,3 +212,16 @@ At the time this handoff was written:
 - Student discovery page: `/learn/:batchId/tests`; only active schedules assigned to the authenticated enrollment are returned by the protected RPC.
 - Result policies supported in schema: immediate, after close, scheduled and manual.
 - C3 GitHub Quality passed on develop. Next checkpoint: C4 student test-taking with secure resumable attempts.
+
+
+### Assessment checkpoints C4–C5 — test-taking, attempts, scoring & results
+
+- Supabase migrations `assessment_attempt_foundation` and `assessment_scoring_results` applied; repository migrations `0023_assessment_attempt_foundation.sql` and `0024_assessment_scoring_results.sql` committed.
+- Starting a test validates active enrollment, schedule audience/window and max-attempt limits, then creates or resumes a timed attempt.
+- Each attempt snapshots question prompt/type, section/order, marks/negative marks, answer key and options so later Question Bank edits cannot change an in-progress or completed attempt.
+- Student payload RPC deliberately omits correctness flags and answer keys; direct attempt snapshot tables are staff-only under RLS.
+- Student runner route: `/learn/:batchId/test/:scheduleId` with question palette, timer, answer persistence, save/exit, resume and submission.
+- Server-side scoring handles exact single/multiple-choice matching, numeric tolerance, normalized short-text answers, negative marking, unanswered counts and total/max score.
+- Result visibility follows schedule policy: immediate, after close, scheduled or manual. Manual release controls are available in Test Scheduling.
+- Released results include safe per-question review, correct answers and awarded marks only after policy allows release.
+- C4/C5 frontend and database commits pass GitHub typecheck, lint and build. Next checkpoint: C6 performance analytics.

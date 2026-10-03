@@ -17,6 +17,7 @@ import './styles/question-bank.css'
 import './styles/test-builder.css'
 import './styles/test-schedule.css'
 import './styles/assessment-runner.css'
+import './styles/assessment-analytics.css'
 import './styles/drive-player.css'
 
 createRoot(document.getElementById('root')!).render(

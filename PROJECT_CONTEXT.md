@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `fb6ca399601297b19823e0d55e31b2a4018ba9f3`
-- Current focus: **Vercel-backed public Home + cross-device web UI stabilization and deployed-device validation**. Resume Android A3 native-client work after this web UI baseline is verified on real devices.
+- Current handoff base before this documentation commit: `5e9e37af9794b310936c6743965ba87abf3a9282`
+- Current focus: **Android A3 native recording playback/device validation**, with Vercel remaining the sole web deployment target.
 
 ## Deployment
 
@@ -495,8 +495,8 @@ At the latest handoff:
 - Added reusable `BackLink` with a dedicated arrow element and applied it to student learning/tests/performance/assignments/results, teacher dashboard, and teacher-mode admin workspaces so back arrows align consistently with their labels.
 - Service-worker static cache advanced to `statistics-lover-static-v7` so the stabilized shell is not held behind an old cached UI.
 - GitHub Quality passed typecheck, lint and build on `bd14eac3b6ce9c81a973cde5995dc68ca6a8e3d9`. Earlier transient CI failures during the BackLink refactor were only unused-import errors on intermediate commits and were resolved by the final green head.
-- Deployment caveat at this checkpoint: Vercel still exposes `c0f58a9b932c41ad06fe9dc1469befe7305a104f` as the newest READY `develop` preview surfaced by the connector. The remaining Home/responsive/BackLink/footer/cache commits are CI-green in GitHub but still require a fresh Vercel preview before visual acceptance.
-- Next: wait for/resynchronize the latest `develop` preview, smoke-test Home/Store/Login and perform real-device visual checks at phone/tablet/desktop widths; fix any remaining screenshot-specific issues before returning to Android A3 native-client validation.
+- The prior Vercel preview lag is resolved. The stable develop alias now serves the stabilized build; automated smoke checks return HTTP 200 for Home, Store, Login and Dashboard SPA routes, and the deployed CSS contains the 1180px header breakpoint, reusable back-link styles and learning-action responsive rules.
+- Remaining UI acceptance is visual/real-device only: authenticated phone/tablet screenshots should still be checked for any screenshot-specific regressions as they are reported, but the deployed web baseline is no longer blocking Android A3 work.
 
 
 ### Deployment checkpoint — Cloudflare selected as current frontend target
@@ -520,3 +520,21 @@ At the latest handoff:
 - During the Cloudflare experiment, Vercel continued to catch up automatically; the develop branch produced READY preview deployments through commit `b9504a1450a0fb8861b89b691ab1f340dff8cfe3`.
 - Cloudflare credentials/workflows should not be revisited unless the user explicitly asks to switch away from Vercel later.
 - Next deployment task: wait for the latest Vercel preview created from the current documentation/policy commits, verify the stable develop alias, then use that deployment for mobile/tablet/desktop UI acceptance.
+
+
+### Android checkpoint A3.1 — dedicated native recording activity
+
+- Added a dedicated Android `RecordingActivity` for authorized Google Drive recording actions while keeping the rest of the A3 app true-native. The Statistics Lover website is still not used as the Android application shell.
+- Verified the live Supabase `native-api` learning action still calls `get_batch_delivery_actions`; the RPC returns `lecture_id, action_kind, provider, action_url, label`, matching the Android routing contract.
+- `LearningScreen` now preserves and renders **multiple actions per lecture** instead of overwriting one action in a single-value map. This prevents Hybrid/live+recorded lectures from losing one of their actions.
+- Google Meet and non-Drive provider actions still open externally. Only `watch + google_drive` is routed to the dedicated recording activity.
+- Recording playback uses an isolated Android WebView with a desktop Chrome user agent, wide viewport, JavaScript/DOM storage and HTTPS-only app configuration so Google Drive can serve its desktop-style preview inside the recording screen.
+- Added a **Statistics Lover custom fullscreen control**. Normal mode keeps the custom button over the lower-right provider fullscreen area; native fullscreen hides the toolbar/system bars, locks to sensor landscape and moves the Exit Fullscreen control to the upper-right so Drive's bottom playback controls stay visible.
+- If Google Drive itself requests HTML fullscreen, the activity cancels the provider custom-view takeover and enters the same Statistics Lover activity fullscreen mode instead, avoiding the separate Drive fullscreen layout.
+- Android Back exits fullscreen first; outside fullscreen it closes the recording activity and returns to the native learning hierarchy.
+- Latest explicit screenshot/testing decision: **debug builds allow screenshots and screen recording**. `FLAG_SECURE` is now applied only to non-debug/release builds in both the native shell and recording activity. This supersedes older A1/A2/A3 notes that said debug testing was screenshot-blocked.
+- Android test version advanced to `1.0.3-test` / versionCode 4.
+- Final recording commit `5e9e37af9794b310936c6743965ba87abf3a9282` passed GitHub Quality run `37163138687` and Android APK run `37163138675`.
+- GitHub APK artifact id `11288521240`; artifact ZIP digest `sha256:7a3604963577563585993a4b26d1b4a43dac2b4e780f24775e274d770b56a976`.
+- Extracted debug APK SHA-256 from the workflow: `87a9f605b342bed2408d638e77b0f69666b83d85ae0349cbf2654688d292a6a7`.
+- Next Android acceptance: install this APK on the real phone and validate Watch Recording startup, play/pause/seek visibility, custom fullscreen enter/exit, landscape restoration, Android Back, screenshot/screen recording, and Hybrid lecture dual actions. After player/device acceptance, continue native teacher/admin editing workflows.

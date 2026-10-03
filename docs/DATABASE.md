@@ -89,6 +89,7 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 - tests ✅
 - test sections ✅
 - ordered test question placement ✅
+- scheduling / selected-student assignment ✅
 - attempts
 - answers
 - results

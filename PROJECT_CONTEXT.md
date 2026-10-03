@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer E2 — Teacher dashboard completion
+- Current focus: Layer E3 — Admin operations dashboard
 
 ## Deployment
 
@@ -293,3 +293,15 @@ At the time this handoff was written:
 - Initial E1 commit `98ad3963...` exposed a React purity lint on render-time `Date.now()`; fixed in `1aeb15e47773bdb7f12399ce1d1f397c452ae4b7` using stable state initialization.
 - E1 final GitHub Quality passed typecheck, lint and build on `1aeb15e47773bdb7f12399ce1d1f397c452ae4b7`.
 - Next: E2 teacher dashboard completion.
+
+
+### Product checkpoint E2 — teacher dashboard complete
+
+- Teacher workspace now functions as a scoped operations dashboard rather than only a navigation grid.
+- Dashboard aggregates active teacher assignments, assigned batches/subjects, upcoming lectures, published assignments/tests, announcement count and direct links to delivery/resources/attendance/assignments/question bank/tests/scheduling/analytics/announcements.
+- Aggregation begins with `teacher_assignments` under teacher RLS and only follows data returned within those scopes; whole-batch vs subject-only access remains server-authoritative.
+- Partial widget failures are non-destructive and surfaced without exposing broader admin data.
+- Responsive styling is in `src/styles/teacher-dashboard.css`.
+- Initial E2 commit `38b79495...` failed only because of an unused TypeScript import; fixed in `ffa9b3921bcc35b3e4873b58ab11f44b241f32b3`.
+- E2 final GitHub Quality passed typecheck, lint and build on `ffa9b3921bcc35b3e4873b58ab11f44b241f32b3`.
+- Next: E3 admin operations dashboard.

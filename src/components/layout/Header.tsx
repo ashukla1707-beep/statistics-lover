@@ -19,15 +19,14 @@ export function Header() {
     document.addEventListener('keydown',onKeyDown)
     return()=>document.removeEventListener('keydown',onKeyDown)
   },[isMenuOpen])
+
   const canManageAcademics = status === 'authenticated' && hasAnyRole(['content_manager', 'admin', 'owner'])
   const canManageEnrollments = status === 'authenticated' && hasAnyRole(['admin', 'owner'])
-
   const accountTarget = status === 'authenticated'
     ? '/dashboard'
     : status === 'suspended'
       ? '/account-suspended'
       : '/login'
-
   const accountLabel = status === 'authenticated'
     ? 'Dashboard'
     : status === 'suspended'
@@ -64,22 +63,22 @@ export function Header() {
           aria-label="Primary navigation"
         >
           <Link to="/store" onClick={closeMenu}>Courses</Link>
-          {status === 'authenticated' && <Link to="/orders" onClick={closeMenu}>My Orders</Link>}
-          {status === 'authenticated' && <Link to="/notifications" onClick={closeMenu}>Notifications</Link>}
-          {navigationItems.map((item) => (
-            <a key={item.href} href={`/${item.href}`} onClick={closeMenu}>
-              {item.label}
-            </a>
-          ))}
-          {canManageAcademics && (
-            <Link to="/admin/overview" onClick={closeMenu}>Admin</Link>
+          {status === 'authenticated' ? (
+            <>
+              <Link to="/orders" onClick={closeMenu}>My Orders</Link>
+              <Link to="/notifications" onClick={closeMenu}>Notifications</Link>
+              <Link to="/" onClick={closeMenu}>Home</Link>
+            </>
+          ) : (
+            navigationItems.map((item) => (
+              <a key={item.href} href={`/${item.href}`} onClick={closeMenu}>
+                {item.label}
+              </a>
+            ))
           )}
-          {canManageAcademics && (
-            <Link to="/admin/content" onClick={closeMenu}>Content</Link>
-          )}
-          {canManageEnrollments && (
-            <Link to="/admin/enrollments" onClick={closeMenu}>Enrollments</Link>
-          )}
+          {canManageAcademics && <Link to="/admin/overview" onClick={closeMenu}>Admin</Link>}
+          {canManageAcademics && <Link to="/admin/content" onClick={closeMenu}>Content</Link>}
+          {canManageEnrollments && <Link to="/admin/enrollments" onClick={closeMenu}>Enrollments</Link>}
           <Link className="button button-small" to={accountTarget} onClick={closeMenu}>
             {accountLabel}
           </Link>

@@ -187,7 +187,7 @@ export function LecturePlayerPage() {
 
   const toggleFullscreen = async () => {
     const stage = stageRef.current as FullscreenStage | null
-    if (!canUseFullscreen(stage)) return
+    if (!stage || !canUseFullscreen(stage)) return
 
     const fullscreenDocument = document as FullscreenDocument
 

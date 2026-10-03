@@ -10,6 +10,7 @@ import { ResourceManagementPage } from './features/admin/ResourceManagementPage'
 import { QuestionBankPage } from './features/admin/QuestionBankPage'
 import { TestBuilderPage } from './features/admin/TestBuilderPage'
 import { TestSchedulePage } from './features/admin/TestSchedulePage'
+import { AssessmentAnalyticsPage } from './features/admin/AssessmentAnalyticsPage'
 import { StaffManagementPage } from './features/admin/StaffManagementPage'
 import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
@@ -22,6 +23,7 @@ import {
 import { LearningPage } from './features/courses/LearningPage'
 import { StudentAssignmentsPage } from './features/courses/StudentAssignmentsPage'
 import { StudentTestsPage } from './features/courses/StudentTestsPage'
+import { StudentPerformancePage } from './features/courses/StudentPerformancePage'
 import { StudentTestAttemptPage } from './features/courses/StudentTestAttemptPage'
 import { LecturePlayerPage } from './features/courses/LecturePlayerPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
@@ -109,6 +111,18 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <StudentTestsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="learn/:batchId/performance"
+          element={
+            <RequireAuth
+              loadingFallback={<div className="auth-state">Loading performance…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <StudentPerformancePage />
             </RequireAuth>
           }
         />
@@ -223,6 +237,20 @@ export default function App() {
           }
         />
         <Route
+          path="admin/test-analytics"
+          element={
+            <RequireAuth
+              roles={['content_manager', 'admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading assessment analytics…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <AssessmentAnalyticsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="admin/assignments"
           element={
             <RequireAuth
@@ -289,6 +317,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <DeliveryManagementPage teacherMode />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="teacher/test-analytics"
+          element={
+            <RequireAuth
+              roles={['teacher']}
+              loadingFallback={<div className="auth-state">Loading assessment analytics…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <AssessmentAnalyticsPage teacherMode />
             </RequireAuth>
           }
         />

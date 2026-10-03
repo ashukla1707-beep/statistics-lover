@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 
-type AdminSection = 'academics' | 'content' | 'delivery' | 'resources' | 'questions' | 'tests' | 'schedules' | 'analytics' | 'assignments' | 'attendance' | 'staff' | 'enrollments'
+type AdminSection = 'academics' | 'content' | 'delivery' | 'resources' | 'questions' | 'tests' | 'schedules' | 'analytics' | 'assignments' | 'attendance' | 'commerce' | 'staff' | 'enrollments'
 
 export function AdminSubnav({ active }: { active: AdminSection }) {
   const { hasAnyRole } = useAuth()
@@ -40,6 +40,11 @@ export function AdminSubnav({ active }: { active: AdminSection }) {
       {canManageStaff && (
         <Link className={active === 'attendance' ? 'is-active' : undefined} to="/admin/attendance">
           Attendance
+        </Link>
+      )}
+      {canManageStaff && (
+        <Link className={active === 'commerce' ? 'is-active' : undefined} to="/admin/commerce">
+          Commerce
         </Link>
       )}
       {canManageStaff && (

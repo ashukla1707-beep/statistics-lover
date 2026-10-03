@@ -45,8 +45,19 @@ type NavigatorWithUserAgentData = Navigator & {
   }
 }
 
+function isStatisticsLoverAndroidApp() {
+  if (typeof navigator === 'undefined') return false
+  return /StatisticsLoverAndroid\//i.test(navigator.userAgent)
+}
+
 function isMobileBrowserMode() {
   if (typeof navigator === 'undefined') return false
+
+  // The Android APK intentionally renders the responsive web UI inside a WebView,
+  // but its recording route provides a desktop-style UA to Google Drive.
+  // Android WebView may still report userAgentData.mobile=true, so app mode must
+  // take precedence over browser mobile detection.
+  if (isStatisticsLoverAndroidApp()) return false
 
   const mobileFlag = (navigator as NavigatorWithUserAgentData).userAgentData?.mobile
   if (typeof mobileFlag === 'boolean') return mobileFlag

@@ -1,5 +1,4 @@
 import { useEffect,useState } from 'react'
-import { Link } from 'react-router-dom'
 import { BackLink } from '../../components/ui/BackLink'
 import { listManagedBatches,listManagedCourses,type ManagedBatch,type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'

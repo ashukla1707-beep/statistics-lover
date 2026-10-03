@@ -28,6 +28,7 @@ import './styles/assessment-analytics.css'
 import './styles/commerce.css'
 import './styles/communications.css'
 import './styles/drive-player.css'
+import './styles/responsive.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

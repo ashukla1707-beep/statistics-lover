@@ -3,6 +3,7 @@ import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
 import { AcademicManagementPage } from './features/admin/AcademicManagementPage'
 import { AttendanceManagementPage } from './features/admin/AttendanceManagementPage'
+import { AssignmentManagementPage } from './features/admin/AssignmentManagementPage'
 import { ContentManagementPage } from './features/admin/ContentManagementPage'
 import { DeliveryManagementPage } from './features/admin/DeliveryManagementPage'
 import { ResourceManagementPage } from './features/admin/ResourceManagementPage'
@@ -16,6 +17,7 @@ import {
   SuspendedPage,
 } from './features/auth'
 import { LearningPage } from './features/courses/LearningPage'
+import { StudentAssignmentsPage } from './features/courses/StudentAssignmentsPage'
 import { LecturePlayerPage } from './features/courses/LecturePlayerPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { HomePage } from './features/home/HomePage'
@@ -81,6 +83,18 @@ export default function App() {
           }
         />
         <Route
+          path="learn/:batchId/assignments"
+          element={
+            <RequireAuth
+              loadingFallback={<div className="auth-state">Loading assignments…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <StudentAssignmentsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="admin/academics"
           element={
             <RequireAuth
@@ -137,6 +151,20 @@ export default function App() {
           }
         />
         <Route
+          path="admin/assignments"
+          element={
+            <RequireAuth
+              roles={['content_manager', 'admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading assignment workspace…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <AssignmentManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="admin/attendance"
           element={
             <RequireAuth
@@ -189,6 +217,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <DeliveryManagementPage teacherMode />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="teacher/assignments"
+          element={
+            <RequireAuth
+              roles={['teacher']}
+              loadingFallback={<div className="auth-state">Loading assignment workspace…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <AssignmentManagementPage teacherMode />
             </RequireAuth>
           }
         />

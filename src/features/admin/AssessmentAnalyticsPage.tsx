@@ -1,5 +1,6 @@
 import { useEffect,useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { listManagedBatches,listManagedCourses,type ManagedBatch,type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
 import { loadAssessmentTestAnalytics,type TestAnalytics } from './assessmentAnalyticsService'
@@ -34,7 +35,7 @@ export function AssessmentAnalyticsPage({teacherMode=false}:{teacherMode?:boolea
 
   const selectedTest=tests.find((test)=>test.id===testId)??null
   return <section className="admin-page assessment-analytics-page"><div className="container admin-shell">
-    {teacherMode?<div className="teacher-mode-nav"><Link to="/teacher">← Teacher workspace</Link><span>Assignment-scoped analytics</span></div>:<AdminSubnav active="analytics"/>}
+    {teacherMode?<div className="teacher-mode-nav"><BackLink to="/teacher">Teacher workspace</BackLink><span>Assignment-scoped analytics</span></div>:<AdminSubnav active="analytics"/>}
     <header className="admin-page-heading"><div><span className="eyebrow">Assessment intelligence</span><h1>Performance Analytics</h1><p>Review test performance from finalized attempt snapshots, including question accuracy and recent student attempts.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}
     <div className="assessment-analytics-context">

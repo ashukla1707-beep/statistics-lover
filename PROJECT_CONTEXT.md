@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer F5 — Release develop to main
+- Current focus: Android APK test & native behavior validation
 
 ## Deployment
 
@@ -425,3 +425,18 @@ At the time this handoff was written:
 - `/manifest.webmanifest` and `/sw.js` return HTTP 200 with the expected cache policies.
 - Browser security headers, including CSP, no-sniff, referrer policy and frame denial, are present on the deployed response.
 - Next: F5 compare/release develop to main, subject to the remaining external release-settings dependencies already documented.
+
+
+### Android checkpoint A1 — installable test APK built
+
+- Added standalone native Android project under `android-app/` with application ID `com.statisticslover.app.debug` for debug builds.
+- Debug APK loads the current verified develop site `https://statistics-lover-git-develop-statistics-lover.vercel.app`; release build configuration targets `https://statistics-lover.vercel.app`.
+- Recording route `/learn/:batchId/lecture/:lectureId` switches only that page to a desktop Chrome user agent, then restores the normal mobile WebView user agent after leaving the recording route.
+- Native fullscreen uses immersive landscape orientation and restores portrait on exit.
+- Android `FLAG_SECURE` is enabled to block normal screenshots/screen recording of the app window as a deterrent; this is not DRM and cannot prevent external-camera/rooted-device capture.
+- File chooser support is enabled for assignment uploads. External links such as Google Meet open in the appropriate external app/browser.
+- Cleartext HTTP is disabled; SSL errors are cancelled instead of bypassed.
+- GitHub workflow `.github/workflows/android-apk.yml` builds and uploads a signed debug APK.
+- Android commit `a1ed680e76db151f1cbaf4686f6f76b2b1331024` passed both Android APK workflow run `37127723234` and repository Quality workflow run `37127723208`.
+- Generated debug APK SHA-256: `665d5716bd05e113faa6e000722c8fdda372a0c20db8174643891bfdd60afd9c`.
+- Next Android step: install on a real phone and validate login/session persistence, recording desktop-UA behavior, fullscreen landscape, assignment file upload, external Meet links, back navigation, and screenshot blocking before production signing.

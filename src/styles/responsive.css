@@ -155,7 +155,9 @@
     .delivery-lecture-summary,
     .attendance-summary,
     .selected-student-header,
-    .staff-role-card
+    .staff-role-card,
+    .admin-batch-card,
+    .teacher-dashboard-heading
   ){
     align-items:flex-start;
     flex-direction:column;
@@ -164,6 +166,15 @@
   .app-shell :where(.teacher-mode-nav,.lecture-admin-actions,.content-column-actions){
     width:100%;
     flex-wrap:wrap;
+  }
+
+  .app-shell .admin-batch-card>.button{
+    width:100%;
+  }
+
+  .app-shell .teacher-dashboard-list article{
+    align-items:flex-start;
+    flex-direction:column;
   }
 
   .app-shell :where(
@@ -230,6 +241,11 @@
   ) > :where(.button,a,button){
     width:100%;
     min-width:0;
+  }
+
+  .app-shell .student-assignment-card-head{
+    align-items:flex-start;
+    flex-direction:column;
   }
 
   .app-shell .student-assignment-summary{

@@ -1,18 +1,17 @@
 package com.statisticslover.app;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
-import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
@@ -25,14 +24,19 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.net.http.SslError;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
     private static final Pattern RECORDING_ROUTE =
             Pattern.compile(".*/learn/[^/]+/lecture/[^/?#]+(?:[/?#].*)?$");
 
@@ -41,17 +45,17 @@ public class MainActivity extends Activity {
             "AppleWebKit/537.36 (KHTML, like Gecko) " +
             "Chrome/126.0.0.0 Safari/537.36";
 
-    private WebView webView;
+    protected WebView webView;
+    private FrameLayout root;
     private String mobileUserAgent;
-    private boolean desktopUserAgentActive = false;
-    private boolean userAgentReloadInProgress = false;
-
+    private boolean desktopUserAgentActive;
+    private boolean userAgentReloadInProgress;
     private View customView;
     private WebChromeClient.CustomViewCallback customViewCallback;
-
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSER_REQUEST = 4107;
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,11 +63,26 @@ public class MainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(248, 246, 250));
+
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(8, 17, 31));
-        setContentView(webView);
+        webView.setBackgroundColor(Color.rgb(248, 246, 250));
+        root.addView(webView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        setContentView(root);
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            if (customView != null) return insets;
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return insets;
+        });
 
         configureWebView();
+        configureBackNavigation();
 
         if (savedInstanceState == null) {
             webView.loadUrl(BuildConfig.APP_URL);
@@ -72,6 +91,7 @@ public class MainActivity extends Activity {
         }
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void configureWebView() {
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -87,31 +107,46 @@ public class MainActivity extends Activity {
         s.setUseWideViewPort(true);
         s.setLoadWithOverviewMode(false);
         s.setSupportMultipleWindows(true);
+        s.setTextZoom(100);
+        webView.setInitialScale(0);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             s.setSafeBrowsingEnabled(true);
+            webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         }
 
         mobileUserAgent = s.getUserAgentString();
 
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.setAcceptCookie(true);
-        cookieManager.setAcceptThirdPartyCookies(webView, true);
+        CookieManager cookies = CookieManager.getInstance();
+        cookies.setAcceptCookie(true);
+        cookies.setAcceptThirdPartyCookies(webView, true);
 
         webView.setWebViewClient(new AppWebViewClient());
         webView.setWebChromeClient(new AppWebChromeClient());
-
-        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) ->
-                openExternal(Uri.parse(url))
-        );
+        webView.setDownloadListener((url, ua, disposition, mime, length) -> openExternal(Uri.parse(url)));
     }
 
-    private boolean isInternalHost(String host) {
+    private void configureBackNavigation() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (customView != null) {
+                    ((AppWebChromeClient) webView.getWebChromeClient()).onHideCustomView();
+                } else if (webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    finish();
+                }
+            }
+        });
+    }
+
+    protected boolean isInternalHost(String host) {
         if (host == null) return false;
         String h = host.toLowerCase(Locale.US);
         return h.equals("statistics-lover.vercel.app")
                 || h.equals("statistics-lover-git-develop-statistics-lover.vercel.app")
-                || h.endsWith(".statistics-lover.vercel.app");
+                || h.endsWith(".vercel.app") && h.startsWith("statistics-lover-");
     }
 
     private boolean isRecordingUrl(String url) {
@@ -146,7 +181,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void openExternal(Uri uri) {
+    protected void openExternal(Uri uri) {
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, uri));
         } catch (ActivityNotFoundException error) {
@@ -154,9 +189,22 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void injectNativeAppMode(WebView view) {
+        view.evaluateJavascript(
+                "(function(){try{" +
+                "document.documentElement.classList.add('statistics-lover-android-app');" +
+                "document.body&&document.body.classList.add('statistics-lover-android-app');" +
+                "var m=document.querySelector('meta[name=theme-color]');" +
+                "if(m)m.setAttribute('content','#08111F');" +
+                "return true;}catch(e){return false;}})();",
+                null
+        );
+    }
+
     private void enterImmersiveLandscape() {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        root.setPadding(0,0,0,0);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             WindowInsetsController controller = getWindow().getInsetsController();
@@ -168,15 +216,16 @@ public class MainActivity extends Activity {
             }
         } else {
             getWindow().getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    View.SYSTEM_UI_FLAG_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             );
         }
     }
 
     private void exitImmersivePortrait() {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        ViewCompat.requestApplyInsets(root);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             WindowInsetsController controller = getWindow().getInsetsController();
@@ -198,7 +247,7 @@ public class MainActivity extends Activity {
             Uri uri = request.getUrl();
             String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.US);
 
-            if (scheme.equals("http") || scheme.equals("https")) {
+            if ("http".equals(scheme) || "https".equals(scheme)) {
                 if (isInternalHost(uri.getHost())) {
                     syncRecordingMode(uri.toString(), false);
                     return false;
@@ -207,8 +256,7 @@ public class MainActivity extends Activity {
                 return true;
             }
 
-            if (scheme.equals("about")) return false;
-
+            if ("about".equals(scheme)) return false;
             openExternal(uri);
             return true;
         }
@@ -229,6 +277,8 @@ public class MainActivity extends Activity {
         public void onPageFinished(WebView view, String url) {
             userAgentReloadInProgress = false;
             syncRecordingMode(url, false);
+            injectNativeAppMode(view);
+            CookieManager.getInstance().flush();
             super.onPageFinished(view, url);
         }
 
@@ -254,18 +304,12 @@ public class MainActivity extends Activity {
                 callback.onCustomViewHidden();
                 return;
             }
-
             customView = view;
             customViewCallback = callback;
-
-            FrameLayout root = findViewById(android.R.id.content);
-            root.addView(
-                    customView,
-                    new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-            );
+            root.addView(customView, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            ));
             webView.setVisibility(View.GONE);
             enterImmersiveLandscape();
         }
@@ -273,14 +317,10 @@ public class MainActivity extends Activity {
         @Override
         public void onHideCustomView() {
             if (customView == null) return;
-
-            FrameLayout root = findViewById(android.R.id.content);
             root.removeView(customView);
             customView = null;
-
             webView.setVisibility(View.VISIBLE);
             exitImmersivePortrait();
-
             if (customViewCallback != null) {
                 customViewCallback.onCustomViewHidden();
                 customViewCallback = null;
@@ -289,23 +329,19 @@ public class MainActivity extends Activity {
 
         @Override
         public boolean onShowFileChooser(
-                WebView webView,
-                ValueCallback<Uri[]> filePathCallback,
-                FileChooserParams fileChooserParams
+                WebView view,
+                ValueCallback<Uri[]> callback,
+                FileChooserParams params
         ) {
-            if (MainActivity.this.filePathCallback != null) {
-                MainActivity.this.filePathCallback.onReceiveValue(null);
-            }
-            MainActivity.this.filePathCallback = filePathCallback;
-
-            Intent intent;
+            if (filePathCallback != null) filePathCallback.onReceiveValue(null);
+            filePathCallback = callback;
             try {
-                intent = fileChooserParams.createIntent();
+                Intent intent = params.createIntent();
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, FILE_CHOOSER_REQUEST);
                 return true;
             } catch (ActivityNotFoundException error) {
-                MainActivity.this.filePathCallback = null;
+                filePathCallback = null;
                 Toast.makeText(MainActivity.this, "No file picker is available.", Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -316,27 +352,15 @@ public class MainActivity extends Activity {
             WebView popup = new WebView(MainActivity.this);
             popup.setWebViewClient(new WebViewClient() {
                 @Override
-                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                public boolean shouldOverrideUrlLoading(WebView child, WebResourceRequest request) {
                     Uri uri = request.getUrl();
                     if (isInternalHost(uri.getHost())) {
                         webView.loadUrl(uri.toString());
                     } else {
                         openExternal(uri);
                     }
-                    view.destroy();
+                    child.destroy();
                     return true;
-                }
-
-                @Override
-                public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
-                    Uri uri = Uri.parse(url);
-                    if (isInternalHost(uri.getHost())) {
-                        webView.loadUrl(url);
-                    } else {
-                        openExternal(uri);
-                    }
-                    view.stopLoading();
-                    view.destroy();
                 }
             });
             WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
@@ -347,6 +371,7 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == FILE_CHOOSER_REQUEST && filePathCallback != null) {
             Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
@@ -358,17 +383,6 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onBackPressed() {
-        if (customView != null) {
-            ((AppWebChromeClient) webView.getWebChromeClient()).onHideCustomView();
-        } else if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         webView.saveState(outState);
         super.onSaveInstanceState(outState);
@@ -377,6 +391,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         webView.onPause();
+        CookieManager.getInstance().flush();
         super.onPause();
     }
 

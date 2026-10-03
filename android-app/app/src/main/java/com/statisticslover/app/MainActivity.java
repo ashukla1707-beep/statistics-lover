@@ -193,9 +193,31 @@ public class MainActivity extends AppCompatActivity {
         view.evaluateJavascript(
                 "(function(){try{" +
                 "document.documentElement.classList.add('statistics-lover-android-app');" +
-                "document.body&&document.body.classList.add('statistics-lover-android-app');" +
+                "if(document.body)document.body.classList.add('statistics-lover-android-app');" +
                 "var m=document.querySelector('meta[name=theme-color]');" +
                 "if(m)m.setAttribute('content','#08111F');" +
+                "var style=document.getElementById('statisticsLoverAndroidStyle');" +
+                "if(!style){style=document.createElement('style');style.id='statisticsLoverAndroidStyle';" +
+                "style.textContent='" +
+                "html.statistics-lover-android-app .site-footer{display:none!important}" +
+                "html.statistics-lover-android-app .skip-link{display:none!important}" +
+                "html.statistics-lover-android-app .primary-nav a[href^=\\\"/#\\\"]{display:none!important}" +
+                "html.statistics-lover-android-app .header-inner{min-height:60px!important}" +
+                "html.statistics-lover-android-app .brand-logo{width:38px!important;height:38px!important}" +
+                "html.statistics-lover-android-app .brand-copy small{display:none!important}" +
+                "html.statistics-lover-android-app .brand-copy strong{font-size:1rem!important}" +
+                "html.statistics-lover-android-app .site-header{background:#fffdfd!important}" +
+                "html.statistics-lover-android-app .app-shell{min-height:100dvh!important}" +
+                "html.statistics-lover-android-app main{min-height:calc(100dvh - 60px)!important}" +
+                "';document.head.appendChild(style);}" +
+                "if(!window.__statisticsLoverAndroidBrandBound){" +
+                "window.__statisticsLoverAndroidBrandBound=true;" +
+                "document.addEventListener('click',function(e){" +
+                "var t=e.target&&e.target.closest?e.target.closest('.brand'):null;" +
+                "if(!t)return;e.preventDefault();e.stopImmediatePropagation();" +
+                "window.location.assign('/dashboard');" +
+                "},true);" +
+                "}" +
                 "return true;}catch(e){return false;}})();",
                 null
         );

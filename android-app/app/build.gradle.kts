@@ -20,7 +20,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "APP_URL", "\"https://statistics-lover-git-develop-statistics-lover.vercel.app\"")
+            buildConfigField("String", "APP_URL", "\"https://statistics-lover-git-develop-statistics-lover.vercel.app/dashboard\"")
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
@@ -31,7 +31,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app\"")
+            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/dashboard\"")
         }
     }
 

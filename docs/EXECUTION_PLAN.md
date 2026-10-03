@@ -37,7 +37,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Student test-taking
 - [x] Attempts/submission/scoring/results
 - [x] Performance analytics
-- [ ] PYQ assessment integration
+- [x] PYQ assessment integration
 
 ## D — Commerce and communication
 - [ ] Orders/payments/provider adapter

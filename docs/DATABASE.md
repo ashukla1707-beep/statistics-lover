@@ -97,6 +97,7 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 - result release policies / review ✅
 - immutable attempt-based test analytics ✅
 - student subject performance analytics ✅
+- PYQ-integrated test building/filtering ✅
 
 ### Operations
 

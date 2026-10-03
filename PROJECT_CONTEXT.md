@@ -10,7 +10,7 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `bd14eac3b6ce9c81a973cde5995dc68ca6a8e3d9`
+- Current handoff base before this documentation commit: `d52468f77fe5db0da485ab8a313d42889153d353`
 - Current focus: **public Home + cross-device web UI stabilization and deployed-device validation**. Resume Android A3 native-client work after this web UI baseline is verified on real devices.
 
 ## Deployment
@@ -21,6 +21,7 @@
 - Cloudflare's earlier Git-connected Workers Build path was unreliable because builds repeatedly failed during **Initializing** before checkout.
 - To bypass that Cloudflare build-system failure, repository workflow `.github/workflows/cloudflare-deploy.yml` now builds the Vite app in GitHub Actions and deploys `dist/` directly with Wrangler using `wrangler.jsonc`.
 - The Cloudflare workflow passed install/typecheck/lint/build but the first deploy attempt on `40441488ec4a33dadd7b720408a0315e0b5a78e2` stopped before Wrangler because the GitHub repository currently has no `CLOUDFLARE_API_TOKEN` secret (and no `CLOUDFLARE_ACCOUNT_ID` secret).
+- Documentation-only changes are ignored by the Cloudflare deploy trigger to avoid unnecessary failed deploy attempts while credentials are being configured.
 - Required unblock: add a Cloudflare API token with permission to deploy the `statistics-lover` Worker and, preferably, the Cloudflare account ID as GitHub repository secrets; then rerun **Cloudflare Deploy**. Do not place the API token in source code or `.env.production`.
 - Once the direct Wrangler deploy succeeds, Cloudflare becomes the active device-testing URL until a later explicit decision switches back to Vercel.
 

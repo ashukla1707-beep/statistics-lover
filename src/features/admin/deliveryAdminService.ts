@@ -61,6 +61,8 @@ export async function saveManagedDeliverySource(input: {
   provider: DeliveryProvider
   providerReference: string
   label?: string
+  availableFrom?: string | null
+  availableUntil?: string | null
 }): Promise<ManagedDeliverySource> {
   const client = requireSupabase()
   const rawReference = input.providerReference.trim()
@@ -78,6 +80,8 @@ export async function saveManagedDeliverySource(input: {
       provider: input.provider,
       provider_reference: reference,
       label,
+      available_from: input.availableFrom ?? null,
+      available_until: input.availableUntil ?? null,
     }, { onConflict: 'lecture_id,action_kind' })
     .select(sourceColumns)
     .single()

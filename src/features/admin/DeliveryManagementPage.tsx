@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
@@ -66,7 +67,7 @@ function defaultLiveWindow(lecture: ManagedLecture | null): Pick<SourceForm, 'av
   return { availableFrom: toLocalDateTime(start.toISOString()), availableUntil: toLocalDateTime(end.toISOString()) }
 }
 
-export function DeliveryManagementPage() {
+export function DeliveryManagementPage({ teacherMode = false }: { teacherMode?: boolean }) {
   const { identity } = useAuth()
   const canDelete = identity?.roles.some((role) => role === 'admin' || role === 'owner') ?? false
 
@@ -247,7 +248,14 @@ export function DeliveryManagementPage() {
   return (
     <section className="admin-page delivery-admin-page">
       <div className="container admin-shell">
-        <AdminSubnav active="delivery" />
+        {teacherMode ? (
+          <div className="teacher-mode-nav">
+            <Link to="/teacher">← Teacher workspace</Link>
+            <span>Assignment-scoped access</span>
+          </div>
+        ) : (
+          <AdminSubnav active="delivery" />
+        )}
 
         <header className="admin-page-heading">
           <div>

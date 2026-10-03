@@ -14,7 +14,6 @@ import {
   type AssignmentStatus,
   type AssignmentSubmission,
   type ManagedAssignment,
-  type SubmissionStatus,
 } from './assignmentService'
 import type { LearningResourceScope } from './resourceAdminService'
 
@@ -89,7 +88,7 @@ export function AssignmentManagementPage({teacherMode=false}:{teacherMode?:boole
     const draft=grades[s.id];if(!draft)return;setSaving(true);setError(null)
     try{
       const score=draft.score===''?null:Number(draft.score)
-      if(selected?.maxScore!==null&&score!==null&&score>selected.maxScore) throw new Error(`Score cannot exceed ${selected.maxScore}.`)
+      if(selected?.maxScore!=null&&score!==null&&score>selected.maxScore) throw new Error(`Score cannot exceed ${selected.maxScore}.`)
       await gradeAssignmentSubmission({submissionId:s.id,status:draft.status,score,feedback:draft.feedback})
       if(selected) await openSubmissions(selected);setNotice('Submission updated.')
     }catch(e){setError(errorMessage(e))}finally{setSaving(false)}

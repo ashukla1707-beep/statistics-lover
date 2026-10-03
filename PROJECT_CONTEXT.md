@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer F1 — Security audit
+- Current focus: Layer F1 — Security & privilege audit
 
 ## Deployment
 
@@ -361,3 +361,16 @@ At the time this handoff was written:
 - Initial PWA commit `689b2c4e403918d7831b3a5499c443ec8a218bcb` failed because the chunk configuration used an incompatible form for Vite 8; fixed in `62fc55e6dcfd32a2914374be5a0e12e2eb8923d1`.
 - E7 final GitHub Quality passed typecheck, lint and build on `62fc55e6dcfd32a2914374be5a0e12e2eb8923d1`.
 - Product layer E is complete. Next: F1 security audit.
+
+
+### Product checkpoint E7 — PWA & performance complete
+
+- Added dependency-free PWA metadata and a production service worker with same-origin static-asset caching plus navigation offline fallback. Authenticated/API/provider traffic is not cached; cross-origin Google Drive/Supabase traffic is bypassed.
+- Fixed the broken favicon reference from a non-existent SVG to the existing Statistics Lover JPG and added manifest/apple-mobile metadata.
+- Added route-level React lazy loading for heavy student/admin/teacher screens and Vite vendor chunking for React and Supabase.
+- Vercel cache headers now mark hashed `/assets/*` immutable while forcing `sw.js` revalidation.
+- Build output after code splitting: core app chunk ~44.43 KB / 9.25 KB gzip; heavy feature pages are separate ~2.7–17.9 KB chunks; React vendor ~73.26 KB gzip and Supabase vendor ~55.01 KB gzip for long-term caching.
+- Initial E7 commit `689b2c4...` hit Vite 8 manualChunks typing; corrected in `62fc55e6dcfd32a2914374be5a0e12e2eb8923d1`.
+- E7 final GitHub Quality passed typecheck, lint and build on `62fc55e6dcfd32a2914374be5a0e12e2eb8923d1`.
+- Vercel preview deployment for the latest commits is currently blocked by the project’s Vercel `build-rate-limit` status, not by application build errors. A clean preview deployment and PWA file smoke check remain mandatory in F release verification once the rate limit clears.
+- Product-completion layer E is now implemented. Next: F1 RLS/privilege/browser-secret/provider-link audit.

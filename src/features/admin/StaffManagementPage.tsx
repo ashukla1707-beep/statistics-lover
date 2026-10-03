@@ -29,7 +29,13 @@ export function StaffManagementPage(){
     if(!selected)return
     if(role==='teacher'&&selected.roles.includes('teacher')&&assignments.length){setError('Remove teacher assignments before removing the teacher role.');return}
     setBusy(true);setError(null);setNotice(null)
-    try{selected.roles.includes(role)?await revokeStaffRole(selected.id,role):await grantStaffRole(selected.id,role);const user=await refreshUsers(selected.id);await loadAssignments(user);setNotice(`${role.replace('_',' ')} role updated.`)}catch(e){setError(message(e))}finally{setBusy(false)}
+    try{
+      if(selected.roles.includes(role)) await revokeStaffRole(selected.id,role)
+      else await grantStaffRole(selected.id,role)
+      const user=await refreshUsers(selected.id)
+      await loadAssignments(user)
+      setNotice(`${role.replace('_',' ')} role updated.`)
+    }catch(e){setError(message(e))}finally{setBusy(false)}
   }
 
   function newAssignment(){if(!selected||!batches[0])return;setForm({id:null,batchId:batches[0].id,subjectId:'',startsAt:'',endsAt:'',isActive:true});void chooseBatch(batches[0].id,batches)}

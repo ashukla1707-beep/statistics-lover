@@ -59,7 +59,7 @@ This is the execution ledger for finishing the website layer by layer without re
 
 ## F — Security, QA and release
 - [x] RLS/privilege/browser-secret/provider-link audit
-- [ ] Data-integrity audit
+- [x] Data-integrity audit
 - [ ] Cross-role acceptance scenarios
 - [ ] Production migration/build verification
 - [ ] Release `develop` -> `main`

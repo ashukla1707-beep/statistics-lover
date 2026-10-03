@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer F2 — Data-integrity audit
+- Current focus: Layer F3 — Cross-role acceptance scenarios
 
 ## Deployment
 
@@ -390,3 +390,13 @@ At the time this handoff was written:
 - Security hardening GitHub Quality passed on `d4e8b59d5d6f42cf06be20499c6fd59d52516c40`.
 - External release setting still required: enable Supabase Auth leaked-password protection from the Supabase Auth dashboard/API when accessible.
 - Next: F2 data-integrity audit.
+
+
+### Release checkpoint F2 — data-integrity audit complete
+
+- Ran a consolidated live anomaly scan across enrollment uniqueness/windows, teacher scope/windows, learning-resource/assignment scope, assessment scope/sections/questions/schedules/audience, attendance batch alignment, announcement scope/windows, offer/coupon/order math, paid timestamps and receipt snapshots.
+- All 20 anomaly classes returned zero rows/issues.
+- Verified cross-table invariants are enforced by database validation triggers for teacher assignments, learning resources, assignments, test scope/sections/questions/audience, attendance and announcements.
+- Verified core uniqueness/check/foreign-key constraints for enrollment, assessment, commerce and teaching entities.
+- Added migration `receipt_integrity_constraints` / repository migration `0032_receipt_integrity_constraints.sql` so receipt snapshots independently enforce currency format, nonnegative amounts, discount caps and arithmetic equality instead of relying only on trusted server creation.
+- Next: F3 cross-role acceptance scenarios.

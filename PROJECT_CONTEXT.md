@@ -425,3 +425,8 @@ At the time this handoff was written:
 - `/manifest.webmanifest` and `/sw.js` return HTTP 200 with the expected cache policies.
 - Browser security headers, including CSP, no-sniff, referrer policy and frame denial, are present on the deployed response.
 - Next: F5 compare/release develop to main, subject to the remaining external release-settings dependencies already documented.
+
+
+### Production redeploy checkpoint — Android WebView public host
+- Production redeploy requested so the public alias `statistics-lover.vercel.app` serves the completed web release for the Android WebView shell.
+- This commit intentionally contains no application behavior change; it refreshes the Vercel production deployment from the verified `main` branch.

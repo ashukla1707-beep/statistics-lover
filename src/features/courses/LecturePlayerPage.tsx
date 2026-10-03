@@ -263,6 +263,11 @@ export function LecturePlayerPage() {
 
           <div className="lecture-player-overlay">
             <div className="lecture-player-corner-controls">
+              <span
+                className="lecture-player-drive-actions-blocker"
+                aria-hidden="true"
+              />
+
               {canFullscreen && (
                 <button
                   type="button"

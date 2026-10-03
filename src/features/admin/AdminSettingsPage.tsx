@@ -21,7 +21,7 @@ export function AdminSettingsPage(){
   const [values,setValues]=useState<Record<string,string>>({})
   const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState<string|null>(null),[notice,setNotice]=useState<string|null>(null)
 
-  useEffect(()=>{let active=true;void listAppSettings().then((rows)=>{if(!active)return;setSettings(rows);setValues(Object.fromEntries(rows.map((setting)=>[setting.key,settingText(setting)]))}).catch((cause)=>{if(active)setError(errorMessage(cause))}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[])
+  useEffect(()=>{let active=true;void listAppSettings().then((rows)=>{if(!active)return;setSettings(rows);setValues(Object.fromEntries(rows.map((setting)=>[setting.key,settingText(setting)])))}).catch((cause)=>{if(active)setError(errorMessage(cause))}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[])
 
   const settingMap=useMemo(()=>new Map(settings.map((setting)=>[setting.key,setting])),[settings])
   async function save(event:FormEvent){

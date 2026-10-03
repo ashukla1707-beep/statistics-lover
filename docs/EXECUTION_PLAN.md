@@ -58,7 +58,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] PWA/performance
 
 ## F — Security, QA and release
-- [ ] RLS/privilege/browser-secret/provider-link audit
+- [x] RLS/privilege/browser-secret/provider-link audit
 - [ ] Data-integrity audit
 - [ ] Cross-role acceptance scenarios
 - [ ] Production migration/build verification

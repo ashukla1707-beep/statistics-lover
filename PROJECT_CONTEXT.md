@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: **Watch Recording / lecture player**
+- Current focus: Assessment layer — C7 PYQ assessment integration
 
 ## Deployment
 
@@ -225,3 +225,16 @@ At the time this handoff was written:
 - Result visibility follows schedule policy: immediate, after close, scheduled or manual. Manual release controls are available in Test Scheduling.
 - Released results include safe per-question review, correct answers and awarded marks only after policy allows release.
 - C4/C5 frontend and database commits pass GitHub typecheck, lint and build. Next checkpoint: C6 performance analytics.
+
+
+### Assessment checkpoint C6 — performance analytics
+
+- Supabase migration `assessment_performance_analytics` applied; repository migration `0025_assessment_performance_analytics.sql` committed.
+- Staff/teacher test analytics are derived from finalized immutable attempt snapshots and include attempt/student counts, average/high/low percentages, per-question accuracy/average awarded marks, and recent student attempts.
+- Student analytics expose only results whose schedule release policy currently permits visibility; unreleased scores are excluded from the analytics RPC.
+- Student performance includes overall released-attempt average/best score, correct/incorrect/unanswered totals, subject-level score/accuracy, and released result history.
+- Duplicate selected-option IDs are rejected server-side before MSQ scoring to prevent malformed/malicious answer arrays from affecting exact-set scoring.
+- Workspaces: `/admin/test-analytics`, `/teacher/test-analytics`, and `/learn/:batchId/performance`.
+- C6 GitHub Quality passed on develop commit `eff3934c8f70e9dfbd20c353d0758ca2ad238d26` (typecheck, lint, build).
+- Deployment note: the Vercel connector currently resolves the stable develop alias to older commit `0347d050...` despite later GitHub CI success; latest preview deployment must be resynchronized/verified before release.
+- Next assessment checkpoint: C7 PYQ assessment integration.

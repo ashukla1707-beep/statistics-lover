@@ -1,20 +1,22 @@
-import { useEffect,useMemo,useState,type ReactNode } from 'react'
+import { useMemo,useState,type ReactNode } from 'react'
 
 export function useCollectionPagination<T>(items:T[],initialPageSize=20,resetKey?:unknown){
-  const [page,setPage]=useState(1)
-  const [pageSize,setPageSize]=useState(initialPageSize)
+  const [state,setState]=useState<{key:unknown;page:number;pageSize:number}>({key:resetKey,page:1,pageSize:initialPageSize})
+  const sameKey=Object.is(state.key,resetKey)
+  const pageSize=state.pageSize
   const totalPages=Math.max(1,Math.ceil(items.length/pageSize))
-  const safePage=Math.min(page,totalPages)
-
-  useEffect(()=>{setPage(1)},[resetKey])
-  useEffect(()=>{if(page!==safePage)setPage(safePage)},[page,safePage])
+  const requestedPage=sameKey?state.page:1
+  const page=Math.min(Math.max(1,requestedPage),totalPages)
 
   const pageItems=useMemo(()=>{
-    const start=(safePage-1)*pageSize
+    const start=(page-1)*pageSize
     return items.slice(start,start+pageSize)
-  },[items,pageSize,safePage])
+  },[items,page,pageSize])
 
-  return{page:safePage,setPage,pageSize,setPageSize,totalPages,pageItems}
+  const setPage=(nextPage:number)=>setState((current)=>({key:resetKey,page:nextPage,pageSize:current.pageSize}))
+  const setPageSize=(nextSize:number)=>setState({key:resetKey,page:1,pageSize:nextSize})
+
+  return{page,setPage,pageSize,setPageSize,totalPages,pageItems}
 }
 
 export function CollectionToolbar({query,onQueryChange,placeholder='Search',shown,total,children}:{query:string;onQueryChange:(value:string)=>void;placeholder?:string;shown:number;total:number;children?:ReactNode}){

@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Android app-first APK real-device validation
+- Current focus: Android A3 — native client device validation
 
 ## Deployment
 
@@ -470,3 +470,18 @@ At the time this handoff was written:
 - App-first APK artifact SHA-256 (GitHub zip): `797bf5a3e39e90cb7e052d3812e8227d11e78f4785fb8f2f865674ffba98eeb8`.
 - Extracted APK SHA-256: `c362630e985019c84f0a952b651cc2c1a6e4709accfa1db442fab83272114e1b`.
 - Next: install this A2 APK on the real Android phone and validate that startup lands in Login/Dashboard rather than marketing Home, then validate session persistence, recording desktop-UA/fullscreen landscape, assignment uploads, external Meet routing and screenshot blocking.
+
+
+### Android checkpoint A3 — true native client build complete
+
+- User explicitly rejected the WebView-based A1/A2 builds, so Android direction changed to a true native client.
+- The Android launcher now uses `SplashActivity -> NativeMainActivity`; obsolete `MainActivity` and `LaunchReadyActivity` WebView activities were deleted from the Android source tree.
+- Native screens now include sign-in, dashboard, enrolled courses, native subject/module/lecture hierarchy, notification inbox, orders, store/order creation, teacher scope and role-aware operations shell.
+- Google Meet/Google Drive lecture actions open as external provider links; the Statistics Lover website itself is not loaded inside an Android WebView.
+- Added Supabase Edge Function `native-api` (ACTIVE, verify_jwt=false) as the mobile API. It uses the anon client plus the user's own JWT for RLS-protected operations; service-role access is not used for normal native user data.
+- Android session state is stored locally and the native API client supports token refresh.
+- Android `FLAG_SECURE` remains enabled as a screenshot/screen-recording deterrent.
+- Final WebView-free Android head `9a4bd97495a2cc074eddcebc7dc1171c5e1ab1ea` passed repository Quality workflow and Android APK workflow run `37130958520`.
+- GitHub APK artifact id `11277210361`; artifact ZIP digest `sha256:9783bf3e20ff69eedf2c0170e9df3fc9d885e622fc70b96ccaf5cac025fbf318`.
+- Extracted APK SHA-256: `c72b271f93ae25b991d64cb4fcf2525ac111adb02cb8f53a22f1e8d7f62e549f`.
+- Next: install A3 on a real phone and validate native login/session restore, course learning hierarchy, inbox/orders/store, provider action routing and role-specific screens. Teacher/admin edit workflows remain the next native Android layer after device validation.

@@ -7,6 +7,7 @@ import { AssignmentManagementPage } from './features/admin/AssignmentManagementP
 import { ContentManagementPage } from './features/admin/ContentManagementPage'
 import { DeliveryManagementPage } from './features/admin/DeliveryManagementPage'
 import { ResourceManagementPage } from './features/admin/ResourceManagementPage'
+import { QuestionBankPage } from './features/admin/QuestionBankPage'
 import { StaffManagementPage } from './features/admin/StaffManagementPage'
 import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
@@ -151,6 +152,20 @@ export default function App() {
           }
         />
         <Route
+          path="admin/questions"
+          element={
+            <RequireAuth
+              roles={['content_manager', 'admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading question bank…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <QuestionBankPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="admin/assignments"
           element={
             <RequireAuth
@@ -217,6 +232,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <DeliveryManagementPage teacherMode />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="teacher/questions"
+          element={
+            <RequireAuth
+              roles={['teacher']}
+              loadingFallback={<div className="auth-state">Loading question bank…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <QuestionBankPage teacherMode />
             </RequireAuth>
           }
         />

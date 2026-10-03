@@ -449,3 +449,11 @@ At the time this handoff was written:
 - In Android custom fullscreen, the Drive iframe and overlay now use the real fullscreen viewport at 100% width/height with no 1024x576 transform scaling.
 - The Statistics Lover custom fullscreen/exit button remains visible above the player; the Statistics Lover logo overlay remains at the top-right.
 - Service-worker cache advanced to `statistics-lover-static-v4` to invalidate prior fullscreen/player bundles.
+
+
+### Watch Recording follow-up — remove Android scaling race
+
+- Android APK playback is now excluded from the legacy touch-device 1024x576 scale calculation.
+- Android player media/overlay use the real element dimensions inline and in custom fullscreen, eliminating stale `--drive-player-scale` races that sometimes distorted Google Drive controls.
+- Web Quality run `37148555562` passed.
+- Android 1.0.16 also injects the same real-size CSS override natively, so the fix does not depend on immediate production redeployment.

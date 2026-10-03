@@ -1,5 +1,4 @@
 import { useEffect,useMemo,useState,type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { listManagedBatches,listManagedCourses,type ManagedBatch,type ManagedCourse } from './academicAdminService'

@@ -20,6 +20,26 @@ type PlayerContext = {
   loaded: boolean
 }
 
+type FullscreenDocument = Document & {
+  webkitFullscreenElement?: Element | null
+  webkitFullscreenEnabled?: boolean
+  webkitExitFullscreen?: () => Promise<void> | void
+}
+
+type FullscreenStage = HTMLDivElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void
+}
+
+function getFullscreenElement() {
+  const fullscreenDocument = document as FullscreenDocument
+  return document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement ?? null
+}
+
+function canUseFullscreen(stage: FullscreenStage | null) {
+  if (!stage) return false
+  return typeof stage.requestFullscreen === 'function' || typeof stage.webkitRequestFullscreen === 'function'
+}
+
 const DRIVE_DESKTOP_WIDTH = 1024
 const DRIVE_DESKTOP_HEIGHT = 576
 
@@ -54,6 +74,7 @@ export function LecturePlayerPage() {
   const { identity } = useAuth()
   const stageRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [canFullscreen, setCanFullscreen] = useState(false)
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -134,7 +155,7 @@ export function LecturePlayerPage() {
 
     const handleViewportChange = () => queuePlayerScaleSync(stage)
     const handleFullscreenChange = () => {
-      setIsFullscreen(document.fullscreenElement === stage)
+      setIsFullscreen(getFullscreenElement() === stage)
       queuePlayerScaleSync(stage)
     }
 
@@ -142,8 +163,10 @@ export function LecturePlayerPage() {
       ? null
       : new ResizeObserver(handleViewportChange)
 
+    setCanFullscreen(canUseFullscreen(stage))
     resizeObserver?.observe(stage)
     document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
     window.addEventListener('resize', handleViewportChange)
     window.visualViewport?.addEventListener('resize', handleViewportChange)
     screen.orientation?.addEventListener('change', handleViewportChange)
@@ -152,6 +175,7 @@ export function LecturePlayerPage() {
     return () => {
       resizeObserver?.disconnect()
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
       window.removeEventListener('resize', handleViewportChange)
       window.visualViewport?.removeEventListener('resize', handleViewportChange)
       screen.orientation?.removeEventListener('change', handleViewportChange)
@@ -162,16 +186,26 @@ export function LecturePlayerPage() {
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
 
   const toggleFullscreen = async () => {
-    const stage = stageRef.current
-    if (!stage || !document.fullscreenEnabled) return
+    const stage = stageRef.current as FullscreenStage | null
+    if (!canUseFullscreen(stage)) return
+
+    const fullscreenDocument = document as FullscreenDocument
 
     try {
-      if (document.fullscreenElement === stage) {
-        await document.exitFullscreen()
+      if (getFullscreenElement() === stage) {
+        if (typeof document.exitFullscreen === 'function') {
+          await document.exitFullscreen()
+        } else {
+          await fullscreenDocument.webkitExitFullscreen?.()
+        }
         return
       }
 
-      await stage.requestFullscreen({ navigationUI: 'hide' })
+      if (typeof stage.requestFullscreen === 'function') {
+        await stage.requestFullscreen({ navigationUI: 'hide' })
+      } else {
+        await stage.webkitRequestFullscreen?.()
+      }
       queuePlayerScaleSync(stage)
     } catch {
       // Keep inline playback available when the browser refuses fullscreen.
@@ -221,39 +255,42 @@ export function LecturePlayerPage() {
             <iframe
               src={state.action.actionUrl}
               title={`${state.lecture.title} recording`}
-              allow="autoplay"
+              allow="autoplay; fullscreen"
+              allowFullScreen
               referrerPolicy="no-referrer"
             />
           </div>
 
           <div className="lecture-player-overlay">
-            <span className="lecture-player-drive-brand-blocker" aria-hidden="true">
-              <img
-                src="/brand/statistics-lover-logo.jpg"
-                alt=""
-                draggable={false}
-              />
-            </span>
+            <div className="lecture-player-corner-controls">
+              {canFullscreen && (
+                <button
+                  type="button"
+                  className="lecture-player-fullscreen"
+                  onClick={toggleFullscreen}
+                  aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
+                  title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+                >
+                  {isFullscreen ? (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" />
+                    </svg>
+                  )}
+                </button>
+              )}
 
-            {document.fullscreenEnabled && (
-              <button
-                type="button"
-                className="lecture-player-fullscreen"
-                onClick={toggleFullscreen}
-                aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
-                title={isFullscreen ? 'Exit full screen' : 'Full screen'}
-              >
-                {isFullscreen ? (
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" />
-                  </svg>
-                )}
-              </button>
-            )}
+              <span className="lecture-player-drive-brand-blocker" aria-hidden="true">
+                <img
+                  src="/brand/statistics-lover-logo.jpg"
+                  alt=""
+                  draggable={false}
+                />
+              </span>
+            </div>
           </div>
         </div>
 

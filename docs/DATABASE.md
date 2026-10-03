@@ -66,6 +66,12 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 - assignments
 - assignment submissions
 
+### Attendance
+
+- lecture attendance ✅
+- assignment-scoped teacher roster access ✅
+- student-owned attendance history ✅
+
 ### Assessment
 
 - tests

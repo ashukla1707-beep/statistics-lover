@@ -21,7 +21,7 @@ function toLocal(value:string|null){if(!value)return'';const d=new Date(value);r
 function defaultLabel(kind:LearningResourceKind){return kind==='notes'?'Open notes':kind==='pyq'?'Open PYQ':kind==='reference'?'Open resource':'Open material'}
 function formFrom(r:ManagedLearningResource):ResourceForm{return{id:r.id,batchId:r.batchId,scope:r.scope,subjectId:r.subjectId,moduleId:r.moduleId,lectureId:r.lectureId,kind:r.kind,title:r.title,description:r.description??'',status:r.status,releaseAt:toLocal(r.releaseAt),position:r.position,provider:r.provider??'google_drive',url:r.providerReference,actionLabel:r.actionLabel||defaultLabel(r.kind),fileName:r.fileName,mimeType:r.mimeType,sizeBytes:r.sizeBytes?.toString()??''}}
 
-export function ResourceManagementPage(){
+export function ResourceManagementPage({ teacherMode = false }: { teacherMode?: boolean }){
   const {identity}=useAuth()
   const canDelete=identity?.roles.some((role)=>role==='admin'||role==='owner')??false
   const [courses,setCourses]=useState<ManagedCourse[]>([])
@@ -54,7 +54,14 @@ export function ResourceManagementPage(){
   async function remove(r:ManagedLearningResource){if(!canDelete||!window.confirm(`Delete “${r.title}”?`))return;setSaving(true);try{await deleteManagedLearningResource(r.id);await refresh(r.batchId);if(form?.id===r.id)setForm(null);setNotice('Learning resource deleted.')}catch(cause){setError(errorMessage(cause))}finally{setSaving(false)}}
 
   return <section className="admin-page resource-admin-page"><div className="container admin-shell">
-    <AdminSubnav active="resources"/>
+    {teacherMode ? (
+      <div className="teacher-mode-nav">
+        <Link to="/teacher">← Teacher workspace</Link>
+        <span>Assignment-scoped access</span>
+      </div>
+    ) : (
+      <AdminSubnav active="resources"/>
+    )}
     <header className="admin-page-heading"><div><span className="eyebrow">Protected learning resources</span><h1>Study Material & Resources</h1><p>Publish notes, PDFs, PYQs and references to a batch, subject, module or lecture.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error" role="alert">{error}</div>}{notice&&<div className="admin-alert admin-alert-success" role="status">{notice}</div>}
     <div className="resource-context-grid">

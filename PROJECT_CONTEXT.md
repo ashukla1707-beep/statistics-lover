@@ -201,3 +201,14 @@ At the time this handoff was written:
 - Subject teachers can build subject tests; only whole-batch-assigned teachers can manage whole-batch tests.
 - Workspaces: `/admin/tests` and `/teacher/tests`.
 - C2 GitHub Quality passed on develop. Next checkpoint: C3 scheduling and student assignment windows.
+
+
+### Assessment checkpoint C3 — scheduling & assignment
+
+- Supabase migration `assessment_test_scheduling` applied; repository migration `0022_assessment_test_scheduling.sql` committed.
+- Published tests can have one or more active exam windows with open/close timestamps, result-release policy, and batch-wide or selected-student audience.
+- Selected-student schedules are validated against active enrollments in the test batch.
+- Staff/teacher workspace: `/admin/test-schedules` and `/teacher/test-schedules`.
+- Student discovery page: `/learn/:batchId/tests`; only active schedules assigned to the authenticated enrollment are returned by the protected RPC.
+- Result policies supported in schema: immediate, after close, scheduled and manual.
+- C3 GitHub Quality passed on develop. Next checkpoint: C4 student test-taking with secure resumable attempts.

@@ -242,9 +242,6 @@ export function LecturePlayerPage() {
 
           <div className="lecture-player-overlay">
             <div className="lecture-player-corner-controls">
-                </button>
-              )}
-
               <span className="lecture-player-drive-brand-blocker" aria-hidden="true">
                 <img
                   src="/brand/statistics-lover-logo.jpg"

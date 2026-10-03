@@ -15,14 +15,14 @@
 
 ## Deployment
 
-- Temporary frontend host: **Vercel**
-- Vercel team: **Statistics Lover**
-- Vercel project: `statistics-lover`
-- Development preview alias: `statistics-lover-git-develop-statistics-lover.vercel.app`
-- `develop` deploys automatically to a Vercel preview.
-- `main` is still the production branch for the current Vercel production deployment.
-- Cloudflare deployment was temporarily abandoned because Workers Builds repeatedly failed during the **Initializing** stage before cloning/install/build.
-- Long-term intention: move hosting back to Cloudflare later if desired.
+- **Current frontend deployment target: Cloudflare Workers static assets from `develop`.**
+- Vercel is intentionally de-prioritized for now; it may be restored later as the preferred preview/production host.
+- Existing Vercel project/team/production deployments remain in place but are not the authoritative current UI verification target.
+- Cloudflare's earlier Git-connected Workers Build path was unreliable because builds repeatedly failed during **Initializing** before checkout.
+- To bypass that Cloudflare build-system failure, repository workflow `.github/workflows/cloudflare-deploy.yml` now builds the Vite app in GitHub Actions and deploys `dist/` directly with Wrangler using `wrangler.jsonc`.
+- The Cloudflare workflow passed install/typecheck/lint/build but the first deploy attempt on `40441488ec4a33dadd7b720408a0315e0b5a78e2` stopped before Wrangler because the GitHub repository currently has no `CLOUDFLARE_API_TOKEN` secret (and no `CLOUDFLARE_ACCOUNT_ID` secret).
+- Required unblock: add a Cloudflare API token with permission to deploy the `statistics-lover` Worker and, preferably, the Cloudflare account ID as GitHub repository secrets; then rerun **Cloudflare Deploy**. Do not place the API token in source code or `.env.production`.
+- Once the direct Wrangler deploy succeeds, Cloudflare becomes the active device-testing URL until a later explicit decision switches back to Vercel.
 
 ## Backend and services
 
@@ -497,3 +497,14 @@ At the latest handoff:
 - GitHub Quality passed typecheck, lint and build on `bd14eac3b6ce9c81a973cde5995dc68ca6a8e3d9`. Earlier transient CI failures during the BackLink refactor were only unused-import errors on intermediate commits and were resolved by the final green head.
 - Deployment caveat at this checkpoint: Vercel still exposes `c0f58a9b932c41ad06fe9dc1469befe7305a104f` as the newest READY `develop` preview surfaced by the connector. The remaining Home/responsive/BackLink/footer/cache commits are CI-green in GitHub but still require a fresh Vercel preview before visual acceptance.
 - Next: wait for/resynchronize the latest `develop` preview, smoke-test Home/Store/Login and perform real-device visual checks at phone/tablet/desktop widths; fix any remaining screenshot-specific issues before returning to Android A3 native-client validation.
+
+
+### Deployment checkpoint — Cloudflare selected as current frontend target
+
+- User explicitly changed the near-term deployment plan: use **Cloudflare now** and return to Vercel later.
+- Added GitHub Actions workflow `.github/workflows/cloudflare-deploy.yml` on develop commit `40441488ec4a33dadd7b720408a0315e0b5a78e2`.
+- The workflow builds and verifies the frontend in GitHub Actions, then runs `npx --yes wrangler@4 deploy` against the existing `wrangler.jsonc` static-assets Worker configuration. This intentionally bypasses the previously unreliable Cloudflare Workers Builds Git integration.
+- Workflow run `37162214830` passed install, typecheck, lint and Vite build, then stopped at the credential guard because `CLOUDFLARE_API_TOKEN` is missing from GitHub repository secrets. `CLOUDFLARE_ACCOUNT_ID` is also unset.
+- No Cloudflare deployment is being claimed yet. The deployment is **wired but blocked on Cloudflare authentication**.
+- Safe unblock: add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as GitHub repository secrets, then rerun the Cloudflare Deploy workflow. Never commit those credentials.
+- Vercel remains connected but should not be used as the current acceptance target until the user explicitly switches back.

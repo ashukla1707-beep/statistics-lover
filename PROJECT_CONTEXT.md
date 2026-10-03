@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Android A2 — Stat Archive-style native shell device validation
+- Current focus: Android app-first APK real-device validation
 
 ## Deployment
 
@@ -455,3 +455,18 @@ At the time this handoff was written:
 - Android APK workflow run `37128489532` and normal Quality workflow run `37128489574` both passed.
 - Workflow artifact digest: `sha256:4cd7cb096b7fb6846f54f5e2573a28c1a3a4d892cdcce6ffb9f33b549e4e4ab7` (ZIP). Extracted APK SHA-256: `e1321e2e4f39145d06222ee3e77113d349b27829b4924018d96062f56c74fa28`.
 - Next Android step: install this A2 APK on the real phone and validate launch/splash feel, login persistence, normal navigation, Watch Recording desktop-UA behavior, fullscreen landscape, uploads, external Meet links and screenshot blocking. If the user means a fully native-screen app rather than Stat Archive-style shell behavior, that is a separate larger rewrite.
+
+
+### Android checkpoint A2 — Stat Archive-style app-first shell
+
+- User feedback showed the first Android APK still felt like the public website because it launched the marketing Home route.
+- Verified the reference Stat Archive APK architecture from `ashukla1707-beep/statarchive-android`: it is also WebView-based, but uses an AndroidX/AppCompat native shell, native splash/launch readiness, dedicated WebView profile, Android back handling, file handling and APK/PWA-specific presentation behavior.
+- Statistics Lover Android was upgraded to the same architecture style: `StatisticsLoverApplication`, `LaunchReadyActivity`, AndroidX/AppCompat/Core SplashScreen, safe system insets, dedicated WebView profile, native Back dispatcher, native file chooser, secure fullscreen/orientation handling and app-only DOM mode.
+- APK launch target is now `/dashboard`, not the public Home page. Logged-out users are redirected by the existing auth guard to Login; authenticated users land directly in Dashboard.
+- Inside Android app mode, the public marketing footer and Home-section navigation are suppressed, the header is compact, and tapping the Statistics Lover brand returns to Dashboard. The normal website is unchanged.
+- Recording route still switches only `/learn/:batchId/lecture/:lectureId` to desktop Chrome UA and fullscreen enters immersive landscape.
+- AndroidX build blocker was fixed with `android.useAndroidX=true` in `android-app/gradle.properties`.
+- App-first commit `e512a46be397787021bc6ea46babcf60c90c6d68` passed Android APK build/verification/upload in workflow run `37128754777`.
+- App-first APK artifact SHA-256 (GitHub zip): `797bf5a3e39e90cb7e052d3812e8227d11e78f4785fb8f2f865674ffba98eeb8`.
+- Extracted APK SHA-256: `c362630e985019c84f0a952b651cc2c1a6e4709accfa1db442fab83272114e1b`.
+- Next: install this A2 APK on the real Android phone and validate that startup lands in Login/Dashboard rather than marketing Home, then validate session persistence, recording desktop-UA/fullscreen landscape, assignment uploads, external Meet routing and screenshot blocking.

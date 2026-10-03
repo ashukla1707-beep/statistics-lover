@@ -51,7 +51,7 @@ This is the execution ledger for finishing the website layer by layer without re
 ## E — Product completion
 - [x] Student dashboard completion
 - [x] Teacher dashboard
-- [ ] Admin operations dashboard
+- [x] Admin operations dashboard
 - [ ] Search/filter/pagination
 - [ ] Audit logs/settings
 - [ ] Accessibility/responsive/error-state pass

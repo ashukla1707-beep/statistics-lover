@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer E3 — Admin operations dashboard
+- Current focus: Layer E4 — Search, filter and pagination
 
 ## Deployment
 
@@ -305,3 +305,13 @@ At the time this handoff was written:
 - Initial E2 commit `38b79495...` failed only because of an unused TypeScript import; fixed in `ffa9b3921bcc35b3e4873b58ab11f44b241f32b3`.
 - E2 final GitHub Quality passed typecheck, lint and build on `ffa9b3921bcc35b3e4873b58ab11f44b241f32b3`.
 - Next: E3 admin operations dashboard.
+
+
+### Product checkpoint E3 — admin operations dashboard complete
+
+- New role-aware admin overview is available at `/admin/overview` and is now the primary Admin entry point from the header/student dashboard.
+- Content-manager/admin/owner users see academic delivery, upcoming lecture, assessment and announcement KPIs; admin/owner additionally receive active-enrollment, pending-order and staff-role counts.
+- Sensitive enrollment/commerce/staff queries are not issued for content managers, so restricted operational data is not fetched merely to render unavailable cards.
+- Quick actions link to academics, content, assessments, communication, enrollments, commerce and staff according to role.
+- E3 GitHub Quality passed on develop commit `27a3fb534663f0a0b7389c94c2078f25b07f2a34` (typecheck, lint, build).
+- Next: E4 shared search/filter/pagination controls across long management lists.

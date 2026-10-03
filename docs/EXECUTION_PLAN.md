@@ -32,7 +32,7 @@ This is the execution ledger for finishing the website layer by layer without re
 
 ## C — Assessment
 - [x] Question bank and options
-- [ ] Test/section builder
+- [x] Test/section builder
 - [ ] Scheduling/assignment
 - [ ] Student test-taking
 - [ ] Attempts/submission/scoring/results

@@ -2,13 +2,20 @@
 
 ## Current decision
 
-Cloudflare is the current frontend deployment target for `develop`. Vercel remains connected but is intentionally de-prioritized until a later explicit switch back.
+Vercel is the only active frontend deployment target for Statistics Lover right now.
 
-The previous Cloudflare Git-connected Workers Builds path failed during the provider's **Initializing** stage before repository checkout. To avoid depending on that build pipeline, Statistics Lover now builds inside GitHub Actions and deploys the already-built `dist/` directory directly with Wrangler.
+- GitHub repository: `ashukla1707-beep/statistics-lover`
+- Active development branch: `develop`
+- Vercel team: `Statistics Lover`
+- Vercel project: `statistics-lover`
+- `develop` deploys automatically to Vercel Preview through the connected GitHub integration.
+- `main` remains the production branch unless a later explicit release decision changes it.
+
+Cloudflare deployment automation is disabled for now. The existing `wrangler.jsonc` may remain as dormant configuration for a later migration, but it is not part of the current release path.
 
 ## Environments
 
-Keep development, staging/preview and production logically separate. Production secrets and data must never be copied into source code.
+Keep development, preview/staging and production logically separate. Production secrets and data must never be copied into source code.
 
 ## Web frontend
 
@@ -26,37 +33,24 @@ Output directory:
 dist
 ```
 
-Cloudflare configuration lives in `wrangler.jsonc` and serves `dist/` as static assets with SPA fallback.
+Vercel is configured through the existing project/Git integration and `vercel.json`.
 
-Repository deployment workflow:
+## Deployment flow
 
-```text
-.github/workflows/cloudflare-deploy.yml
-```
-
-The workflow performs install, typecheck, lint and build before deploying with:
-
-```bash
-npx --yes wrangler@4 deploy
-```
-
-## Cloudflare credentials
-
-Cloudflare credentials must be stored only as GitHub repository secrets:
-
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
-
-The API token must have sufficient permission to deploy the `statistics-lover` Worker. Never commit the token to the repository or add it to `.env.production`.
+1. Commit changes to `develop`.
+2. GitHub Quality runs typecheck, lint and build.
+3. Vercel automatically creates a Preview deployment for the same `develop` commit.
+4. Verify the Preview deployment and the stable develop alias before treating the UI as accepted.
+5. Promote/release to `main` only as a separate release decision.
 
 ## Backend
 
-Cloudflare is currently used for frontend delivery only. Business data/auth remains in Supabase/PostgreSQL. Edge deployment must not become an unstructured monolithic backend.
+Frontend hosting remains independent from business data. Supabase/PostgreSQL remains the structured source of truth for authentication and application data.
 
-## Vercel
+## Cloudflare
 
-Existing Vercel deployment configuration may remain in the repository while Cloudflare is the active target. Do not treat Vercel as the current acceptance environment until a later documented decision switches back.
+Cloudflare is not the active deployment target. Do not add or rerun Cloudflare deployment workflows unless the user explicitly switches hosting back to Cloudflare later.
 
 ## Production ownership
 
-The coaching owner should ultimately control the production Cloudflare project, domain/DNS, database/auth project, payment account and messaging/video provider accounts.
+The coaching owner should ultimately control the production hosting project/domain, database/auth project, payment account and messaging/video provider accounts.

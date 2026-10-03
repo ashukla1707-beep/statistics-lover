@@ -2,7 +2,7 @@ export const siteConfig = {
   name: 'Statistics Lover',
   tagline: 'Learn • Practice • Succeed',
   description:
-    'A focused statistics learning platform for live classes, recorded lectures, tests, PYQs and study material.',
+    'A focused statistics learning platform for live classes, recorded lectures, tests, PYQs, assignments and study resources.',
   phone: '9264927804',
   whatsappNumber: '919264927804',
   logoPath: '/brand/statistics-lover-logo.jpg',
@@ -10,10 +10,8 @@ export const siteConfig = {
 
 export const navigationItems = [
   { label: 'Home', href: '#home' },
-  { label: 'Courses', href: '#courses' },
-  { label: 'Free Content', href: '#free-content' },
-  { label: 'Test Series', href: '#test-series' },
-  { label: 'PYQs', href: '#pyqs' },
-  { label: 'Study Material', href: '#study-material' },
+  { label: 'Platform', href: '#platform' },
+  { label: 'Assessments', href: '#assessments' },
+  { label: 'PYQs & Resources', href: '#resources' },
   { label: 'About', href: '#about' },
 ] as const

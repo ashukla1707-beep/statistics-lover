@@ -24,8 +24,8 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Google Drive recording player
 - [x] Learning-resource database/RLS/RPC foundation
 - [x] Study material admin/student UI
-- [ ] Live-class scheduling/availability hardening
-- [ ] Teacher assignments and teacher workspace
+- [x] Live-class scheduling/availability hardening
+- [x] Teacher assignments and teacher workspace
 - [ ] Attendance
 - [ ] Assignments and submissions
 - [ ] Teaching-layer acceptance tests

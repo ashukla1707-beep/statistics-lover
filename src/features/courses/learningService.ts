@@ -29,6 +29,24 @@ export interface StudentSubject {
   modules: StudentModule[]
 }
 
+export interface StudentLearningResource {
+  id: string
+  scope: 'batch' | 'subject' | 'module' | 'lecture'
+  subjectId: string | null
+  moduleId: string | null
+  lectureId: string | null
+  kind: 'study_material' | 'notes' | 'pyq' | 'reference'
+  title: string
+  description: string | null
+  provider: 'google_drive' | 'external'
+  actionUrl: string
+  actionLabel: string
+  fileName: string | null
+  mimeType: string | null
+  sizeBytes: number | null
+  position: number
+}
+
 export interface LectureDeliveryAction {
   lectureId: string
   actionKind: 'join' | 'watch'
@@ -64,6 +82,24 @@ type LectureRow = {
   scheduled_at: string | null
   duration_minutes: number | null
   release_at: string | null
+}
+
+type LearningResourceRow = {
+  resource_id: string
+  resource_scope: StudentLearningResource['scope']
+  subject_id: string | null
+  module_id: string | null
+  lecture_id: string | null
+  resource_kind: StudentLearningResource['kind']
+  title: string
+  description: string | null
+  provider: StudentLearningResource['provider']
+  action_url: string
+  action_label: string
+  file_name: string | null
+  mime_type: string | null
+  size_bytes: number | null
+  resource_position: number
 }
 
 type DeliveryActionRow = {
@@ -158,5 +194,32 @@ export async function loadBatchDeliveryActions(batchId: string): Promise<Lecture
     provider: row.provider,
     actionUrl: row.action_url,
     label: row.label,
+  }))
+}
+
+
+export async function loadBatchLearningResources(batchId: string): Promise<StudentLearningResource[]> {
+  const { data, error } = await requireSupabase().rpc('get_batch_learning_resources', {
+    target_batch: batchId,
+  })
+
+  if (error) throw error
+
+  return ((data ?? []) as LearningResourceRow[]).map((row) => ({
+    id: row.resource_id,
+    scope: row.resource_scope,
+    subjectId: row.subject_id,
+    moduleId: row.module_id,
+    lectureId: row.lecture_id,
+    kind: row.resource_kind,
+    title: row.title,
+    description: row.description,
+    provider: row.provider,
+    actionUrl: row.action_url,
+    actionLabel: row.action_label,
+    fileName: row.file_name,
+    mimeType: row.mime_type,
+    sizeBytes: row.size_bytes,
+    position: row.resource_position,
   }))
 }

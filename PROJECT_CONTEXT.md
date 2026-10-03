@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer E4 — Search, filter and pagination
+- Current focus: Layer E5 — Audit logs & settings
 
 ## Deployment
 
@@ -315,3 +315,13 @@ At the time this handoff was written:
 - Quick actions link to academics, content, assessments, communication, enrollments, commerce and staff according to role.
 - E3 GitHub Quality passed on develop commit `27a3fb534663f0a0b7389c94c2078f25b07f2a34` (typecheck, lint, build).
 - Next: E4 shared search/filter/pagination controls across long management lists.
+
+
+### Product checkpoint E4 — search, filter and pagination complete
+
+- Added shared reusable collection controls in `src/features/admin/CollectionControls.tsx` with render-pure pagination, page-size selection, result counts and search toolbar.
+- Applied high-volume management controls to Staff, Students/Enrollments, Question Bank, Commerce Orders, Tests, Resources and Assignments.
+- Existing contextual filters (course/batch/subject/module/lecture/source/status) are preserved and compose with text search rather than replacing scope controls.
+- React lint initially rejected effect-driven pagination resets; the hook was redesigned to derive page state from a reset key with no synchronous setState effects.
+- Final E4 GitHub Quality passed on `249b37d7d6810563854ed03e42f7fba85b77da76` (typecheck, lint, build).
+- Next: E5 audit logs and operational settings.

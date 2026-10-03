@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
 import { listManagedLectures, listManagedModules, listManagedSubjects, type ManagedLecture, type ManagedModule, type ManagedSubject } from './contentAdminService'
@@ -51,7 +52,7 @@ export function AttendanceManagementPage({teacherMode=false}:{teacherMode?:boole
   }
 
   return <section className="admin-page attendance-admin-page"><div className="container admin-shell">
-    {teacherMode?<div className="teacher-mode-nav"><Link to="/teacher">← Teacher workspace</Link><span>Assignment-scoped access</span></div>:<AdminSubnav active="attendance"/>}
+    {teacherMode?<div className="teacher-mode-nav"><BackLink to="/teacher">Teacher workspace</BackLink><span>Assignment-scoped access</span></div>:<AdminSubnav active="attendance"/>}
     <header className="admin-page-heading"><div><span className="eyebrow">Lecture operations</span><h1>Attendance</h1><p>Mark attendance against the enrolled roster for each lecture. Teachers only see lectures inside their assigned teaching scope.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error" role="alert">{error}</div>}{notice&&<div className="admin-alert admin-alert-success" role="status">{notice}</div>}
     <div className="attendance-context-grid">

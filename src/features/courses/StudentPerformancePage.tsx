@@ -1,5 +1,5 @@
 import { useEffect,useState } from 'react'
-import { Link,useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { loadMyAssessmentAnalytics,type StudentAssessmentAnalytics } from '../admin/assessmentAnalyticsService'

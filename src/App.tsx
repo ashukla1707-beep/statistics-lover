@@ -1,6 +1,8 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
+import { RouteFocus } from './components/layout/RouteFocus'
+import { NotFoundPage } from './features/system/NotFoundPage'
 import { AcademicManagementPage } from './features/admin/AcademicManagementPage'
 import { AttendanceManagementPage } from './features/admin/AttendanceManagementPage'
 import { AssignmentManagementPage } from './features/admin/AssignmentManagementPage'
@@ -41,8 +43,10 @@ import { TeacherWorkspacePage } from './features/teacher/TeacherWorkspacePage'
 function SiteLayout() {
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <Header />
-      <main>
+      <RouteFocus />
+      <main id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
       <Footer />
@@ -537,7 +541,7 @@ export default function App() {
             </RequireAuth>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   )

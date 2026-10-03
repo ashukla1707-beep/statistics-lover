@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect,useState } from 'react'
 import { Link } from 'react-router-dom'
 import { navigationItems, siteConfig } from '../../config/site'
 import { useAuth } from '../../features/auth'
@@ -7,6 +7,18 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { status, hasAnyRole } = useAuth()
   const closeMenu = () => setIsMenuOpen(false)
+
+  useEffect(()=>{
+    if(!isMenuOpen)return
+    const onKeyDown=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){
+        setIsMenuOpen(false)
+        document.querySelector<HTMLButtonElement>('.menu-toggle')?.focus()
+      }
+    }
+    document.addEventListener('keydown',onKeyDown)
+    return()=>document.removeEventListener('keydown',onKeyDown)
+  },[isMenuOpen])
   const canManageAcademics = status === 'authenticated' && hasAnyRole(['content_manager', 'admin', 'owner'])
   const canManageEnrollments = status === 'authenticated' && hasAnyRole(['admin', 'owner'])
 
@@ -38,12 +50,12 @@ export function Header() {
           type="button"
           aria-expanded={isMenuOpen}
           aria-controls="primary-navigation"
-          aria-label="Toggle navigation"
+          aria-label={isMenuOpen ? 'Close navigation' : 'Open navigation'}
           onClick={() => setIsMenuOpen((open) => !open)}
         >
-          <span />
-          <span />
-          <span />
+          <span aria-hidden="true" />
+          <span aria-hidden="true" />
+          <span aria-hidden="true" />
         </button>
 
         <nav

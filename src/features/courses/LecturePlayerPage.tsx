@@ -50,6 +50,15 @@ function isStatisticsLoverAndroidApp() {
   return /StatisticsLoverAndroid\//i.test(navigator.userAgent)
 }
 
+type StatisticsLoverNativeBridge = {
+  enterFullscreen?: () => void
+  exitFullscreen?: () => void
+}
+
+function getStatisticsLoverNativeBridge() {
+  return (window as Window & { StatisticsLoverNative?: StatisticsLoverNativeBridge }).StatisticsLoverNative
+}
+
 function isMobileBrowserMode() {
   if (typeof navigator === 'undefined') return false
 
@@ -144,7 +153,8 @@ export function LecturePlayerPage() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [canFullscreen, setCanFullscreen] = useState(false)
   const requiresDesktopSite = isMobileBrowserMode()
-  const showCustomFullscreen = canFullscreen && shouldShowPhoneFullscreen()
+  const showCustomFullscreen = isStatisticsLoverAndroidApp()
+    || (canFullscreen && shouldShowPhoneFullscreen())
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -261,12 +271,48 @@ export function LecturePlayerPage() {
     }
   }, [state.loaded])
 
+  useEffect(() => {
+    if (!isStatisticsLoverAndroidApp()) return
+
+    const handleNativeExit = () => setIsFullscreen(false)
+    window.addEventListener('statisticslover:exit-fullscreen', handleNativeExit)
+
+    if (isFullscreen) {
+      const previousHtmlOverflow = document.documentElement.style.overflow
+      const previousBodyOverflow = document.body.style.overflow
+      document.documentElement.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden'
+
+      return () => {
+        document.documentElement.style.overflow = previousHtmlOverflow
+        document.body.style.overflow = previousBodyOverflow
+        window.removeEventListener('statisticslover:exit-fullscreen', handleNativeExit)
+      }
+    }
+
+    return () => window.removeEventListener('statisticslover:exit-fullscreen', handleNativeExit)
+  }, [isFullscreen])
+
   const backPath = useMemo(() => `/learn/${batchId}`, [batchId])
 
   const toggleFullscreen = async () => {
     const stage = stageRef.current as FullscreenStage | null
-    if (!stage || !canUseFullscreen(stage)) return
+    if (!stage) return
 
+    if (isStatisticsLoverAndroidApp()) {
+      const bridge = getStatisticsLoverNativeBridge()
+
+      if (isFullscreen) {
+        setIsFullscreen(false)
+        bridge?.exitFullscreen?.()
+      } else {
+        setIsFullscreen(true)
+        bridge?.enterFullscreen?.()
+      }
+      return
+    }
+
+    if (!canUseFullscreen(stage)) return
     const fullscreenDocument = document as FullscreenDocument
 
     try {
@@ -353,7 +399,7 @@ export function LecturePlayerPage() {
 
         <div
           ref={stageRef}
-          className={`lecture-player-stage${isStatisticsLoverAndroidApp() ? ' lecture-player-stage-android' : ''}`}
+          className={`lecture-player-stage${isStatisticsLoverAndroidApp() ? ' lecture-player-stage-android' : ''}${isStatisticsLoverAndroidApp() && isFullscreen ? ' lecture-player-stage-app-fullscreen' : ''}`}
           role="region"
           aria-label={`${state.lecture.title} recording`}
         >

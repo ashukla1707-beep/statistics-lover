@@ -53,6 +53,7 @@ export function Header() {
         >
           <Link to="/store" onClick={closeMenu}>Courses</Link>
           {status === 'authenticated' && <Link to="/orders" onClick={closeMenu}>My Orders</Link>}
+          {status === 'authenticated' && <Link to="/notifications" onClick={closeMenu}>Notifications</Link>}
           {navigationItems.map((item) => (
             <a key={item.href} href={`/${item.href}`} onClick={closeMenu}>
               {item.label}

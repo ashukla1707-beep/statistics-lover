@@ -12,6 +12,7 @@ import { TestBuilderPage } from './features/admin/TestBuilderPage'
 import { TestSchedulePage } from './features/admin/TestSchedulePage'
 import { AssessmentAnalyticsPage } from './features/admin/AssessmentAnalyticsPage'
 import { CommerceManagementPage } from './features/admin/CommerceManagementPage'
+import { AnnouncementManagementPage } from './features/admin/AnnouncementManagementPage'
 import { StaffManagementPage } from './features/admin/StaffManagementPage'
 import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
 import {
@@ -31,6 +32,7 @@ import { DashboardPage } from './features/dashboard/DashboardPage'
 import { HomePage } from './features/home/HomePage'
 import { StorePage } from './features/commerce/StorePage'
 import { MyOrdersPage } from './features/commerce/MyOrdersPage'
+import { NotificationsPage } from './features/communications/NotificationsPage'
 import { TeacherWorkspacePage } from './features/teacher/TeacherWorkspacePage'
 
 function SiteLayout() {
@@ -77,6 +79,18 @@ export default function App() {
       <Route element={<SiteLayout />}>
         <Route index element={<HomePage />} />
         <Route path="store" element={<StorePage />} />
+        <Route
+          path="notifications"
+          element={
+            <RequireAuth
+              loadingFallback={<div className="auth-state">Loading notifications…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <NotificationsPage />
+            </RequireAuth>
+          }
+        />
         <Route path="login" element={<AuthPage mode="login" />} />
         <Route path="register" element={<AuthPage mode="register" />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
@@ -295,6 +309,20 @@ export default function App() {
           }
         />
         <Route
+          path="admin/announcements"
+          element={
+            <RequireAuth
+              roles={['content_manager', 'admin', 'owner']}
+              loadingFallback={<div className="auth-state">Loading announcements…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <AnnouncementManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="admin/commerce"
           element={
             <RequireAuth
@@ -333,6 +361,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <TeacherWorkspacePage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="teacher/announcements"
+          element={
+            <RequireAuth
+              roles={['teacher']}
+              loadingFallback={<div className="auth-state">Loading announcements…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <AnnouncementManagementPage teacherMode />
             </RequireAuth>
           }
         />

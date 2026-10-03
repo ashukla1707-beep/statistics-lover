@@ -19,6 +19,7 @@ import './styles/test-schedule.css'
 import './styles/assessment-runner.css'
 import './styles/assessment-analytics.css'
 import './styles/commerce.css'
+import './styles/communications.css'
 import './styles/drive-player.css'
 
 createRoot(document.getElementById('root')!).render(

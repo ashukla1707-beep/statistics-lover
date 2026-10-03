@@ -94,6 +94,7 @@ export function DashboardPage() {
         <div className="portal-role-actions">
           <Link className="button button-small" to="/store">Browse courses</Link>
           <Link className="button button-small button-secondary" to="/orders">My orders</Link>
+          <Link className="button button-small button-secondary" to="/notifications">Notifications</Link>
         </div>
 
         {(isTeacher || canAdmin) && (

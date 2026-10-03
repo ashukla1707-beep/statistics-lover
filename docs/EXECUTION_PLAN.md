@@ -54,7 +54,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Admin operations dashboard
 - [x] Search/filter/pagination
 - [x] Audit logs/settings
-- [ ] Accessibility/responsive/error-state pass
+- [x] Accessibility/responsive/error-state pass
 - [ ] PWA/performance
 
 ## F — Security, QA and release

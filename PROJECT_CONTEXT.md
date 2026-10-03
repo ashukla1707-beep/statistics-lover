@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer E6 — Accessibility, responsive and error-state pass
+- Current focus: Layer E7 — PWA & performance
 
 ## Deployment
 
@@ -339,3 +339,14 @@ At the time this handoff was written:
 - Supabase security advisor after E5 reports only the pre-existing Auth leaked-password-protection warning; no audit/settings-specific findings remain.
 - E5 final GitHub Quality passed typecheck, lint and build on `6f91e612cd9bd21224f592127dfa6cd323121491`.
 - Next: E6 accessibility, responsive and error-state pass.
+
+
+### Product checkpoint E6 — accessibility, responsive and error-state pass complete
+
+- Added keyboard skip navigation and route-level focus management to move focus to the main content region after navigation.
+- Mobile navigation now closes on Escape and returns focus to the menu trigger; the toggle exposes a dynamic accessible label.
+- Added global :focus-visible treatment, screen-reader-only utility, reduced-motion hardening, coarse-pointer touch-target minimums, mobile form font sizing, responsive nav overflow handling and disabled-control affordances.
+- Added a top-level React error boundary with a user-facing reload/home fallback instead of an unhandled blank screen.
+- Replaced wildcard redirect with a proper 404 page.
+- E6 GitHub Quality passed typecheck, lint and build on `8d4a82f663b3afdb9e43fadf19a3aad990e6c1f7`.
+- Next: E7 PWA and performance optimization.

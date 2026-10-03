@@ -439,3 +439,13 @@ At the time this handoff was written:
 - Android `WebChromeClient` still owns fullscreen custom-view handling and landscape orientation after Drive requests fullscreen.
 - Service-worker cache is now `statistics-lover-static-v3` to invalidate the prior player bundle.
 - Production deployment for commit `ec07f4bce734a71a602595236f99f43d4ec70bb4` is READY.
+
+
+### Watch Recording follow-up — custom Android fullscreen retained
+
+- Product decision confirmed: keep the Statistics Lover custom fullscreen button in the Android APK rather than using Google Drive's native fullscreen UI.
+- Root cause of clipped/missing controls in the earlier custom fullscreen: Android fullscreen inherited the touch-specific 1024x576 scaling workaround, so Drive's embedded desktop controls were laid out against a fake canvas and some controls were clipped/hidden.
+- Android lecture stage now carries a dedicated `lecture-player-stage-android` marker.
+- In Android custom fullscreen, the Drive iframe and overlay now use the real fullscreen viewport at 100% width/height with no 1024x576 transform scaling.
+- The Statistics Lover custom fullscreen/exit button remains visible above the player; the Statistics Lover logo overlay remains at the top-right.
+- Service-worker cache advanced to `statistics-lover-static-v4` to invalidate prior fullscreen/player bundles.

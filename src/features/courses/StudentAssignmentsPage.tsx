@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { loadStudentCourseEnrollments, type StudentCourseEnrollment } from './courseService'
 import {
@@ -80,7 +81,7 @@ export function StudentAssignmentsPage(){
   if(error&&!enrollment)return <section className="student-assignment-page"><div className="container student-assignment-shell"><div className="learning-empty-card"><h1>Assignments unavailable</h1><p>{error}</p><Link className="button button-small" to="/dashboard">Back to dashboard</Link></div></div></section>
 
   return <section className="student-assignment-page"><div className="container student-assignment-shell">
-    <Link className="learning-back-link" to={`/learn/${batchId}`}>← Learning space</Link>
+    <BackLink className="learning-back-link" to={`/learn/${batchId}`}>Learning space</BackLink>
     <header className="student-assignment-hero"><div><span className="eyebrow">Coursework</span><h1>Assignments</h1><p>{enrollment?.course.title} · {enrollment?.batch.title}</p></div><div className="student-assignment-summary"><span><strong>{summary.total}</strong>Total</span><span><strong>{summary.submitted}</strong>Submitted</span><span><strong>{summary.graded}</strong>Reviewed</span></div></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}{notice&&<div className="admin-alert admin-alert-success">{notice}</div>}
     {!assignments.length?<div className="learning-empty-card"><h2>No assignments yet</h2><p>Published assignments will appear here when they are released.</p></div>:<div className="student-assignment-list">{assignments.map((a)=>{

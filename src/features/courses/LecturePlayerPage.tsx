@@ -84,6 +84,10 @@ type LockableScreenOrientation = ScreenOrientation & {
 }
 
 async function lockLandscapeOrientation() {
+  // The Android APK owns fullscreen orientation natively. Letting both the
+  // webpage and Activity lock orientation can recreate/reload the WebView.
+  if (isStatisticsLoverAndroidApp()) return
+
   const orientation = screen.orientation as LockableScreenOrientation | undefined
   if (!orientation?.lock) return
 
@@ -95,6 +99,8 @@ async function lockLandscapeOrientation() {
 }
 
 function unlockOrientation() {
+  if (isStatisticsLoverAndroidApp()) return
+
   const orientation = screen.orientation as LockableScreenOrientation | undefined
   try {
     orientation?.unlock?.()

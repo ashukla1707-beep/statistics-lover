@@ -41,6 +41,8 @@ export function AdminOverviewPage(){
           {canManageSensitive&&<Link to="/admin/enrollments"><strong>Enrollments</strong><span>Student batch access</span></Link>}
           {canManageSensitive&&<Link to="/admin/commerce"><strong>Commerce</strong><span>Pricing, coupons and orders</span></Link>}
           {canManageSensitive&&<Link to="/admin/staff"><strong>Staff</strong><span>Roles and teacher assignments</span></Link>}
+          {canManageSensitive&&<Link to="/admin/audit"><strong>Audit Log</strong><span>Critical operational changes</span></Link>}
+          {canManageSensitive&&<Link to="/admin/settings"><strong>Settings</strong><span>Operational configuration</span></Link>}
         </div></section>
       </div>
 

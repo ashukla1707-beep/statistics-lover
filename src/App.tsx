@@ -13,6 +13,8 @@ import { TestSchedulePage } from './features/admin/TestSchedulePage'
 import { AssessmentAnalyticsPage } from './features/admin/AssessmentAnalyticsPage'
 import { CommerceManagementPage } from './features/admin/CommerceManagementPage'
 import { AdminOverviewPage } from './features/admin/AdminOverviewPage'
+import { AdminAuditPage } from './features/admin/AdminAuditPage'
+import { AdminSettingsPage } from './features/admin/AdminSettingsPage'
 import { AnnouncementManagementPage } from './features/admin/AnnouncementManagementPage'
 import { StaffManagementPage } from './features/admin/StaffManagementPage'
 import { StudentEnrollmentsPage } from './features/admin/StudentEnrollmentsPage'
@@ -348,6 +350,22 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <CommerceManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/audit"
+          element={
+            <RequireAuth roles={['admin','owner']} loadingFallback={<div className="auth-state">Loading audit log…</div>} anonymousFallback={<Navigate to="/login" replace />} unauthorizedFallback={<Navigate to="/dashboard" replace />} suspendedFallback={<Navigate to="/account-suspended" replace />}>
+              <AdminAuditPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/settings"
+          element={
+            <RequireAuth roles={['admin','owner']} loadingFallback={<div className="auth-state">Loading settings…</div>} anonymousFallback={<Navigate to="/login" replace />} unauthorizedFallback={<Navigate to="/dashboard" replace />} suspendedFallback={<Navigate to="/account-suspended" replace />}>
+              <AdminSettingsPage />
             </RequireAuth>
           }
         />

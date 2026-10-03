@@ -15,6 +15,7 @@ import './styles/attendance.css'
 import './styles/assignments.css'
 import './styles/question-bank.css'
 import './styles/test-builder.css'
+import './styles/test-schedule.css'
 import './styles/drive-player.css'
 
 createRoot(document.getElementById('root')!).render(

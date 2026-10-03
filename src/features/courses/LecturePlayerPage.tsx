@@ -127,7 +127,7 @@ function unlockOrientation() {
 function syncTouchPlayerScale(stage: HTMLDivElement | null) {
   if (!stage) return
 
-  if (!isTouchDevice()) {
+  if (isStatisticsLoverAndroidApp() || !isTouchDevice()) {
     stage.style.removeProperty('--drive-player-scale')
     return
   }

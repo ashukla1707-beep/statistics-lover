@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
@@ -117,7 +118,7 @@ export function TestBuilderPage({teacherMode=false}:{teacherMode?:boolean}){
   const pyqYears=[...new Set(Object.values(banks).flatMap((questions)=>questions.filter((q)=>q.source==='pyq'&&q.sourceYear!==null).map((q)=>q.sourceYear as number)))].sort((a,b)=>b-a)
 
   return <section className="admin-page test-builder-page"><div className="container admin-shell">
-    {teacherMode?<div className="teacher-mode-nav"><Link to="/teacher">← Teacher workspace</Link><span>Assignment-scoped access</span></div>:<AdminSubnav active="tests"/>}
+    {teacherMode?<div className="teacher-mode-nav"><BackLink to="/teacher">Teacher workspace</BackLink><span>Assignment-scoped access</span></div>:<AdminSubnav active="tests"/>}
     <header className="admin-page-heading"><div><span className="eyebrow">Assessment builder</span><h1>Tests & Sections</h1><p>Compose subject or full-batch tests from the protected question bank, with section ordering and test-specific marking.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}{notice&&<div className="admin-alert admin-alert-success">{notice}</div>}
     <div className="test-context-grid"><label className="form-field"><span>Course</span><select value={courseId} disabled={loading||!courses.length} onChange={(e)=>void chooseCourse(e.target.value)}>{courses.map((x)=><option key={x.id} value={x.id}>{x.title}</option>)}</select></label><label className="form-field"><span>Batch</span><select value={batchId} disabled={!batches.length} onChange={(e)=>void chooseBatch(e.target.value)}>{batches.map((x)=><option key={x.id} value={x.id}>{x.title}</option>)}</select></label></div>

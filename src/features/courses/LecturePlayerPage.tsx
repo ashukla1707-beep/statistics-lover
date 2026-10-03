@@ -61,6 +61,37 @@ function isTouchDevice() {
   return typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 }
 
+function shouldShowPhoneFullscreen() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
+  return navigator.maxTouchPoints > 0
+    && window.matchMedia('(hover: none) and (pointer: coarse)').matches
+}
+
+type LockableScreenOrientation = ScreenOrientation & {
+  lock?: (orientation: 'landscape') => Promise<void>
+  unlock?: () => void
+}
+
+async function lockLandscapeOrientation() {
+  const orientation = screen.orientation as LockableScreenOrientation | undefined
+  if (!orientation?.lock) return
+
+  try {
+    await orientation.lock('landscape')
+  } catch {
+    // Some mobile browsers do not permit programmatic orientation locking.
+  }
+}
+
+function unlockOrientation() {
+  const orientation = screen.orientation as LockableScreenOrientation | undefined
+  try {
+    orientation?.unlock?.()
+  } catch {
+    // Ignore browsers that do not support unlocking orientation.
+  }
+}
+
 function syncTouchPlayerScale(stage: HTMLDivElement | null) {
   if (!stage) return
 
@@ -90,6 +121,7 @@ export function LecturePlayerPage() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [canFullscreen, setCanFullscreen] = useState(false)
   const requiresDesktopSite = isMobileBrowserMode()
+  const showCustomFullscreen = canFullscreen && shouldShowPhoneFullscreen()
   const [state, setState] = useState<PlayerContext>({
     enrollment: null,
     lecture: null,
@@ -170,8 +202,16 @@ export function LecturePlayerPage() {
 
     const handleViewportChange = () => queuePlayerScaleSync(stage)
     const handleFullscreenChange = () => {
-      setIsFullscreen(getFullscreenElement() === stage)
+      const active = getFullscreenElement() === stage
+      setIsFullscreen(active)
+
+      if (!active) {
+        unlockOrientation()
+      }
+
       queuePlayerScaleSync(stage)
+      window.setTimeout(() => queuePlayerScaleSync(stage), 180)
+      window.setTimeout(() => queuePlayerScaleSync(stage), 420)
     }
 
     const resizeObserver = typeof ResizeObserver === 'undefined'
@@ -208,6 +248,8 @@ export function LecturePlayerPage() {
 
     try {
       if (getFullscreenElement() === stage) {
+        unlockOrientation()
+
         if (typeof document.exitFullscreen === 'function') {
           await document.exitFullscreen()
         } else {
@@ -221,7 +263,11 @@ export function LecturePlayerPage() {
       } else {
         await stage.webkitRequestFullscreen?.()
       }
+
+      await lockLandscapeOrientation()
       queuePlayerScaleSync(stage)
+      window.setTimeout(() => queuePlayerScaleSync(stage), 180)
+      window.setTimeout(() => queuePlayerScaleSync(stage), 420)
     } catch {
       // Keep inline playback available when the browser refuses fullscreen.
     }
@@ -300,7 +346,7 @@ export function LecturePlayerPage() {
 
           <div className="lecture-player-overlay">
             <div className="lecture-player-corner-controls">
-              {canFullscreen && (
+              {showCustomFullscreen && (
                 <button
                   type="button"
                   className="lecture-player-fullscreen"

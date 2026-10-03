@@ -21,14 +21,15 @@ export function Footer() {
         </div>
         <div>
           <h2>Platform</h2>
-          <a href="#courses">Courses</a>
-          <a href="#test-series">Test Series</a>
-          <a href="#study-material">Study Material</a>
+          <a href="/store">Courses</a>
+          <a href="/#assessments">Assessments</a>
+          <a href="/#resources">PYQs & Resources</a>
+          <a href="/login">Student Login</a>
         </div>
       </div>
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} Statistics Lover.</span>
-        <span>Built for long-term maintainability.</span>
+        <span>Learn • Practice • Succeed</span>
       </div>
     </footer>
   )

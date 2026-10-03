@@ -190,3 +190,14 @@ At the time this handoff was written:
 - Workspaces: `/admin/questions` for content-manager/admin/owner and `/teacher/questions` for assignment-scoped teachers.
 - GitHub Quality passed for develop commit `61de69552e888f6f2339bff2a69a1781061edef2`; Vercel develop alias is READY.
 - Next assessment checkpoint: C2 Test & Section Builder.
+
+
+### Assessment checkpoint C2 — test & section builder
+
+- Supabase migration `assessment_test_builder` applied; repository migration `0021_assessment_test_builder.sql` committed.
+- Staff can create subject-scoped or whole-batch tests with draft/published/archive lifecycle, total duration, max attempts, shuffle settings and instructions.
+- Tests contain ordered subject-specific sections; each section contains reusable Question Bank questions with test-specific marks and negative marks.
+- Database validation prevents cross-batch subjects, cross-subject question placement and archived question insertion.
+- Subject teachers can build subject tests; only whole-batch-assigned teachers can manage whole-batch tests.
+- Workspaces: `/admin/tests` and `/teacher/tests`.
+- C2 GitHub Quality passed on develop. Next checkpoint: C3 scheduling and student assignment windows.

@@ -19,6 +19,7 @@ export interface TeacherAssignment {
   isActive: boolean
   startsAt: string | null
   endsAt: string | null
+  courseId: string
   courseTitle: string
   batchTitle: string
   subjectTitle: string | null
@@ -81,7 +82,7 @@ export async function listTeacherAssignments(teacherId:string):Promise<TeacherAs
     const batch=batchMap.get(a.batch_id)
     return {
       id:a.id,teacherId:a.teacher_id,batchId:a.batch_id,subjectId:a.subject_id,isActive:a.is_active,startsAt:a.starts_at,endsAt:a.ends_at,
-      batchTitle:batch?.title??'Assigned batch',courseTitle:batch?courseMap.get(batch.course_id)??'Course':'Course',
+      courseId:batch?.course_id??'',batchTitle:batch?.title??'Assigned batch',courseTitle:batch?courseMap.get(batch.course_id)??'Course':'Course',
       subjectTitle:a.subject_id?subjectMap.get(a.subject_id)??'Assigned subject':null,
     }
   })

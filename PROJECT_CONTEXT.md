@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer E7 — PWA & performance
+- Current focus: Layer F1 — Security audit
 
 ## Deployment
 
@@ -350,3 +350,14 @@ At the time this handoff was written:
 - Replaced wildcard redirect with a proper 404 page.
 - E6 GitHub Quality passed typecheck, lint and build on `8d4a82f663b3afdb9e43fadf19a3aad990e6c1f7`.
 - Next: E7 PWA and performance optimization.
+
+
+### Product checkpoint E7 — PWA & performance complete
+
+- Added installable web manifest, service-worker registration and a conservative same-origin cache strategy for the static shell and versioned assets; authenticated/API requests are not intercepted.
+- Added Vercel cache headers for hashed assets, brand assets, manifest and revalidated service worker.
+- Converted heavy product/admin/student routes to React lazy imports behind a shared Suspense fallback.
+- Vite build now separates React/router and Supabase vendor chunks with Vite 8-compatible manual chunking.
+- Initial PWA commit `689b2c4e403918d7831b3a5499c443ec8a218bcb` failed because the chunk configuration used an incompatible form for Vite 8; fixed in `62fc55e6dcfd32a2914374be5a0e12e2eb8923d1`.
+- E7 final GitHub Quality passed typecheck, lint and build on `62fc55e6dcfd32a2914374be5a0e12e2eb8923d1`.
+- Product layer E is complete. Next: F1 security audit.

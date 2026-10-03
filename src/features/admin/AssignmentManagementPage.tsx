@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
@@ -107,7 +108,7 @@ export function AssignmentManagementPage({teacherMode=false}:{teacherMode?:boole
   }
 
   return <section className="admin-page assignment-admin-page"><div className="container admin-shell">
-    {teacherMode?<div className="teacher-mode-nav"><Link to="/teacher">← Teacher workspace</Link><span>Assignment-scoped access</span></div>:<AdminSubnav active="assignments"/>}
+    {teacherMode?<div className="teacher-mode-nav"><BackLink to="/teacher">Teacher workspace</BackLink><span>Assignment-scoped access</span></div>:<AdminSubnav active="assignments"/>}
     <header className="admin-page-heading"><div><span className="eyebrow">Teaching workflow</span><h1>Assignments & Submissions</h1><p>Publish work, set due dates, review private student submissions and return grades or feedback.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}{notice&&<div className="admin-alert admin-alert-success">{notice}</div>}
     <div className="assignment-context-grid">

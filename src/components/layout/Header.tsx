@@ -60,7 +60,7 @@ export function Header() {
             </a>
           ))}
           {canManageAcademics && (
-            <Link to="/admin/academics" onClick={closeMenu}>Admin</Link>
+            <Link to="/admin/overview" onClick={closeMenu}>Admin</Link>
           )}
           {canManageAcademics && (
             <Link to="/admin/content" onClick={closeMenu}>Content</Link>

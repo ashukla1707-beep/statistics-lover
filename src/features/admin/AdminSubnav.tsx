@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 
-type AdminSection = 'academics' | 'content' | 'delivery' | 'resources' | 'questions' | 'tests' | 'schedules' | 'analytics' | 'assignments' | 'attendance' | 'announcements' | 'commerce' | 'staff' | 'enrollments'
+type AdminSection = 'overview' | 'academics' | 'content' | 'delivery' | 'resources' | 'questions' | 'tests' | 'schedules' | 'analytics' | 'assignments' | 'attendance' | 'announcements' | 'commerce' | 'staff' | 'enrollments'
 
 export function AdminSubnav({ active }: { active: AdminSection }) {
   const { hasAnyRole } = useAuth()

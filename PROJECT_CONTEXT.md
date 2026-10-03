@@ -10,20 +10,19 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `d52468f77fe5db0da485ab8a313d42889153d353`
-- Current focus: **public Home + cross-device web UI stabilization and deployed-device validation**. Resume Android A3 native-client work after this web UI baseline is verified on real devices.
+- Current handoff base before this documentation commit: `fb6ca399601297b19823e0d55e31b2a4018ba9f3`
+- Current focus: **Vercel-backed public Home + cross-device web UI stabilization and deployed-device validation**. Resume Android A3 native-client work after this web UI baseline is verified on real devices.
 
 ## Deployment
 
-- **Current frontend deployment target: Cloudflare Workers static assets from `develop`.**
-- Vercel is intentionally de-prioritized for now; it may be restored later as the preferred preview/production host.
-- Existing Vercel project/team/production deployments remain in place but are not the authoritative current UI verification target.
-- Cloudflare's earlier Git-connected Workers Build path was unreliable because builds repeatedly failed during **Initializing** before checkout.
-- To bypass that Cloudflare build-system failure, repository workflow `.github/workflows/cloudflare-deploy.yml` now builds the Vite app in GitHub Actions and deploys `dist/` directly with Wrangler using `wrangler.jsonc`.
-- The Cloudflare workflow passed install/typecheck/lint/build but the first deploy attempt on `40441488ec4a33dadd7b720408a0315e0b5a78e2` stopped before Wrangler because the GitHub repository currently has no `CLOUDFLARE_API_TOKEN` secret (and no `CLOUDFLARE_ACCOUNT_ID` secret).
-- Documentation-only changes are ignored by the Cloudflare deploy trigger to avoid unnecessary failed deploy attempts while credentials are being configured.
-- Required unblock: add a Cloudflare API token with permission to deploy the `statistics-lover` Worker and, preferably, the Cloudflare account ID as GitHub repository secrets; then rerun **Cloudflare Deploy**. Do not place the API token in source code or `.env.production`.
-- Once the direct Wrangler deploy succeeds, Cloudflare becomes the active device-testing URL until a later explicit decision switches back to Vercel.
+- **Current frontend deployment target: Vercel only.**
+- Vercel team: **Statistics Lover**
+- Vercel project: `statistics-lover`
+- Development branch: `develop`; GitHub integration automatically creates Vercel Preview deployments for develop commits.
+- `main` remains the production branch unless a later explicit release decision changes it.
+- Stable develop alias remains `statistics-lover-git-develop-statistics-lover.vercel.app`.
+- Cloudflare deployment automation was removed after the user explicitly decided to continue with Vercel only. The dormant `wrangler.jsonc` may remain for a future hosting switch but is not part of the active release path.
+- Do not re-add or rerun Cloudflare deployment workflows unless the user explicitly changes this decision later.
 
 ## Backend and services
 
@@ -510,3 +509,14 @@ At the latest handoff:
 - After the user reported adding the credentials, Cloudflare Deploy run `37162329262` was re-run (attempt 2). Install/typecheck/lint/build all passed again, but GitHub Actions still received an empty `CLOUDFLARE_API_TOKEN` and empty `CLOUDFLARE_ACCOUNT_ID` at the credential check. This means the values are not currently available to the workflow as GitHub **Actions repository secrets** (for example, they may have been added under a different secret store/category or with different names).
 - Safe unblock: add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as GitHub repository secrets, then rerun the Cloudflare Deploy workflow. Never commit those credentials.
 - Vercel remains connected but should not be used as the current acceptance target until the user explicitly switches back.
+
+
+### Deployment checkpoint — Vercel-only path restored
+
+- User explicitly ended the Cloudflare attempt and decided to use **Vercel only** for frontend deployment.
+- The temporary GitHub Actions Cloudflare deploy workflow was deleted on commit `333a3fab6ae53eb4edb9a7474c320e09d4fa5e63`.
+- `docs/DEPLOYMENT.md` was restored to a Vercel-only release policy on `fb6ca399601297b19823e0d55e31b2a4018ba9f3`.
+- The existing Vercel Git integration is healthy and is again the authoritative deployment path for `develop`.
+- During the Cloudflare experiment, Vercel continued to catch up automatically; the develop branch produced READY preview deployments through commit `b9504a1450a0fb8861b89b691ab1f340dff8cfe3`.
+- Cloudflare credentials/workflows should not be revisited unless the user explicitly asks to switch away from Vercel later.
+- Next deployment task: wait for the latest Vercel preview created from the current documentation/policy commits, verify the stable develop alias, then use that deployment for mobile/tablet/desktop UI acceptance.

@@ -430,3 +430,12 @@ At the time this handoff was written:
 ### Production redeploy checkpoint — Android WebView public host
 - Production redeploy requested so the public alias `statistics-lover.vercel.app` serves the completed web release for the Android WebView shell.
 - This commit intentionally contains no application behavior change; it refreshes the Vercel production deployment from the verified `main` branch.
+
+
+### Watch Recording follow-up — Android uses Drive native fullscreen
+
+- Android APK now suppresses the Statistics Lover custom fullscreen button and uses Google Drive's native fullscreen control instead.
+- Reason: outer-stage fullscreen left Drive in embedded-player mode and caused some native Drive controls to render blank/missing.
+- Android `WebChromeClient` still owns fullscreen custom-view handling and landscape orientation after Drive requests fullscreen.
+- Service-worker cache is now `statistics-lover-static-v3` to invalidate the prior player bundle.
+- Production deployment for commit `ec07f4bce734a71a602595236f99f43d4ec70bb4` is READY.

@@ -23,7 +23,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Protected recording provider foundation
 - [x] Google Drive recording player
 - [x] Learning-resource database/RLS/RPC foundation
-- [ ] Study material admin/student UI
+- [x] Study material admin/student UI
 - [ ] Live-class scheduling/availability hardening
 - [ ] Teacher assignments and teacher workspace
 - [ ] Attendance

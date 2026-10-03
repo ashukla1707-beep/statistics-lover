@@ -7,6 +7,10 @@ on:
       - develop
     paths-ignore:
       - "android-app/**"
+      - "docs/**"
+      - "PROJECT_CONTEXT.md"
+      - "README.md"
+      - "CHANGELOG.md"
 
 permissions:
   contents: read

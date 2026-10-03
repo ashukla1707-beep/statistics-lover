@@ -1,29 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.StatisticsLover" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="windowActionModeOverlay">true</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">#F8F6FA</item>
+        <item name="android:windowBackground">#F7F8FB</item>
         <item name="android:statusBarColor">#08111F</item>
         <item name="android:navigationBarColor">#08111F</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:windowIsTranslucent">false</item>
-        <item name="android:windowIsFloating">false</item>
         <item name="colorAccent">#C6005A</item>
     </style>
 
-    <style name="Theme.StatisticsLover.SplashContent" parent="Theme.StatisticsLover">
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowBackground">#F8F6FA</item>
-        <item name="android:statusBarColor">#F8F6FA</item>
-        <item name="android:navigationBarColor">#F8F6FA</item>
-    </style>
-
     <style name="Theme.StatisticsLover.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#F8F6FA</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
-        <item name="windowSplashScreenAnimationDuration">0</item>
-        <item name="postSplashScreenTheme">@style/Theme.StatisticsLover.SplashContent</item>
+        <item name="windowSplashScreenBackground">#F7F8FB</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher</item>
+        <item name="windowSplashScreenAnimationDuration">250</item>
+        <item name="postSplashScreenTheme">@style/Theme.StatisticsLover</item>
     </style>
 </resources>

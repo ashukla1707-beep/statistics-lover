@@ -10,6 +10,7 @@ export function DashboardPage(){
   const navigate=useNavigate()
   const {identity,signOut}=useAuth()
   const [busy,setBusy]=useState(false)
+  const [currentTime]=useState(()=>Date.now())
   const [data,setData]=useState<StudentDashboardData|null>(null)
   const [error,setError]=useState<string|null>(null)
 
@@ -21,7 +22,7 @@ export function DashboardPage(){
   const displayName=identity?.profile?.fullName||identity?.email||'Student'
   const isTeacher=identity?.roles.includes('teacher')??false
   const canAdmin=identity?.roles.some((role)=>role==='admin'||role==='owner'||role==='content_manager')??false
-  const now=Date.now()
+  const now=currentTime
   const nextLecture=data?.lectures.find((lecture)=>new Date(lecture.scheduledAt).getTime()>=now-30*60*1000)??data?.lectures[0]??null
   const openTests=data?.tests.filter((test)=>new Date(test.opensAt).getTime()<=now&&new Date(test.closesAt).getTime()>now)??[]
   const pendingAssignments=data?.assignments.filter((assignment)=>!assignment.submissionStatus||assignment.submissionStatus==='draft')??[]

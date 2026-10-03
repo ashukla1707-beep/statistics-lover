@@ -1,5 +1,6 @@
 import { useEffect,useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { loadTeacherDashboard,type TeacherDashboardData } from './teacherDashboardService'
 
@@ -23,7 +24,7 @@ export function TeacherWorkspacePage(){
   const subjectScopes=activeAssignments.filter((item)=>item.subjectId!==null).length
 
   return <section className="teacher-dashboard-page"><div className="container teacher-dashboard-shell">
-    <Link className="learning-back-link" to="/dashboard">← Student dashboard</Link>
+    <BackLink className="learning-back-link" to="/dashboard">Student dashboard</BackLink>
     <header className="teacher-dashboard-hero"><div><span className="eyebrow">Teacher workspace</span><h1>Your teaching dashboard</h1><p>Only batches and subjects assigned to your account are included.</p></div><Link className="button button-small button-secondary" to="/notifications">Notifications</Link></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}
     {data?.partialFailures?<div className="teacher-dashboard-warning">Some teaching widgets could not refresh. Available scoped data remains usable.</div>:null}

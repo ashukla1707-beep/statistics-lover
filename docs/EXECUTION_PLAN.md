@@ -43,8 +43,10 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Orders/payments/provider adapter
 - [x] Coupons/receipts
 - [x] Enrollment activation from payment
-- [ ] Announcements
-- [ ] Email/WhatsApp/in-app notifications
+- [x] Announcements
+- [x] In-app notifications
+- [x] Email/WhatsApp secure outbox + provider worker adapters
+- [ ] Email/WhatsApp production credentials/templates + live delivery verification
 
 ## E — Product completion
 - [ ] Student dashboard completion

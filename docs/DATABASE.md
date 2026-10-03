@@ -102,8 +102,11 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 ### Operations
 
 - attendance
-- announcements
-- notifications
+- announcements ✅
+- in-app notifications / read state ✅
+- notification channel preferences ✅
+- email/WhatsApp delivery outbox ✅
+- provider worker claim/retry/completion contract ✅
 - audit logs
 - settings
 

@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer D2 — Announcements & Notifications
+- Current focus: Layer E1 — Student dashboard completion
 
 ## Deployment
 
@@ -265,3 +265,20 @@ At the time this handoff was written:
 - GitHub Quality passed for Commerce styling commit `e81e94ea5f5ff631b9ada8b75646b0f0744b4ac3` and Store/My Orders commit `edb49d1503e172ccb183adc38f2b0cf07004c34b` (typecheck, lint, build).
 - Latest Vercel deployment surfaced by the connector is READY for Commerce styling commit `e81e94ea...`; Store/My Orders commit was CI-green but had not yet surfaced in the connector at this checkpoint.
 - Next: D2 announcements, in-app notifications, then email/WhatsApp adapter hooks.
+
+
+### Communication checkpoint D2 — announcements & notifications
+
+- Supabase migration `announcements_in_app_notifications` applied and repository migration `0028_announcements_in_app_notifications.sql` committed.
+- Announcements support global, batch and subject scope, draft/published/archive lifecycle, scheduled publish time and expiry. Subject/batch scope is validated server-side.
+- Admin/content-manager workspace: `/admin/announcements`. Assignment-scoped teacher workspace: `/teacher/announcements`; teachers cannot publish global announcements.
+- Publishing an announcement generates private per-student in-app notifications for eligible active students. Student inbox: `/notifications`, with unread/read state and mark-all-read.
+- Supabase migration `notification_channel_outbox` applied and repository migration `0029_notification_channel_outbox.sql` committed.
+- Students can manage email/WhatsApp delivery preferences; email defaults enabled and WhatsApp is opt-in. WhatsApp delivery requires a phone number on the profile.
+- External email/WhatsApp notifications are queued in a service-role-controlled outbox with retry/attempt state; browser clients cannot read or mutate other users’ deliveries.
+- Supabase Edge Function `notification-dispatch` version 1 is deployed ACTIVE with JWT verification plus an explicit service-role-token check. It implements Resend email delivery and Meta WhatsApp Cloud API template delivery, then completes/fails outbox rows through service-role-only RPCs.
+- Required release-time external configuration for those channels: `RESEND_API_KEY`, `EMAIL_FROM`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, approved `WHATSAPP_TEMPLATE_NAME`, and optional template language/Graph version. Until configured, in-app notifications are fully operational while external-channel jobs remain dormant.
+- Supabase security advisor after D2 reports only the pre-existing leaked-password-protection Auth warning; no announcement/notification-specific security warnings remain.
+- GitHub Quality passed for announcement foundation `bccc7d7851acd9ed7bd4a7247803791f4ca6565f`, announcement/inbox UI `c321ef761025fc7e44a9854a09755bc732030db6`, and channel-outbox UI `0aa7ceefcdc4858d58e45d2b8dd1a6a0e038e765`.
+- Layer D feature implementation is complete except for live external email/WhatsApp provider credentials/template verification, which is an external release configuration dependency.
+- Next product layer: E1 student dashboard completion.

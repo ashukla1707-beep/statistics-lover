@@ -1,5 +1,6 @@
 import { useEffect,useMemo,useState,type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { listManagedBatches,listManagedCourses,type ManagedBatch,type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
@@ -71,7 +72,7 @@ export function AnnouncementManagementPage({teacherMode=false}:{teacherMode?:boo
   }
 
   return <section className="admin-page announcements-admin-page"><div className="container admin-shell">
-    {teacherMode?<div className="teacher-mode-nav"><Link to="/teacher">← Teacher workspace</Link><span>Assigned teaching scope</span></div>:<AdminSubnav active="announcements"/>}
+    {teacherMode?<div className="teacher-mode-nav"><BackLink to="/teacher">Teacher workspace</BackLink><span>Assigned teaching scope</span></div>:<AdminSubnav active="announcements"/>}
     <header className="admin-page-heading"><div><span className="eyebrow">Communication</span><h1>Announcements</h1><p>Publish scheduled global, batch or subject notices. Published notices generate private in-app notifications for eligible students.</p></div></header>
     {error&&<div className="admin-alert admin-alert-error">{error}</div>}{notice&&<div className="admin-alert admin-alert-success">{notice}</div>}
     <section className="admin-panel announcements-panel"><div className="admin-panel-heading"><div><span>{announcements.length} announcements</span><h2>Communication feed</h2></div><button className="button button-small" disabled={loading} onClick={()=>void startNew()}>+ New announcement</button></div>

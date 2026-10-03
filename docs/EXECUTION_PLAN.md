@@ -31,7 +31,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [ ] Teaching-layer acceptance tests
 
 ## C — Assessment
-- [ ] Question bank and options
+- [x] Question bank and options
 - [ ] Test/section builder
 - [ ] Scheduling/assignment
 - [ ] Student test-taking

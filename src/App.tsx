@@ -22,6 +22,7 @@ import {
 import { LearningPage } from './features/courses/LearningPage'
 import { StudentAssignmentsPage } from './features/courses/StudentAssignmentsPage'
 import { StudentTestsPage } from './features/courses/StudentTestsPage'
+import { StudentTestAttemptPage } from './features/courses/StudentTestAttemptPage'
 import { LecturePlayerPage } from './features/courses/LecturePlayerPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { HomePage } from './features/home/HomePage'
@@ -42,6 +43,19 @@ function SiteLayout() {
 export default function App() {
   return (
     <Routes>
+      <Route
+        path="learn/:batchId/test/:scheduleId"
+        element={
+          <RequireAuth
+            loadingFallback={<div className="assessment-runner-loading">Loading secure test…</div>}
+            anonymousFallback={<Navigate to="/login" replace />}
+            suspendedFallback={<Navigate to="/account-suspended" replace />}
+          >
+            <StudentTestAttemptPage />
+          </RequireAuth>
+        }
+      />
+
       <Route
         path="learn/:batchId/lecture/:lectureId"
         element={

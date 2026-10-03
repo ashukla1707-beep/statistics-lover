@@ -82,10 +82,12 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 
 ### Assessment
 
+- question bank ✅
+- protected question options / answer keys ✅
+- MCQ / MSQ / numeric / short-text question types ✅
+- PYQ metadata foundation ✅
 - tests
 - test sections
-- questions
-- question options
 - attempts
 - answers
 - results

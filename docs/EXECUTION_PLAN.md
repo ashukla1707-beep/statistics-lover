@@ -27,7 +27,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] Live-class scheduling/availability hardening
 - [x] Teacher assignments and teacher workspace
 - [x] Attendance
-- [ ] Assignments and submissions
+- [x] Assignments and submissions
 - [ ] Teaching-layer acceptance tests
 
 ## C — Assessment

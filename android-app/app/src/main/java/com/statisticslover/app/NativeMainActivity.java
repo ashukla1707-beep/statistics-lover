@@ -28,7 +28,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 public class NativeMainActivity extends AppCompatActivity {
     private final ExecutorService io=Executors.newSingleThreadExecutor();
@@ -50,7 +49,7 @@ public class NativeMainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle state){
         super.onCreate(state);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        if(!BuildConfig.DEBUG) getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         api=new NativeApiClient(this);
         ui=new NativeUi(this);
         createRoot();
@@ -284,7 +283,7 @@ public class NativeMainActivity extends AppCompatActivity {
                         LearningScreen.build(
                                 this,ui,courseTitle,batchTitle,data,
                                 this::showCourses,
-                                this::openExternal
+                                this::openLearningAction
                         )
                 ));
                 screen="learning";
@@ -295,6 +294,23 @@ public class NativeMainActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private void openLearningAction(JSONObject action){
+        String url=action.optString("action_url",action.optString("actionUrl",""));
+        if(url.isBlank()) return;
+
+        String actionKind=action.optString("action_kind",action.optString("actionKind",""));
+        String provider=action.optString("provider","");
+        if("watch".equals(actionKind)&&"google_drive".equals(provider)){
+            RecordingActivity.open(
+                    this,
+                    action.optString("label","Watch recording"),
+                    url
+            );
+            return;
+        }
+        openExternal(url);
     }
 
     private void showInbox(){

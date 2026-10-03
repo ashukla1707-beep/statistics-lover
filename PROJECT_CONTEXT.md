@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer F4 — Production migration/build verification
+- Current focus: Layer F5 — Release develop to main
 
 ## Deployment
 
@@ -413,3 +413,15 @@ At the time this handoff was written:
 - Frontend route guards already mirror this split: teacher routes require teacher role; admin-sensitive commerce/enrollment/staff/audit/settings routes require admin/owner; content management routes permit content-manager/admin/owner.
 - This matrix also closes the Teaching-layer acceptance-test item because it verifies student access, teacher subject scoping and whole-batch management denial under live RLS.
 - Next: F4 production migration/build/deployment verification.
+
+
+### Release checkpoint F4 — production migration/build verification complete
+
+- Repository contains 33 SQL migration files and live Supabase migration history contains the corresponding 33 named migrations through `receipt_integrity_constraints`.
+- Current develop head passed GitHub Quality (typecheck, lint, build).
+- Vercel deployment for develop commit `3aae0da6eadf612fe5b203747d65d0bb64a5240d` is READY and owns the stable alias `statistics-lover-git-develop-statistics-lover.vercel.app`.
+- Stable alias and raw deployment return identical built asset hashes.
+- Deep SPA routes `/store` and `/login` return HTTP 200 through the rewrite.
+- `/manifest.webmanifest` and `/sw.js` return HTTP 200 with the expected cache policies.
+- Browser security headers, including CSP, no-sniff, referrer policy and frame denial, are present on the deployed response.
+- Next: F5 compare/release develop to main, subject to the remaining external release-settings dependencies already documented.

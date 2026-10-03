@@ -61,7 +61,7 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] RLS/privilege/browser-secret/provider-link audit
 - [x] Data-integrity audit
 - [x] Cross-role acceptance scenarios
-- [ ] Production migration/build verification
+- [x] Production migration/build verification
 - [ ] Release `develop` -> `main`
 - [ ] Production smoke test/final handover
 

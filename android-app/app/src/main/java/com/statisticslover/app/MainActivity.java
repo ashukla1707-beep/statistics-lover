@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String DESKTOP_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) " +
-            "Chrome/126.0.0.0 Safari/537.36";
+            "Chrome/126.0.0.0 Safari/537.36 StatisticsLoverAndroid/1.0";
 
     protected WebView webView;
     private FrameLayout root;
@@ -115,7 +115,8 @@ public class MainActivity extends AppCompatActivity {
             webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         }
 
-        mobileUserAgent = s.getUserAgentString();
+        mobileUserAgent = s.getUserAgentString() + " StatisticsLoverAndroid/1.0";
+        s.setUserAgentString(mobileUserAgent);
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);

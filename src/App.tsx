@@ -2,6 +2,8 @@ import { lazy,Suspense } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
+import { AndroidAppHeader,AndroidBottomNav } from './components/layout/AndroidAppChrome'
+import { isStatisticsLoverAndroidApp } from './lib/runtime'
 import { RouteFocus } from './components/layout/RouteFocus'
 import { NotFoundPage } from './features/system/NotFoundPage'
 import {
@@ -44,15 +46,16 @@ const NotificationsPage=lazy(()=>import('./features/communications/Notifications
 const TeacherWorkspacePage=lazy(()=>import('./features/teacher/TeacherWorkspacePage').then((module)=>({default:module.TeacherWorkspacePage})))
 
 function SiteLayout() {
+  const androidApp=isStatisticsLoverAndroidApp()
   return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to main content</a>
-      <Header />
+    <div className={androidApp?'app-shell android-app-mode':'app-shell'}>
+      {!androidApp&&<a className="skip-link" href="#main-content">Skip to main content</a>}
+      {androidApp?<AndroidAppHeader/>:<Header/>}
       <RouteFocus />
       <main id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
-      <Footer />
+      {androidApp?<AndroidBottomNav/>:<Footer/>}
     </div>
   )
 }

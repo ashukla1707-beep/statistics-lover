@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Android APK test & native behavior validation
+- Current focus: Android A2 — Stat Archive-style native shell device validation
 
 ## Deployment
 
@@ -440,3 +440,18 @@ At the time this handoff was written:
 - Android commit `a1ed680e76db151f1cbaf4686f6f76b2b1331024` passed both Android APK workflow run `37127723234` and repository Quality workflow run `37127723208`.
 - Generated debug APK SHA-256: `665d5716bd05e113faa6e000722c8fdda372a0c20db8174643891bfdd60afd9c`.
 - Next Android step: install on a real phone and validate login/session persistence, recording desktop-UA behavior, fullscreen landscape, assignment file upload, external Meet links, back navigation, and screenshot blocking before production signing.
+
+
+### Android checkpoint A2 — Stat Archive-style shell build complete
+
+- Rebuilt Statistics Lover Android using the same architecture style as the existing Stat Archive Android app after inspecting `ashukla1707-beep/statarchive-android`.
+- Added AndroidX/AppCompat/Core SplashScreen dependencies and enabled AndroidX in the Android project.
+- Native launch stack now owns the cold-start splash and keeps it visible until the React app has actually rendered, rather than exposing a blank/basic WebView launch.
+- Added a dedicated Statistics Lover WebView data profile, proper Android system-inset handling, Android Back dispatcher behavior, persistent cookies/session handling, trusted-host routing and native app-mode injection.
+- Recording route still switches only Watch Recording to a desktop Chrome user agent; fullscreen remains immersive landscape and returns to portrait on exit.
+- Assignment uploads use the Android file picker; external links such as Google Meet open outside the app; FLAG_SECURE remains enabled.
+- The product UI remains web-driven inside the native shell, matching Stat Archive's architectural model rather than being a full native-screen rewrite.
+- Initial Stat Archive-style commit `d187554acf8054eac3c34604e22be0bf395b7035` failed Android compilation because AndroidX mode was not enabled; fixed in `99bfafb34aebabfaa423b2e1ae5795c222a2fd79`.
+- Android APK workflow run `37128489532` and normal Quality workflow run `37128489574` both passed.
+- Workflow artifact digest: `sha256:4cd7cb096b7fb6846f54f5e2573a28c1a3a4d892cdcce6ffb9f33b549e4e4ab7` (ZIP). Extracted APK SHA-256: `e1321e2e4f39145d06222ee3e77113d349b27829b4924018d96062f56c74fa28`.
+- Next Android step: install this A2 APK on the real phone and validate launch/splash feel, login persistence, normal navigation, Watch Recording desktop-UA behavior, fullscreen landscape, uploads, external Meet links and screenshot blocking. If the user means a fully native-screen app rather than Stat Archive-style shell behavior, that is a separate larger rewrite.

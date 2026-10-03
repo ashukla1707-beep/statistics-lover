@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { BackLink } from '../../components/ui/BackLink'
 import { useAuth } from '../auth'
 import { listManagedBatches, listManagedCourses, type ManagedBatch, type ManagedCourse } from './academicAdminService'
 import { AdminSubnav } from './AdminSubnav'
@@ -59,7 +60,7 @@ export function ResourceManagementPage({ teacherMode = false }: { teacherMode?: 
   return <section className="admin-page resource-admin-page"><div className="container admin-shell">
     {teacherMode ? (
       <div className="teacher-mode-nav">
-        <Link to="/teacher">← Teacher workspace</Link>
+        <BackLink to="/teacher">Teacher workspace</BackLink>
         <span>Assignment-scoped access</span>
       </div>
     ) : (

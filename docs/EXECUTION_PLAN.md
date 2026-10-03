@@ -40,9 +40,9 @@ This is the execution ledger for finishing the website layer by layer without re
 - [x] PYQ assessment integration
 
 ## D — Commerce and communication
-- [ ] Orders/payments/provider adapter
-- [ ] Coupons/receipts
-- [ ] Enrollment activation from payment
+- [x] Orders/payments/provider adapter
+- [x] Coupons/receipts
+- [x] Enrollment activation from payment
 - [ ] Announcements
 - [ ] Email/WhatsApp/in-app notifications
 

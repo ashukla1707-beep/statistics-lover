@@ -11,7 +11,7 @@
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
 - Current handoff base before this documentation commit: `8e1ef7217bbe834369b29e37b9450d8016ac105d`
-- Current focus: Layer D — Commerce & Communication
+- Current focus: Layer D2 — Announcements & Notifications
 
 ## Deployment
 
@@ -249,3 +249,19 @@ At the time this handoff was written:
 - C7 GitHub Quality passed on develop commit `61fbdb6c6928156c04709070d9d7c58736cb6dca` (typecheck, lint, build).
 - Assessment execution-plan items C1–C7 are complete. Next layer: D Commerce & Communication, beginning with orders/payments/provider adapter and enrollment activation.
 - Vercel stable develop alias remains known to lag behind current GitHub develop and must be resynchronized before release acceptance.
+
+
+### Commerce checkpoint D1 — orders, payments, coupons, receipts & enrollment activation
+
+- Supabase migration `commerce_orders_payments` applied and repository migration `0026_commerce_orders_payments.sql` committed.
+- Commerce uses server-authoritative `batch_offers` pricing in minor currency units; browser clients never decide the paid amount or enrollment entitlement.
+- Orders snapshot subtotal, discount, coupon, currency and payment provider. Coupons support percent/fixed discounts, time windows, minimum order, max discount, global redemption caps and per-user limits.
+- Verified payment events are idempotent by provider/event ID. The provider-neutral service-role endpoint `record_verified_commerce_payment` is the adapter boundary for a future Razorpay/Stripe/external webhook; a live third-party gateway is not configured yet because no provider has been selected.
+- Admin/owner can verify a manual payment from `/admin/commerce`; successful verification atomically marks the order paid, activates/updates the enrollment and creates a receipt snapshot.
+- Public Store: `/store`. Authenticated order history: `/orders`. Header/dashboard now link to these workflows.
+- Admin Commerce manages batch pricing, coupons and latest orders/payments. Student order creation cannot mark its own payment as verified.
+- Migration `commerce_security_hardening` applied after Supabase advisor review: public offer discovery now uses SECURITY INVOKER, provider payment recording is service-role only, the admin manual-payment wrapper is invoker-safe, the order-offer FK is indexed, and Commerce write policies no longer create duplicate permissive SELECT policies. Repository migration `0027_commerce_security_hardening.sql` is committed.
+- Supabase security advisor after D1 reports only the pre-existing Auth leaked-password-protection warning; no Commerce-specific security warnings remain.
+- GitHub Quality passed for Commerce styling commit `e81e94ea5f5ff631b9ada8b75646b0f0744b4ac3` and Store/My Orders commit `edb49d1503e172ccb183adc38f2b0cf07004c34b` (typecheck, lint, build).
+- Latest Vercel deployment surfaced by the connector is READY for Commerce styling commit `e81e94ea...`; Store/My Orders commit was CI-green but had not yet surfaced in the connector at this checkpoint.
+- Next: D2 announcements, in-app notifications, then email/WhatsApp adapter hooks.

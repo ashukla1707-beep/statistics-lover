@@ -109,9 +109,12 @@ Enrollment is the server-authoritative link between a student and a batch. A fro
 
 ### Commerce
 
-- orders
-- payments
-- coupons
+- batch offers / server-authoritative pricing ✅
+- orders ✅
+- verified payment events / provider adapter contract ✅
+- coupons ✅
+- receipts ✅
+- payment-triggered enrollment activation ✅
 - refunds / adjustments where required
 
 ## Rules

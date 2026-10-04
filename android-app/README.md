@@ -105,3 +105,10 @@ Version 1.0.30 removes the old two-Activity splash handoff and launches directly
 Version 1.0.31 removes the duplicate-logo startup effect. Android's system splash now shows only the current light/dark theme background, while the Statistics Lover logo appears once in the native loading overlay. The overlay uses the restored validated 420x420 original logo with FIT_CENTER and circular clipping.
 
 The native shell follows the device light/dark setting, including splash, WebView background and system bars. The website follows `prefers-color-scheme` on phone, tablet and desktop browsers.
+
+
+## Startup recovery 1.0.32
+
+Version 1.0.32 / versionCode 33 restores the known-working 1.0.30 native startup/splash implementation after the 1.0.31 native theme/splash experiment caused an on-device startup failure.
+
+The web light/dark theme remains deployed. Native splash/theming work is frozen until this recovery build is confirmed opening correctly on-device.

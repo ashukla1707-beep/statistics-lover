@@ -1472,3 +1472,25 @@ At the latest verified handoff on **2026-10-04**:
   - Supabase leaked-password protection;
   - production email/WhatsApp provider credentials/templates;
   - Razorpay Test Mode secrets and webhook.
+
+
+## RAZORPAY KYC PAUSE — Next payment milestone (2026-10-04)
+
+- Razorpay gateway implementation is technically complete through the pre-activation stage.
+- Current customer-facing gateway state remains intentionally **disabled** with `commerce_razorpay_enabled=false`.
+- Razorpay merchant account/KYC has not yet been completed by the owner.
+- Do not request, store, or paste Razorpay secrets into chat.
+- The next payment-gateway action is intentionally paused until the owner confirms that **Razorpay KYC/account activation is complete**.
+- When KYC is complete, continue in guided steps, one step at a time:
+  1. enter Razorpay Test Mode;
+  2. generate Test Mode API keys;
+  3. create a dedicated Razorpay webhook secret;
+  4. configure Supabase Edge Function secrets `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`;
+  5. configure the Razorpay Test Mode webhook to `https://wjsudutyvsssfhrdqvbr.supabase.co/functions/v1/razorpay-webhook`;
+  6. enable at minimum `payment.captured` and `payment.failed` events;
+  7. execute a full sandbox payment;
+  8. verify order -> verified payment -> receipt -> enrollment -> webhook idempotency;
+  9. only after the sandbox pass, set `commerce_razorpay_enabled=true`;
+  10. later repeat the same controlled process with Live Mode keys/webhook after Razorpay live activation.
+- Until KYC is complete, make no further Razorpay activation changes.
+- Android remains **1.0.41 / versionCode 42** and requires no payment-specific rebuild at this checkpoint.

@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `ff140ed53a6276dc278f34fb07c0cd0727ed63fc`
-- Current focus: **Android A3 native teacher/admin editing workflows**. Recording, attendance, grading, assessment operations, and study-resource management are implemented; next native layer is lecture delivery-source management.
+- Current handoff base before this documentation commit: `cc8bbb1f72221c4c23de3edb39fdf1768f3997c3`
+- Current focus: **Android A3 native operations completion and real-device acceptance**. Web UI is deployed on Vercel and no longer blocks native work.
 
 ## Deployment
 
@@ -628,3 +628,32 @@ At the latest handoff:
 - APK artifact id `11289171194`; artifact ZIP digest `sha256:aa9cf323a13be65b4e4f9ada1d3ec1dd61ccbc8c9cf62e33c72ff1aba92e9d2e`.
 - Extracted debug APK SHA-256: `b216a066bd0168dd84cbf12580b70173bb7e74f646620190e503eea538bb8451`.
 - Next native layer: lecture delivery-source management (Meet/Drive/external availability windows), then remaining admin operations.
+
+
+### Android checkpoint A3.6 — native lecture delivery management complete
+
+- Added native management for protected lecture delivery sources while preserving the existing provider-neutral data model and RLS authorization.
+- Repository-backed `native-api` was extended with:
+  - `deliveryWorkspace`: loads RLS-visible subjects/modules/lectures plus protected delivery sources for a batch or teacher-assigned subject.
+  - `saveDeliverySource`: validates action/provider/link compatibility, label length and optional availability windows, then upserts through the caller's user JWT/RLS.
+  - `deleteDeliverySource`: removes a join/watch source only when the caller's DELETE policy allows it; current database policy keeps deletion admin/owner-only.
+- Existing database authorization remains authoritative. Live RLS currently permits assigned teachers to read/insert/update delivery sources only for lectures in their teaching scope; content-manager/admin/owner staff policies remain in force. No service-role bypass was added.
+- Provider validation matches the database contract:
+  - Google Meet → `join` + `https://meet.google.com/...`
+  - Google Drive → `watch` + `https://drive.google.com/...`
+  - Cloudflare Stream → `watch` + approved Stream delivery hosts
+  - External → HTTPS
+- Added native `DeliveryManagerScreen`:
+  - operations users can choose a batch and manage lecture delivery;
+  - teachers get **Live & recording access** inside each assigned batch/subject scope;
+  - Live/Hybrid lectures expose join-source editing;
+  - Recorded/Hybrid lectures expose recording-source editing;
+  - provider, protected link, student label and optional ISO availability window can be edited;
+  - admin/owner can remove an existing source; teacher/content-manager UI does not offer deletion when RLS does not allow it.
+- Android navigation now exposes **Manage lecture delivery** in Ops and delivery access within teacher assignment cards.
+- Android test version advanced to `1.0.8-test` / versionCode 9.
+- Source commit `cc8bbb1f72221c4c23de3edb39fdf1768f3997c3` passed GitHub Quality run `37172336885` and Android APK run `37172336921`.
+- Live Supabase `native-api` is ACTIVE at version 6 and the deployed function contains all three delivery-management actions using the existing user-scoped RLS client.
+- APK artifact id `11291349444`; artifact ZIP digest `sha256:794e9b5ffd0851fd6f15663ca05b93997b84d5b54c9f4f88d12d7c7f2b16a19c`.
+- Extracted debug APK SHA-256: `5759180c7de10d5ef123f1292aa62ed5f47dce0ebeb3fa17cabe8247d30b7426`.
+- Next native layer: remaining admin operations (enrollment management, announcements/communications, commerce/payment verification, staff/role administration and settings/audit), followed by optional full mobile assessment authoring. Continue real-device testing of the recording/fullscreen path in parallel with these native operations layers.

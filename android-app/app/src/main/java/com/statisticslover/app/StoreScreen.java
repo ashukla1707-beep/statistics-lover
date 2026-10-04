@@ -24,10 +24,10 @@ final class StoreScreen {
             CreateOrder createOrder,
             Runnable back
     ) {
-        ScrollView scroll=ui.page("Course store","Create an order inside the native app");
+        ScrollView scroll=ui.page("Courses","Browse Statistics Lover batches and course offers");
         LinearLayout body=ui.body(scroll);
 
-        Button backButton=ui.button("← Back to dashboard",false);
+        Button backButton=ui.button("← Back",false);
         backButton.setOnClickListener(v->back.run());
         body.addView(backButton);
 

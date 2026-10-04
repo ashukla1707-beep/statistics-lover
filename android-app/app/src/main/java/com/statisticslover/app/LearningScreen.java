@@ -21,7 +21,7 @@ final class LearningScreen {
             String batchTitle,
             JSONObject data,
             Runnable back,
-            Consumer<JSONObject> openAction
+            Consumer<String> openExternal
     ) {
         ScrollView scroll=ui.page(courseTitle,batchTitle);
         LinearLayout body=ui.body(scroll);
@@ -35,17 +35,10 @@ final class LearningScreen {
         JSONArray lectures=array(data,"lectures");
         JSONArray actions=array(data,"actions");
 
-        Map<String,JSONArray> actionMap=new HashMap<>();
+        Map<String,JSONObject> actionMap=new HashMap<>();
         for(int i=0;i<actions.length();i++){
             JSONObject action=actions.optJSONObject(i);
-            if(action==null)continue;
-            String lectureId=action.optString("lecture_id");
-            JSONArray lectureActions=actionMap.get(lectureId);
-            if(lectureActions==null){
-                lectureActions=new JSONArray();
-                actionMap.put(lectureId,lectureActions);
-            }
-            lectureActions.put(action);
+            if(action!=null)actionMap.put(action.optString("lecture_id"),action);
         }
 
         for(int s=0;s<subjects.length();s++){
@@ -78,16 +71,12 @@ final class LearningScreen {
                         card.addView(ui.text(scheduled.replace("T"," "),11,NativeUi.MUTED,false));
                     }
 
-                    JSONArray lectureActions=actionMap.get(lecture.optString("id"));
-                    if(lectureActions!=null){
-                        for(int a=0;a<lectureActions.length();a++){
-                            JSONObject action=lectureActions.optJSONObject(a);
-                            if(action==null)continue;
-                            Button open=ui.button(action.optString("label","Open"),true);
-                            JSONObject selectedAction=action;
-                            open.setOnClickListener(v->openAction.accept(selectedAction));
-                            ui.add(card,open,10);
-                        }
+                    JSONObject action=actionMap.get(lecture.optString("id"));
+                    if(action!=null){
+                        Button open=ui.button(action.optString("label","Open"),true);
+                        String url=action.optString("action_url");
+                        open.setOnClickListener(v->openExternal.accept(url));
+                        ui.add(card,open,10);
                     }
                     body.addView(card);
                 }

@@ -25,8 +25,9 @@ final class LoginScreen {
         scroll.addView(body);
 
         body.addView(ui.text("STATISTICS LOVER",12,NativeUi.MAGENTA,true));
-        body.addView(ui.text("Sign in",32,NativeUi.NAVY,true));
-        body.addView(ui.text("Native Android application",14,NativeUi.MUTED,false));
+        body.addView(ui.text("Learn • Practice • Succeed",13,NativeUi.MUTED,true));
+        ui.add(body,ui.text("Student Login",32,NativeUi.NAVY,true),10);
+        body.addView(ui.text("Continue to your Statistics Lover dashboard.",14,NativeUi.MUTED,false));
 
         EditText email=new EditText(context);
         email.setHint("Email");
@@ -56,7 +57,7 @@ final class LoginScreen {
         ui.add(body,submit,14);
 
         TextView note=ui.text(
-                "This screen is native. The Statistics Lover website is not loaded inside the app.",
+                "Use the same Statistics Lover account you use on the web platform.",
                 12,NativeUi.MUTED,false);
         ui.add(body,note,22);
 

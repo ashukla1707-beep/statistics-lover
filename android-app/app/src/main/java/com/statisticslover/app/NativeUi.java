@@ -73,7 +73,7 @@ final class NativeUi {
         body.setPadding(dp(16),dp(18),dp(16),dp(24));
         scroll.addView(body);
         scroll.setTag(body);
-        body.addView(text("NATIVE ANDROID",11,MAGENTA,true));
+        body.addView(text("STATISTICS LOVER",11,MAGENTA,true));
         body.addView(text(title,27,NAVY,true));
         if(subtitle!=null&&!subtitle.isBlank())add(body,text(subtitle,13,MUTED,false),3);
         return scroll;

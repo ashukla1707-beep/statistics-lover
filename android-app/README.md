@@ -6,13 +6,13 @@ Canonical release record:
 
 - Dedicated repo: `ashukla1707-beep/statistics-lover-android`
 - Verified source commit: `7fff278316d50bf6ea3970f6d90ea52316acf8fc`
-- Version: **1.0.27**
-- versionCode: **28**
+- Version: **1.0.29**
+- versionCode: **30**
 - Package: `com.statisticslover.app`
-- Signed release workflow: `37180641112` — SUCCESS
-- Release artifact: `11294579346`
-- APK size: **655138 bytes**
-- APK SHA-256: `e98b55697aed956ab6e35af38008e939eb19c6583e21ef5dfd141b7042ade991`
+- Signed release workflow: `37181709525` — SUCCESS
+- Release artifact: `11295292272`
+- APK size: **655582 bytes**
+- APK SHA-256: `6fd0353834cd513d2af8a61784add36e833e78f3f41c1b46a687a31212410751`
 
 This release was rebuilt from the pinned 1.0.15 working runtime behavior and intentionally excludes the later 1.0.16–1.0.18 player-layout/scaling experiments.
 
@@ -22,7 +22,7 @@ The app checks the permanent signed update channel in the dedicated Android repo
 
 `https://raw.githubusercontent.com/ashukla1707-beep/statistics-lover-android/main/downloads/version.json`
 
-Current channel: **1.0.27 / versionCode 28**.
+Current channel: **1.0.29 / versionCode 30**.
 
 Do not move or duplicate that publication channel casually. Existing installed release APKs depend on the permanent signing certificate and the dedicated repo's published APK.
 
@@ -75,3 +75,13 @@ Version 1.0.27 restores the proven Android A15 behavior: the Google Drive-capabl
 To keep the requested website-style APK UI, a document-start script hides the `StatisticsLoverAndroid` marker from normal website routes and exposes it only on lecture routes. The lecture page therefore retains native fullscreen integration without forcing the rest of the APK into a separate Android UI.
 
 Expected transition: course page -> lecture page/player -> Google Drive provider load. There is no intermediate Statistics Lover route reload.
+
+
+## Seek-control stabilization
+
+Version 1.0.29 fixes the Google Drive timeline/seek UI getting visually stuck while playback continues.
+
+- On fullscreen touch release, the WebView clears Drive's synthetic desktop scrub/hover state.
+- The compact 1024x576 fullscreen canvas no longer re-scales on transient resize events while the user is interacting with controls.
+- Scale is re-synchronized only on real orientation changes.
+- Website-style UI, single-transition recording startup, compact landscape fullscreen, session continuity and auto-update remain unchanged.

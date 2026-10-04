@@ -901,3 +901,20 @@ At the latest handoff:
   - AndroidX WebKit document-start script hides the marker from normal website routes, preserving the website UI;
   - the marker becomes JS-visible only on lecture routes so the existing native fullscreen bridge still works.
 - This restores the A15 single-navigation behavior while preserving the newer web-UI requirement, compact landscape fullscreen, stable session origin and auto-update chain.
+
+
+### Android seek-control correction — 1.0.29 / versionCode 30
+
+- User reported that tapping/dragging the Drive video time/progress line could leave the seek UI stuck even though playback continued.
+- Dedicated Android fixes:
+  - `d07c1e475485827a63cba505bcf8eff287f1ee67` clears Drive's synthetic touch/mouse scrub state after fullscreen touch release.
+  - `75df561f9414c4bff6d0812319584d21627bf199` freezes compact fullscreen scale during transient resize events so Drive's pointer state is not disrupted mid-seek.
+- Verified signed release: **Statistics Lover 1.0.29 / versionCode 30**.
+- Dedicated workflow run: **37181709525 — SUCCESS**.
+- Signed release artifact ID: **11295292272**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **655582 bytes**.
+- APK SHA-256: **`6fd0353834cd513d2af8a61784add36e833e78f3f41c1b46a687a31212410751`**.
+- Auto-update channel now advertises **1.0.29 / versionCode 30**.
+- Existing website UI, A15 single-transition recording startup, compact landscape fullscreen and stable session origin are preserved.

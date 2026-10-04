@@ -8,7 +8,10 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.View;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -163,6 +166,7 @@ public class NativeMainActivity extends AppCompatActivity {
         );
 
         installWebUiUserAgentMask();
+        installRecordingTouchReset();
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -311,6 +315,87 @@ public class NativeMainActivity extends AppCompatActivity {
         // document-start script and exposed only on lecture routes.
     }
 
+    private void installRecordingTouchReset() {
+        if (webView == null) return;
+
+        webView.setOnTouchListener((view, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_UP
+                    && appFullscreen
+                    && isRecordingUrl(webView.getUrl())) {
+                final float x = event.getX();
+                final float y = event.getY();
+
+                // Google Drive renders desktop controls because the recording
+                // WebView uses the desktop UA. On touch devices its seek bar can
+                // keep a synthetic mouse/scrub state after ACTION_UP. Playback
+                // continues, but the timeline marker/preview appears frozen.
+                //
+                // Let Drive process the real tap first, then explicitly finish
+                // the synthetic gesture and move the mouse hover away from the
+                // seek bar. This is scoped to custom fullscreen only.
+                webView.postDelayed(() -> clearDriveScrubState(x, y), 90L);
+            }
+            return false;
+        });
+    }
+
+    private void clearDriveScrubState(float x, float y) {
+        if (webView == null
+                || !appFullscreen
+                || !isRecordingUrl(webView.getUrl())) {
+            return;
+        }
+
+        long now = SystemClock.uptimeMillis();
+
+        MotionEvent cancel = MotionEvent.obtain(
+                now,
+                now,
+                MotionEvent.ACTION_CANCEL,
+                x,
+                y,
+                0
+        );
+        try {
+            webView.dispatchTouchEvent(cancel);
+        } finally {
+            cancel.recycle();
+        }
+
+        // Clear the desktop hover position that Drive leaves pinned over the
+        // timeline after a touch-generated mouse interaction.
+        float safeX = Math.max(1f, webView.getWidth() * 0.5f);
+        float safeY = 1f;
+
+        MotionEvent hoverMove = MotionEvent.obtain(
+                now,
+                now,
+                MotionEvent.ACTION_HOVER_MOVE,
+                safeX,
+                safeY,
+                0
+        );
+        hoverMove.setSource(InputDevice.SOURCE_MOUSE);
+
+        MotionEvent hoverExit = MotionEvent.obtain(
+                now,
+                now,
+                MotionEvent.ACTION_HOVER_EXIT,
+                safeX,
+                safeY,
+                0
+        );
+        hoverExit.setSource(InputDevice.SOURCE_MOUSE);
+
+        try {
+            webView.dispatchGenericMotionEvent(hoverMove);
+            webView.dispatchGenericMotionEvent(hoverExit);
+        } finally {
+            hoverMove.recycle();
+            hoverExit.recycle();
+        }
+    }
+
     private void installWebUiUserAgentMask() {
         if (webView == null) return;
 
@@ -409,8 +494,7 @@ public class NativeMainActivity extends AppCompatActivity {
                 + "if(stage){stage.classList.remove('lecture-player-stage-app-fullscreen');stage.style.removeProperty('--sl-native-fs-scale');}"
                 + "clean();var b=document.querySelector('.lecture-player-fullscreen');setButton(b,false);"
                 + "});"
-                + "window.addEventListener('resize',function(){setTimeout(resync,0);setTimeout(resync,120);});"
-                + "window.addEventListener('orientationchange',function(){setTimeout(resync,80);setTimeout(resync,220);setTimeout(resync,420);});"
+                + "window.addEventListener('orientationchange',function(){setTimeout(resync,100);setTimeout(resync,260);setTimeout(resync,460);});"
                 + "})();";
 
         webView.evaluateJavascript(script, null);
@@ -467,8 +551,21 @@ public class NativeMainActivity extends AppCompatActivity {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         }
 
-        if (root != null) ViewCompat.requestApplyInsets(root);
-        queueWebViewportSync();
+        // Restore the proven compact-player exit behavior from 1.0.18.
+        // Android/WebView will deliver the real portrait viewport change itself.
+        // Do NOT synthesize delayed resize/orientationchange events here: Google
+        // Drive reacts to those late events by collapsing the inline video into
+        // a tiny preview after fullscreen exit.
+        if (root != null) {
+            root.post(() -> ViewCompat.requestApplyInsets(root));
+        }
+        if (webView != null) {
+            webView.post(() -> {
+                if (webView == null) return;
+                webView.requestLayout();
+                webView.invalidate();
+            });
+        }
 
         if (!isRecordingUrl(webView == null ? null : webView.getUrl())) {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -576,7 +673,16 @@ public class NativeMainActivity extends AppCompatActivity {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         if (root != null) ViewCompat.requestApplyInsets(root);
-        queueWebViewportSync();
+
+        // Reflow aggressively only while entering/remaining in our custom
+        // fullscreen. On portrait exit, the native viewport change is enough
+        // and avoids the late Google Drive inline-player collapse.
+        if (appFullscreen) {
+            queueWebViewportSync();
+        } else if (webView != null) {
+            webView.requestLayout();
+            webView.invalidate();
+        }
     }
 
     @Override

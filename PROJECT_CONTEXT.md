@@ -10,8 +10,9 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `9a385f341765c424430d59def3ad6ad52d3e4c5f`
-- Current focus: **device acceptance of recovered Statistics Lover 1.0.15 / versionCode 16 WebView APK**. Do not advance the Android version line until this recovered baseline is validated.
+- Current verified branch heads (2026-10-04): `develop` = `5c85c41383ce22708a1e188492642f997390fce6`; `main` = `a7cf2408b6b4d74d47f0b5d584c7dc7cd1e45381`. `develop` is newer and remains the canonical implementation branch.
+- Current handoff base before this documentation commit: `5c85c41383ce22708a1e188492642f997390fce6`
+- Current focus: **Razorpay Test Mode activation + external production configuration, while Android 1.0.41 / versionCode 42 remains the authoritative APK baseline for device validation.**
 
 ## Deployment
 
@@ -123,15 +124,43 @@ When continuing in a new chat:
 
 ## Immediate next state
 
-At the latest handoff:
-- The active workstream is the **public Home page and cross-device UI stabilization**, based on user screenshots showing authenticated-header overlap, narrow/mobile button/card overflow and misaligned text-arrow back links.
-- The public Home page now represents the implemented product rather than the old foundation placeholder and uses working Store/Login/current-section navigation.
-- A shared responsive hardening layer is loaded last to provide min-width/wrapping guardrails, earlier compact header behavior and narrow-screen action/card layouts across product areas.
-- Back navigation now uses a reusable icon/text component so the arrow is vertically aligned instead of relying on a text glyph baseline.
-- The prior experimental Android/player scaling changes were rolled back before this UI pass; do not reintroduce the rejected scaling race fixes without new evidence.
-- GitHub Quality is green through UI code commit `bd14eac3b6ce9c81a973cde5995dc68ca6a8e3d9`.
-- Vercel's connector still shows the newest READY `develop` preview at `c0f58a9b932c41ad06fe9dc1469befe7305a104f`, so the complete UI layer has **not yet surfaced as a verified READY preview**. Do not claim full deployed-device acceptance until the later commits appear on Vercel and are checked.
-- After the latest UI build is deployed, verify Home, Login, Store, Dashboard and Learning pages on real 320/360/390/430px phones plus tablet/desktop-width layouts, then resume Android A3 work.
+At the latest verified handoff on **2026-10-04**:
+
+- The staged platform audit is complete through **Stage 6**:
+  - Auth/Roles: PASS;
+  - Student: PASS;
+  - Teacher: PASS after the scoped returning-RLS fix;
+  - Content Manager: PASS;
+  - Admin/Owner: PASS;
+  - Production hardening/runtime: PASS.
+- Android **1.0.41 / versionCode 42** is the authoritative APK baseline. Do not regress to recovered 1.0.15/16, 1.0.37, or the earlier experimental full-WebView wrapper line unless the user explicitly asks to revert.
+- Razorpay integration is complete through **Stage 7C** on the Statistics Lover side:
+  - backend order/webhook foundation exists;
+  - web checkout is wired;
+  - payment-domain acceptance passed;
+  - rollout gate remains safely OFF.
+- Razorpay activation is blocked only by external Test Mode configuration:
+  1. set `RAZORPAY_KEY_ID`;
+  2. set `RAZORPAY_KEY_SECRET`;
+  3. set `RAZORPAY_WEBHOOK_SECRET`;
+  4. configure the Test Mode webhook at `https://wjsudutyvsssfhrdqvbr.supabase.co/functions/v1/razorpay-webhook` for at least `payment.captured` and `payment.failed`;
+  5. run one real sandbox payment and verify order -> payment -> receipt -> enrollment;
+  6. only then set `commerce_razorpay_enabled=true`.
+- Supabase leaked-password protection remains an external Auth configuration item because the connected project tools do not expose that setting.
+- Production email/WhatsApp delivery infrastructure exists, but real delivery still depends on provider credentials/templates being configured.
+- Vercel is the active frontend host. Latest verified `develop` deployment:
+  - deployment `dpl_7y6tZKHaJdy6MFk11bvtQheb23XF`;
+  - source commit `5c85c41383ce22708a1e188492642f997390fce6`;
+  - state **READY**;
+  - stable develop alias `statistics-lover-git-develop-statistics-lover.vercel.app`.
+- Canonical `statistics-lover.vercel.app` currently serves the same built assets as that latest develop deployment:
+  - JS `/assets/index-D4X7g2U9.js`;
+  - CSS `/assets/index-Bt2CpQQC.css`;
+  - Razorpay CSP origins are present;
+  - manifest/PWA metadata are present.
+- GitHub Quality run **37204654493** for current develop head `5c85c413...` completed successfully.
+- Cloudflare deployment automation is not part of the active release path; continue with Vercel unless the user explicitly changes hosting direction.
+- Next recommended work: configure Razorpay Test Mode secrets/webhook and run the real sandbox payment; in parallel continue real-device acceptance of Android 1.0.41.
 
 
 ### Teaching checkpoint — protected study material
@@ -1426,3 +1455,20 @@ At the latest handoff:
 - After external secrets/webhook are configured, execute a real Razorpay Test Mode sandbox payment and verify order -> payment -> receipt -> enrollment before setting `commerce_razorpay_enabled=true`.
 - Do not commit or expose Razorpay Key Secret/webhook secret in browser code, Vercel public env, GitHub, or APK.
 - Android remains **1.0.41 / versionCode 42**; no native change is required at this checkpoint.
+
+
+## CONTEXT REFRESH — 2026-10-04 18:51 IST
+
+- This refresh supersedes older handoff lines that still referred to recovered Android 1.0.15 / versionCode 16 or earlier UI-stabilization checkpoints as the current focus.
+- Current canonical development head: `5c85c41383ce22708a1e188492642f997390fce6` — `chore: deploy latest develop to production`.
+- Current `main` head: `a7cf2408b6b4d74d47f0b5d584c7dc7cd1e45381`. Do not assume `main` contains the newest implementation; verify `develop` first.
+- Latest GitHub Quality for develop: run `37204654493` — **SUCCESS**.
+- Latest Vercel develop deployment: `dpl_7y6tZKHaJdy6MFk11bvtQheb23XF` — **READY**.
+- Canonical production URL and stable develop alias were fetched on this refresh and serve the same current application asset hashes, including the Razorpay-enabled CSP and PWA metadata.
+- Android authoritative baseline remains **Statistics Lover 1.0.41 / versionCode 42**.
+- Staged acceptance/hardening status remains complete through Stage 6; Stage 7A–7C Razorpay implementation/pre-activation verification is complete.
+- Razorpay remains intentionally disabled until external Test Mode credentials/webhook and one end-to-end sandbox payment are completed.
+- Remaining external configuration blockers:
+  - Supabase leaked-password protection;
+  - production email/WhatsApp provider credentials/templates;
+  - Razorpay Test Mode secrets and webhook.

@@ -833,3 +833,24 @@ At the latest handoff:
 - APK web source now points to the stable Vercel develop alias:
   `https://statistics-lover-git-develop-statistics-lover.vercel.app/`.
 - This intentionally uses the current working homepage/header/footer/responsive fixes without merging `develop` into production `main`.
+
+
+### Android session-origin correction — 1.0.24 / versionCode 25
+
+- User reported that 1.0.23 behaved like a fresh browser visit and requested sign-in again.
+- Root cause: changing the APK from `statistics-lover.vercel.app` to the `develop` Vercel hostname changed the browser origin; Supabase/WebView session storage is origin-scoped.
+- Dedicated Android fix commit: `253bc5650fe325a4d4fd83e70b854e8b8b18780e`.
+- Verified signed release: **Statistics Lover 1.0.24 / versionCode 25**.
+- Dedicated workflow run: **37179541593 — SUCCESS**.
+- Signed release artifact ID: **11294701290**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **644863 bytes**.
+- APK SHA-256: **`d10e99dff759d5a60ab8dd47aa17f854047934a074edb8265da4c674cc9644d6`**.
+- Auto-update channel now advertises **1.0.24 / versionCode 25**.
+- APK `APP_URL` is restored to the stable origin and direct app route:
+  `https://statistics-lover.vercel.app/dashboard`.
+- Vercel production alias `statistics-lover.vercel.app` was reassigned to current develop deployment `dpl_BRMCC4xjefkc5DAowgaRgwyxBzUP`.
+- Verification: production and stable develop aliases both serve JS bundle `index-DC55xXSS.js`.
+- This preserves stored login/session continuity while delivering the current working homepage/header/footer/responsive fixes on the original app origin.
+- Fullscreen behavior remains the 1.0.23 compact landscape implementation.

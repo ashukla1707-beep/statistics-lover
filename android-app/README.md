@@ -6,13 +6,13 @@ Canonical release record:
 
 - Dedicated repo: `ashukla1707-beep/statistics-lover-android`
 - Verified source commit: `7fff278316d50bf6ea3970f6d90ea52316acf8fc`
-- Version: **1.0.23**
-- versionCode: **24**
+- Version: **1.0.24**
+- versionCode: **25**
 - Package: `com.statisticslover.app`
-- Signed release workflow: `37179092335` — SUCCESS
-- Release artifact: `11294711461`
-- APK size: **644851 bytes**
-- APK SHA-256: `01c2098f2e4ae24acf21827aabaf0a6868a7f446ade30e7b1345fbc88882bb92`
+- Signed release workflow: `37179541593` — SUCCESS
+- Release artifact: `11294701290`
+- APK size: **644863 bytes**
+- APK SHA-256: `d10e99dff759d5a60ab8dd47aa17f854047934a074edb8265da4c674cc9644d6`
 
 This release was rebuilt from the pinned 1.0.15 working runtime behavior and intentionally excludes the later 1.0.16–1.0.18 player-layout/scaling experiments.
 
@@ -22,7 +22,7 @@ The app checks the permanent signed update channel in the dedicated Android repo
 
 `https://raw.githubusercontent.com/ashukla1707-beep/statistics-lover-android/main/downloads/version.json`
 
-Current channel: **1.0.23 / versionCode 24**.
+Current channel: **1.0.24 / versionCode 25**.
 
 Do not move or duplicate that publication channel casually. Existing installed release APKs depend on the permanent signing certificate and the dedicated repo's published APK.
 
@@ -47,3 +47,11 @@ Version 1.0.23 removes the Activity manifest portrait lock, keeps normal app mod
 
 The APK now loads the stable Vercel develop alias so it uses the current working homepage and responsive UI fixes:
 `https://statistics-lover-git-develop-statistics-lover.vercel.app/`
+
+
+## Session-origin correction
+
+Version 1.0.24 restores the stable app origin and launches directly at:
+`https://statistics-lover.vercel.app/dashboard`
+
+This preserves WebView/Supabase session storage from earlier signed installs. The Vercel production alias now serves the same current web bundle as the working develop deployment, so the app gets the corrected homepage/UI without switching origins.

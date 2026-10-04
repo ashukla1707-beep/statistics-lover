@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -86,6 +87,7 @@ public class NativeMainActivity extends AppCompatActivity {
         // Do not set FLAG_SECURE here while this mode is enabled.
         updateManager = new AppUpdateManager(this);
         buildWebShell();
+        applyAdaptiveSystemBars();
         configureBackNavigation();
 
         if (state == null) {
@@ -101,7 +103,7 @@ public class NativeMainActivity extends AppCompatActivity {
         root = new FrameLayout(this);
 
         webView = new WebView(this);
-        webView.setBackgroundColor(0xFFF7F8FB);
+        webView.setBackgroundColor(getColor(R.color.shell_background));
         webView.setAlpha(0f);
         root.addView(
                 webView,
@@ -146,7 +148,7 @@ public class NativeMainActivity extends AppCompatActivity {
 
     private void addLaunchOverlay() {
         launchOverlay = new FrameLayout(this);
-        launchOverlay.setBackgroundColor(Color.rgb(247, 248, 251));
+        launchOverlay.setBackgroundColor(getColor(R.color.shell_background));
         launchOverlay.setClickable(true);
 
         LinearLayout content = new LinearLayout(this);
@@ -155,20 +157,23 @@ public class NativeMainActivity extends AppCompatActivity {
 
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.statistics_lover_logo);
-        logo.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.WHITE);
+        circle.setColor(Color.TRANSPARENT);
         logo.setBackground(circle);
         logo.setClipToOutline(true);
-        logo.setElevation(dp(6));
+        logo.setElevation(dp(4));
 
         LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(188), dp(188));
         content.addView(logo, logoParams);
 
         ProgressBar spinner = new ProgressBar(this);
         spinner.setIndeterminate(true);
+        spinner.setIndeterminateTintList(
+                ColorStateList.valueOf(getColor(R.color.splash_spinner))
+        );
         LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(dp(30), dp(30));
         spinnerParams.topMargin = dp(22);
         content.addView(spinner, spinnerParams);
@@ -209,6 +214,42 @@ public class NativeMainActivity extends AppCompatActivity {
                     })
                     .start();
         }
+    }
+
+    private void applyAdaptiveSystemBars() {
+        if (appFullscreen) return;
+
+        int background = getColor(R.color.shell_background);
+        boolean lightBars = getResources().getBoolean(R.bool.light_system_bars);
+
+        getWindow().setStatusBarColor(background);
+        getWindow().setNavigationBarColor(background);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                        | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+                controller.setSystemBarsAppearance(lightBars ? mask : 0, mask);
+            }
+        } else {
+            int flags = getWindow().getDecorView().getSystemUiVisibility();
+            flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+            if (lightBars && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            }
+            if (lightBars && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+            getWindow().getDecorView().setSystemUiVisibility(flags);
+        }
+
+        if (root != null) root.setBackgroundColor(background);
+        if (webView != null) webView.setBackgroundColor(background);
+        if (launchOverlay != null) launchOverlay.setBackgroundColor(background);
     }
 
     private void configureWebView() {
@@ -760,6 +801,7 @@ public class NativeMainActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        applyAdaptiveSystemBars();
         if (root != null) ViewCompat.requestApplyInsets(root);
 
         // Reflow aggressively only while entering/remaining in our custom

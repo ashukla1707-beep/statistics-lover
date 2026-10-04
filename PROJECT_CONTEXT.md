@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `5e9e37af9794b310936c6743965ba87abf3a9282`
-- Current focus: **Android A3 native recording playback/device validation**, with Vercel remaining the sole web deployment target.
+- Current handoff base before this documentation commit: `1b728d205894d5560fd3890e7302813bef5a337a`
+- Current focus: **Android A3 native teacher/admin editing workflows**, with recording playback and native attendance now implemented. Next native workflow: assignment review/grading.
 
 ## Deployment
 
@@ -538,3 +538,23 @@ At the latest handoff:
 - GitHub APK artifact id `11288521240`; artifact ZIP digest `sha256:7a3604963577563585993a4b26d1b4a43dac2b4e780f24775e274d770b56a976`.
 - Extracted debug APK SHA-256 from the workflow: `87a9f605b342bed2408d638e77b0f69666b83d85ae0349cbf2654688d292a6a7`.
 - Next Android acceptance: install this APK on the real phone and validate Watch Recording startup, play/pause/seek visibility, custom fullscreen enter/exit, landscape restoration, Android Back, screenshot/screen recording, and Hybrid lecture dual actions. After player/device acceptance, continue native teacher/admin editing workflows.
+
+
+### Android checkpoint A3.2 — native attendance editing complete
+
+- Added repository source for the existing Supabase Edge Function under `supabase/functions/native-api/` so the deployed mobile API is no longer an untracked dashboard-only function.
+- Deployed `native-api` version 2 from the same repository source. It remains `verify_jwt=false` because sign-in/recovery are public actions, while every protected action still requires the user's access token and uses a user-scoped Supabase client so RLS remains authoritative.
+- Extended bootstrap teacher assignments with readable course/batch/subject labels while preserving assignment IDs and scope.
+- Added protected mobile actions:
+  - `attendanceLectures`: returns RLS-visible subject/module/lecture hierarchy, optionally restricted to a teacher assignment's batch/subject.
+  - `attendanceRoster`: calls the existing protected `get_attendance_roster` RPC.
+  - `saveAttendance`: validates status/note payloads, upserts `lecture_attendance` with the user's JWT, then reloads the protected roster.
+- No service-role bypass was added. Existing teacher/admin attendance RLS and the database validation trigger remain the write authority.
+- Added native `AttendanceScreen` with scoped lecture selection, roster editing, Present/Absent/Late/Excused status controls, optional notes, Mark All Present and Save Attendance.
+- Teacher workspace now displays human-readable assignment context and a **Take attendance** action for each active scope.
+- Admin/owner native Ops now exposes **Manage attendance** across their RLS-visible academic scope; content managers are not given attendance write UI because current attendance policies restrict writes to assigned teachers/admin/owner.
+- Android test version advanced to `1.0.4-test` / versionCode 5.
+- Attendance commit `1b728d205894d5560fd3890e7302813bef5a337a` passed GitHub Quality run `37163518108` and Android APK run `37163518109`.
+- APK artifact id `11288462935`; artifact ZIP digest `sha256:bdc0c712d96e00762566396a5a1b23a399e26a580033f59bd5bbc3c247853dba`.
+- Extracted debug APK SHA-256: `0a99ceb674322777e19015567637225a7a4c9127f8dee888bd78cabad72ba8ec`.
+- Next native layer: assignment submission review/grading for teacher/admin, followed by assessment/content editing and the remaining admin operations modules.

@@ -299,3 +299,171 @@
     grid-template-columns:1fr;
   }
 }
+
+
+/* System theme support.
+   This file is imported last, so these overrides apply consistently across
+   public, student, teacher and admin layouts without changing page logic. */
+html{color-scheme:light}
+@media (prefers-color-scheme:dark){
+  html{color-scheme:dark}
+  :root{
+    --paper:#0b1020;
+    --ink:#e9eef8;
+    --muted:#9aa7bb;
+    --line:rgba(222,230,244,.14);
+    --pink-50:#17111a;
+    --pink-100:#281522;
+    --shadow:0 24px 70px rgba(0,0,0,.38);
+  }
+
+  body,.app-shell,.route-loading,.auth-state{
+    background:#0b1020;
+    color:var(--ink);
+  }
+
+  .site-header{
+    border-color:var(--line);
+    background:rgba(11,16,32,.94);
+  }
+
+  .primary-nav{color:#d7e0ef}
+  .menu-toggle{
+    border-color:var(--line);
+    background:#141b2d;
+  }
+  .menu-toggle span{background:#eef3fb}
+
+  .app-shell:not(.android-app-mode) .primary-nav{
+    background:rgba(11,16,32,.99);
+    box-shadow:0 20px 40px rgba(0,0,0,.3);
+  }
+
+  .hero,
+  .student-dashboard-page,
+  .auth-page,
+  .portal-page,
+  .admin-page,
+  .learning-page,
+  .commerce-store-page,
+  .commerce-orders-page,
+  .notifications-page,
+  .student-assignment-page,
+  .student-tests-page,
+  .student-performance-page,
+  .teacher-dashboard-page{
+    background:linear-gradient(180deg,#0b1020 0%,#15111a 100%) !important;
+  }
+
+  .section-soft{
+    background:#111727;
+    border-color:var(--line);
+  }
+
+  .app-shell :where(
+    .feature-card,
+    .logo-card,
+    .floating-card,
+    .system-error-card,
+    .not-found-card,
+    .auth-card,
+    .portal-welcome,
+    .portal-card,
+    .student-dashboard-hero,
+    .student-dashboard-kpis article,
+    .student-dashboard-section,
+    .student-dashboard-panel,
+    .student-dashboard-account,
+    .student-course-card-grid article,
+    .admin-panel,
+    .admin-batch-card,
+    .admin-metrics article,
+    .content-context-bar,
+    .content-item,
+    .learning-hero,
+    .learning-subject-card,
+    .learning-module,
+    .learning-empty-card,
+    .delivery-context-grid,
+    .assignment-context-grid,
+    .student-assignment-hero,
+    .student-assignment-card,
+    .commerce-store-hero,
+    .commerce-orders-hero,
+    .commerce-offer-card,
+    .commerce-student-order,
+    .notifications-hero,
+    .notification-list article,
+    .notification-preferences
+  ){
+    border-color:var(--line) !important;
+    background:#111827 !important;
+    box-shadow:0 18px 50px rgba(0,0,0,.2);
+  }
+
+  .app-shell :where(
+    .admin-course-row,
+    .commerce-tabs button,
+    .admin-subnav a,
+    .commerce-inline-form,
+    .announcement-form
+  ){
+    border-color:var(--line) !important;
+    background:#111827 !important;
+    color:#e7edf8 !important;
+  }
+
+  .app-shell :where(
+    h1,h2,h3,h4,
+    .brand-copy strong,
+    .feature-link,
+    .student-dashboard-kpis strong,
+    .student-dashboard-list strong,
+    .student-attendance-summary strong,
+    .student-course-card-grid h3,
+    .portal-course-list strong,
+    .admin-course-row strong,
+    .admin-batch-card h4,
+    .content-item strong,
+    .learning-module summary strong,
+    .learning-lecture-title-row strong,
+    .commerce-list strong,
+    .commerce-order-list strong,
+    .commerce-student-order strong,
+    .notification-title-row strong,
+    .notification-preferences strong
+  ){
+    color:#f4f7fc !important;
+  }
+
+  .hero-copy>p,
+  .hero-trust,
+  .principles span,
+  .form-field>span,
+  .auth-field-heading{
+    color:#b4bfd0 !important;
+  }
+
+  .app-shell :where(input,select,textarea){
+    border-color:rgba(220,228,242,.18) !important;
+    background:#0d1423 !important;
+    color:#edf2fb !important;
+  }
+
+  .app-shell :where(input,textarea)::placeholder{
+    color:#7f8ba0;
+  }
+
+  .button-secondary{
+    border-color:#8fa0ba;
+    background:transparent;
+    color:#eef3fb;
+  }
+  .button-secondary:hover,.button-secondary:focus-visible{background:#172033}
+
+  .system-error-page,.not-found-page{
+    background:linear-gradient(180deg,#0b1020 0%,#15111a 100%);
+  }
+
+  .site-footer{background:#060b16}
+}

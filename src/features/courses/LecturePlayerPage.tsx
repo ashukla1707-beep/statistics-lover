@@ -437,7 +437,7 @@ export function LecturePlayerPage() {
 
               <span className="lecture-player-drive-brand-blocker" aria-hidden="true">
                 <img
-                  src="/brand/statistics-lover-logo.jpg"
+                  src="/brand/statistics-lover-logo.jpg?v=20261004-4"
                   alt=""
                   draggable={false}
                 />

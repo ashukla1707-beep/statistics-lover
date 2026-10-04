@@ -734,11 +734,34 @@ At the latest handoff:
 - Next: install this exact recovered APK and validate launch experience, internal navigation, update-check behavior, recording playback/fullscreen, Android Back, uploads and system insets before making any further APK changes.
 
 
-### Android authoritative baseline — Statistics Lover 1.0.20 / versionCode 20
+### Android authoritative baseline — Statistics Lover 1.0.20 / versionCode 21
 
-- User confirmed that **Statistics Lover 1.0.20 — versionCode 20** was built successfully in the prior project work and is the current stable Android baseline.
-- This supersedes the attempted 1.0.15 recovery, the accidental 1.0.16-test rebuild, and all true-native A3 experimental APKs for future Android work.
-- Do **not** rebuild Android from the early A1/A2/native-A3 checkpoints unless the user explicitly requests a historical recovery.
-- Preserve the successful 1.0.20 behavior, including its stable in-app experience and auto-update channel, as the starting point for future APK changes.
-- The repository branch currently visible from this chat has not yet caught up to that successful 1.0.20 source/build metadata, so do not overwrite Android source blindly. First locate/import the exact 1.0.20 implementation or artifact from the prior project work before making further Android changes.
-- Until the exact 1.0.20 source/artifact is reattached to this branch, treat version 1.0.20 / versionCode 20 as **user-confirmed authoritative state**, not as reconstructed code from the current 1.0.15 files.
+- The exact successful Android release was recovered from the dedicated repository `ashukla1707-beep/statistics-lover-android`.
+- Verified product/version: **Statistics Lover 1.0.20**.
+- Verified Android `versionCode`: **21**. Earlier references to versionCode 20 were an assumption and are superseded by the release metadata.
+- Dedicated Android source commit: `7fff278316d50bf6ea3970f6d90ea52316acf8fc`.
+- Dedicated release workflow run: **37175526613 — SUCCESS**.
+- Release artifact ID: **11292129608**.
+- Signed release APK size: **644359 bytes**.
+- Signed release APK SHA-256: **`67827ccf3f11abd963383f23c9d170dc8affc5bdf8bb0723110acb614f81bd3b`**.
+- Auto-update channel: **1.0.20 / versionCode 21**.
+- Package ID: `com.statisticslover.app`; the permanent signing key and existing update chain remain authoritative in the dedicated Android repository.
+- This release was rebuilt from the pinned 1.0.15 working runtime behavior and intentionally excludes the later 1.0.16–1.0.18 player-layout/scaling experiments.
+- This supersedes the attempted monorepo 1.0.15 recovery, the accidental 1.0.16-test rebuild, and the native A3 experimental APKs as the Android baseline.
+
+
+### Android source reconciliation — develop now mirrors verified 1.0.20
+
+- Located the dedicated Android repository `ashukla1707-beep/statistics-lover-android` and its canonical project handoff rather than reconstructing the APK from stale monorepo history.
+- Mirrored the verified release source commit `7fff278316d50bf6ea3970f6d90ea52316acf8fc` into `statistics-lover/develop/android-app/`.
+- Runtime/version/manifest sync commits:
+  - `672c39e3556f610595728a759d0f4d797c548d29` — restored verified 1.0.20 runtime, updater and launcher metadata.
+  - `cf8fa30e19f946f5713b86ffc6fc01d557b6f595` — synced required release resources and FileProvider paths.
+  - `50e084dd4a87994abf2aa294903076dd5006f98d` — removed stale alternate launcher/experimental Android classes and made 1.0.20 the only active monorepo source path.
+  - `3e656287426dd1336aba79e70a9495dcae9734d9` — completed the remaining source mirror.
+- Verified by Git tree comparison: all Android source/build files mirrored from the dedicated 1.0.20 commit now have identical Git blob SHAs in the monorepo; no extra runtime files remain except the monorepo-specific `android-app/README.md`.
+- Monorepo Quality run `37177024373` passed.
+- Monorepo Android verification run `37177024460` passed build, APK verification and artifact upload.
+- Monorepo debug artifact ID: `11293698157`; debug APK SHA-256: `6b917af726a9e59c4bdcc703f7f1982eefd45f75c23e95a27ddef49298bc727c`.
+- The monorepo workflow intentionally does **not** publish over the stable self-update channel. Signed stable release publication remains owned by the dedicated Android repository so existing installs keep the same permanent signing certificate/update lineage.
+- For installable stable APK requests, use the verified dedicated-repo **1.0.20 signed release** (644359 bytes, SHA-256 `67827ccf3f11abd963383f23c9d170dc8affc5bdf8bb0723110acb614f81bd3b`) rather than the monorepo debug artifact.

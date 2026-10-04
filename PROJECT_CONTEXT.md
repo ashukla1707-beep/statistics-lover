@@ -765,3 +765,27 @@ At the latest handoff:
 - Monorepo debug artifact ID: `11293698157`; debug APK SHA-256: `6b917af726a9e59c4bdcc703f7f1982eefd45f75c23e95a27ddef49298bc727c`.
 - The monorepo workflow intentionally does **not** publish over the stable self-update channel. Signed stable release publication remains owned by the dedicated Android repository so existing installs keep the same permanent signing certificate/update lineage.
 - For installable stable APK requests, use the verified dedicated-repo **1.0.20 signed release** (644359 bytes, SHA-256 `67827ccf3f11abd963383f23c9d170dc8affc5bdf8bb0723110acb614f81bd3b`) rather than the monorepo debug artifact.
+
+
+### Android fullscreen fix — 1.0.21 / versionCode 22
+
+- User supplied a real-device recording showing the 1.0.20 custom fullscreen transition rotating into a sideways/narrow layout and settling with incorrect portrait-like geometry.
+- Fix was made in the dedicated signed Android repository, not by reconstructing from stale monorepo code.
+- Dedicated source fix commit: `c84fda9f4a44ad0d891ee6ec129a02f22e57d433`.
+- Verified signed release: **Statistics Lover 1.0.21 / versionCode 22**.
+- Dedicated workflow run: **37177622093 — SUCCESS**.
+- Signed release artifact ID: **11293579153**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **644607 bytes**.
+- APK SHA-256: **`0ebef70a62cf5066494caabee8c057fb4e7a65472f99fcae213825919e700495`**.
+- Auto-update channel now advertises **1.0.21 / versionCode 22**, so installed signed 1.0.20 builds can update in-app.
+- Root-cause fix:
+  - Drive nested WebChromeClient fullscreen is rejected; Statistics Lover custom fullscreen is the only fullscreen owner.
+  - fallback JS no longer capture-blocks the React fullscreen handler.
+  - custom fullscreen button covers the Drive fullscreen hit area while fullscreen is active.
+  - fixed landscape replaces sensor-landscape during fullscreen transition.
+  - safe-area padding is removed during fullscreen and restored on exit.
+  - WebView resize/orientation reflow is forced across the transition.
+  - immersive bars are re-applied on focus return.
+- Monorepo Android source has been advanced from the mirrored 1.0.20 source to this 1.0.21 fix and should remain aligned with the dedicated repo for future APK changes.

@@ -3,6 +3,7 @@ package com.statisticslover.app;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -50,6 +51,7 @@ public class NativeMainActivity extends AppCompatActivity {
             "statistics-lover-git-develop-statistics-lover.vercel.app"
     ));
 
+    private FrameLayout root;
     private WebView webView;
     private ProgressBar progressBar;
     private View customView;
@@ -78,7 +80,7 @@ public class NativeMainActivity extends AppCompatActivity {
     }
 
     private void buildWebShell() {
-        FrameLayout root = new FrameLayout(this);
+        root = new FrameLayout(this);
 
         webView = new WebView(this);
         webView.setBackgroundColor(0xFFF7F8FB);
@@ -109,7 +111,11 @@ public class NativeMainActivity extends AppCompatActivity {
                             | WindowInsetsCompat.Type.navigationBars()
                             | WindowInsetsCompat.Type.displayCutout()
             );
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            if (appFullscreen || customView != null) {
+                view.setPadding(0, 0, 0, 0);
+            } else {
+                view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            }
             return insets;
         });
         ViewCompat.requestApplyInsets(root);
@@ -184,29 +190,18 @@ public class NativeMainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
-                if (customView != null) {
+                // Google Drive exposes its own fullscreen control inside the iframe.
+                // Using it while Statistics Lover custom fullscreen is active creates
+                // two independent fullscreen/orientation owners. Reject the nested
+                // WebChromeClient fullscreen request and keep our bridge authoritative.
+                if (callback != null) {
                     callback.onCustomViewHidden();
-                    return;
                 }
-
-                customView = view;
-                customViewCallback = callback;
-
-                FrameLayout contentRoot = findViewById(android.R.id.content);
-                contentRoot.addView(
-                        customView,
-                        new FrameLayout.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                );
-                webView.setVisibility(View.GONE);
-                enterImmersiveLandscape();
             }
 
             @Override
             public void onHideCustomView() {
-                hideCustomView();
+                // No-op: Drive custom-view fullscreen is intentionally disabled.
             }
 
             @Override
@@ -338,42 +333,35 @@ public class NativeMainActivity extends AppCompatActivity {
 
         String script =
                 "(function(){"
-                + "if(window.__SL_NATIVE_FULLSCREEN_FALLBACK__)return;"
-                + "window.__SL_NATIVE_FULLSCREEN_FALLBACK__=true;"
-                + "var s=document.createElement('style');"
-                + "s.id='sl-native-fullscreen-style';"
+                + "if(window.__SL_NATIVE_FULLSCREEN_FALLBACK_V2__)return;"
+                + "window.__SL_NATIVE_FULLSCREEN_FALLBACK_V2__=true;"
+                + "var s=document.getElementById('sl-native-fullscreen-style');"
+                + "if(!s){s=document.createElement('style');s.id='sl-native-fullscreen-style';document.head.appendChild(s);}"
                 + "s.textContent='"
-                + ".lecture-player-stage.lecture-player-stage-app-fullscreen{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100dvw!important;height:100dvh!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;border:0!important;border-radius:0!important;background:#000!important;box-shadow:none!important;overflow:hidden!important;}"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;border:0!important;border-radius:0!important;background:#000!important;box-shadow:none!important;overflow:hidden!important;}"
                 + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-media{position:absolute!important;inset:0!important;left:0!important;top:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;transform:none!important;will-change:auto!important;}"
                 + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-media iframe{width:100%!important;height:100%!important;}"
-                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-overlay{position:absolute!important;inset:0!important;left:0!important;top:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;transform:none!important;will-change:auto!important;z-index:40!important;}"
-                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-fullscreen{right:18px!important;bottom:18px!important;width:48px!important;height:48px!important;border-radius:10px!important;background:rgba(0,0,0,.72)!important;box-shadow:0 3px 12px rgba(0,0,0,.3)!important;}"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-overlay{position:absolute!important;inset:0!important;left:0!important;top:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;transform:none!important;will-change:auto!important;z-index:2147483100!important;}"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-fullscreen{right:0!important;bottom:0!important;width:64px!important;height:64px!important;border-radius:12px 0 0 0!important;background:rgba(0,0,0,.82)!important;box-shadow:none!important;z-index:2147483200!important;}"
                 + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-drive-brand-blocker{top:12px!important;right:12px!important;width:64px!important;height:64px!important;transform:none!important;}"
                 + "';"
-                + "document.head.appendChild(s);"
-                + "function setButton(b,on){"
-                + "b.setAttribute('aria-label',on?'Exit full screen':'Enter full screen');"
-                + "b.setAttribute('title',on?'Exit full screen':'Full screen');"
-                + "}"
+                + "function setButton(b,on){if(!b)return;b.setAttribute('aria-label',on?'Exit full screen':'Enter full screen');b.setAttribute('title',on?'Exit full screen':'Full screen');}"
+                + "function clean(){document.documentElement.style.overflow='';document.body.style.overflow='';}"
                 + "document.addEventListener('click',function(e){"
-                + "var b=e.target&&e.target.closest?e.target.closest('.lecture-player-fullscreen'):null;"
-                + "if(!b)return;"
-                + "var stage=b.closest('.lecture-player-stage');"
-                + "if(!stage)return;"
-                + "e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();"
-                + "var on=!stage.classList.contains('lecture-player-stage-app-fullscreen');"
-                + "stage.classList.toggle('lecture-player-stage-app-fullscreen',on);"
-                + "document.documentElement.style.overflow=on?'hidden':'';"
-                + "document.body.style.overflow=on?'hidden':'';"
-                + "setButton(b,on);"
-                + "try{if(on){window.StatisticsLoverNative&&window.StatisticsLoverNative.enterFullscreen&&window.StatisticsLoverNative.enterFullscreen();}"
-                + "else{window.StatisticsLoverNative&&window.StatisticsLoverNative.exitFullscreen&&window.StatisticsLoverNative.exitFullscreen();}}catch(_){ }"
-                + "},true);"
+                + "var b=e.target&&e.target.closest?e.target.closest('.lecture-player-fullscreen'):null;if(!b)return;"
+                + "var stage=b.closest('.lecture-player-stage');if(!stage)return;"
+                + "var exiting=((b.getAttribute('aria-label')||'').toLowerCase().indexOf('exit')===0);"
+                + "setTimeout(function(){"
+                + "var active=stage.classList.contains('lecture-player-stage-app-fullscreen');"
+                + "try{"
+                + "if(exiting&&active){stage.classList.remove('lecture-player-stage-app-fullscreen');clean();setButton(b,false);window.StatisticsLoverNative&&window.StatisticsLoverNative.exitFullscreen&&window.StatisticsLoverNative.exitFullscreen();}"
+                + "else if(!exiting&&!active){stage.classList.add('lecture-player-stage-app-fullscreen');document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';setButton(b,true);window.StatisticsLoverNative&&window.StatisticsLoverNative.enterFullscreen&&window.StatisticsLoverNative.enterFullscreen();}"
+                + "}catch(_){ }"
+                + "},0);"
+                + "},false);"
                 + "window.addEventListener('statisticslover:exit-fullscreen',function(){"
-                + "var stage=document.querySelector('.lecture-player-stage-app-fullscreen');"
-                + "if(stage)stage.classList.remove('lecture-player-stage-app-fullscreen');"
-                + "document.documentElement.style.overflow='';document.body.style.overflow='';"
-                + "var b=document.querySelector('.lecture-player-fullscreen');if(b)setButton(b,false);"
+                + "var stage=document.querySelector('.lecture-player-stage-app-fullscreen');if(stage)stage.classList.remove('lecture-player-stage-app-fullscreen');"
+                + "clean();var b=document.querySelector('.lecture-player-fullscreen');setButton(b,false);"
                 + "});"
                 + "})();";
 
@@ -381,8 +369,12 @@ public class NativeMainActivity extends AppCompatActivity {
     }
 
     private void enterImmersiveLandscape() {
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        if (root != null) {
+            root.setPadding(0, 0, 0, 0);
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             WindowInsetsController controller = getWindow().getInsetsController();
@@ -399,6 +391,9 @@ public class NativeMainActivity extends AppCompatActivity {
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             );
         }
+
+        if (root != null) ViewCompat.requestApplyInsets(root);
+        queueWebViewportSync();
     }
 
     private void exitImmersivePortrait() {
@@ -413,8 +408,28 @@ public class NativeMainActivity extends AppCompatActivity {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         }
 
+        if (root != null) ViewCompat.requestApplyInsets(root);
+        queueWebViewportSync();
+
         if (!isRecordingUrl(webView == null ? null : webView.getUrl())) {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+    private void queueWebViewportSync() {
+        if (webView == null) return;
+        long[] delays = new long[] { 0L, 90L, 220L, 420L };
+        for (long delay : delays) {
+            webView.postDelayed(() -> {
+                if (webView == null) return;
+                webView.requestLayout();
+                webView.invalidate();
+                webView.evaluateJavascript(
+                        "(function(){window.dispatchEvent(new Event('resize'));"
+                                + "window.dispatchEvent(new Event('orientationchange'));})();",
+                        null
+                );
+            }, delay);
         }
     }
 
@@ -488,6 +503,21 @@ public class NativeMainActivity extends AppCompatActivity {
             webView.saveState(outState);
         }
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && appFullscreen) {
+            enterImmersiveLandscape();
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (root != null) ViewCompat.requestApplyInsets(root);
+        queueWebViewportSync();
     }
 
     @Override

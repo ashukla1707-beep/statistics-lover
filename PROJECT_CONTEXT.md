@@ -1079,3 +1079,28 @@ At the latest handoff:
 - Header logo fix: web commit `7d11ea92da7256128a92aa9ef9d01fdbd18a0f7a`, cache-busted logo URL, SW cache v9, Quality run `37187777649`, Vercel deployment `dpl_DpDi4Wwwynu3UtbaMvxGKsm3fJUR` assigned to production.
 - Production bundle verified as `index-Cbxz-gPm.js` and contains the new logo URL.
 - Automatic light/dark theming remains active in Android DayNight resources and web `prefers-color-scheme` CSS.
+
+
+### Current logo/splash recovery checkpoint — web side
+
+- User reported that both the APK splash logo and the website/header logo were still missing.
+- Web-side audit confirmed the Header component could still depend on a cached public image path in older installed WebViews/service-worker shells.
+- First mitigation commit `68eba241f514f195a8ac855292e1e336818bbec7`:
+  - moved the header logo into the Vite bundle as `src/assets/statistics-lover-logo.jpg`;
+  - Header imports the bundled logo instead of relying only on a public URL;
+  - service worker cache bumped to `statistics-lover-static-v10`.
+- That build passed Quality run `37188788958` and Vercel deployment `dpl_GRwRhyfLRse6w7iSFyxvNjt3GirH` was READY.
+- Production alias `statistics-lover.vercel.app` was assigned to that deployment and verified to serve bundle `index-Difc2g3c.js`.
+- The repo logo asset itself was then found to be visually degraded.
+- The clean **1254×1254 original user-uploaded Statistics Lover logo** is now the authoritative web logo asset.
+- Web original-logo commit: `06d0d0a769198814007f01f169c832bd25f0722b`.
+  - replaces `public/brand/statistics-lover-logo.jpg`;
+  - replaces bundled `src/assets/statistics-lover-logo.jpg`;
+  - updates manifest icon size metadata to 1254×1254;
+  - bumps service-worker cache to `statistics-lover-static-v11`;
+  - updates logo cache-busting URLs to `?v=20261004-3`.
+- Current verification state for `06d0d0a...` at this checkpoint:
+  - GitHub Quality run `37189461579` is **still in progress**;
+  - a Vercel deployment for that exact commit had **not yet appeared** in the last deployment poll;
+  - therefore do **not** claim the 1254×1254 web/header logo is live in production until the Quality run and matching Vercel deployment are verified.
+- Android 1.0.37 already uses the same 1254×1254 original logo and its signed release is verified.

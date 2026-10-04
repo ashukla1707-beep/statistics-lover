@@ -1,39 +1,31 @@
-# Statistics Lover Android
+# Statistics Lover Android — monorepo mirror
 
-## Recovered stable line
+The Android source in this directory is the verified **Statistics Lover 1.0.20** release source mirrored from the dedicated Android repository.
 
-Canonical recovery target:
+Canonical release record:
 
-- Version name: **1.0.15**
-- Version code: **16**
-- Architecture: app-first Android WebView shell
-- Debug package: `com.statisticslover.app.debug`
+- Dedicated repo: `ashukla1707-beep/statistics-lover-android`
+- Verified source commit: `7fff278316d50bf6ea3970f6d90ea52316acf8fc`
+- Version: **1.0.20**
+- versionCode: **21**
+- Package: `com.statisticslover.app`
+- Signed release workflow: `37175526613` — SUCCESS
+- Release artifact: `11292129608`
+- APK size: **644359 bytes**
+- APK SHA-256: `67827ccf3f11abd963383f23c9d170dc8affc5bdf8bb0723110acb614f81bd3b`
 
-The original 1.0.15 binary was not retained in GitHub history/Actions, so this recovery uses the preserved pre-native WebView architecture plus the current Statistics Lover Android app-mode/fullscreen bridge.
-
-## Launch flow
-
-```text
-LaunchReadyActivity -> MainActivity -> Statistics Lover WebView
-```
-
-The WebView is the application surface; internal Statistics Lover navigation stays inside the app. External providers such as Google Meet open outside the app.
+This release was rebuilt from the pinned 1.0.15 working runtime behavior and intentionally excludes the later 1.0.16–1.0.18 player-layout/scaling experiments.
 
 ## Auto-update
 
-The app checks `BuildConfig.UPDATE_MANIFEST_URL` on startup. If the manifest advertises a higher `versionCode`, the app:
+The app checks the permanent signed update channel in the dedicated Android repository:
 
-1. prompts for the update;
-2. downloads the APK with Android DownloadManager;
-3. verifies SHA-256 when the manifest supplies one;
-4. opens Android's package installer without routing the Statistics Lover UI through an external browser.
+`https://raw.githubusercontent.com/ashukla1707-beep/statistics-lover-android/main/downloads/version.json`
 
-The current recovery manifest advertises versionCode 16, so 1.0.15 will not try to update itself until a later APK is intentionally published.
+Current channel: **1.0.20 / versionCode 21**.
 
-## Recording/fullscreen
+Do not move or duplicate that publication channel casually. Existing installed release APKs depend on the permanent signing certificate and the dedicated repo's published APK.
 
-The recording route keeps the `StatisticsLoverAndroid/1.0.15` marker while using a desktop-style user agent for Google Drive. The Statistics Lover custom fullscreen button uses the native JavaScript bridge for immersive landscape and Android Back restores the inline player.
+## Monorepo CI
 
-## Capture policy
-
-Debug builds allow screenshots/screen recording. Release builds retain `FLAG_SECURE`.
+The monorepo workflow builds a debug APK only to verify that this mirrored source continues to compile on `develop`. Stable signed release publication remains owned by the dedicated Android repository.

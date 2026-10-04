@@ -501,6 +501,15 @@ public class NativeMainActivity extends AppCompatActivity {
             tests.setOnClickListener(v->
                     showAssessmentTests(batchId,this::showTeacher));
             ui.add(card,tests,8);
+
+            Button resources=ui.button("Study resources",false);
+            String resourceBatchTitle=batch==null
+                    ?batchId:batch.optString("title",batchId);
+            resources.setOnClickListener(v->
+                    showResourceWorkspace(
+                            batchId,resourceBatchTitle,subjectId,this::showTeacher
+                    ));
+            ui.add(card,resources,8);
             body.addView(card);
         }
 
@@ -558,6 +567,11 @@ public class NativeMainActivity extends AppCompatActivity {
                 showAssessmentTests("",this::showOperations));
         ui.add(body,tests,8);
 
+        Button resources=ui.button("Manage study resources",false);
+        resources.setOnClickListener(v->
+                showResourceBatches(this::showOperations));
+        ui.add(body,resources,8);
+
         String[] modules=(roles.contains("admin")||roles.contains("owner"))
                 ? new String[]{"Academics","Content","Enrollments","Assignments","Attendance","Tests","Announcements","Commerce","Staff","Audit","Settings"}
                 : new String[]{"Academics","Content","Assignments","Attendance","Tests","Announcements"};
@@ -570,6 +584,99 @@ public class NativeMainActivity extends AppCompatActivity {
         }
 
         replace(scroll);
+    }
+
+    private void showResourceBatches(Runnable back){
+        busy("Loading batches…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.contentBatches();
+                JSONArray batches=array(data,"batches");
+                runOnUiThread(()->renderResourceBatches(batches,back));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderResourceBatches(JSONArray batches,Runnable back){
+        screen="resources";
+        replace(ResourceManagerScreen.buildBatches(
+                this,ui,batches,back,
+                (batchId,batchTitle)->showResourceWorkspace(
+                        batchId,batchTitle,"",
+                        ()->renderResourceBatches(batches,back)
+                )
+        ));
+    }
+
+    private void showResourceWorkspace(
+            String batchId,
+            String batchTitle,
+            String subjectId,
+            Runnable back
+    ){
+        busy("Loading study resources…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.resourceWorkspace(batchId,subjectId);
+                runOnUiThread(()->renderResourceWorkspace(
+                        batchId,batchTitle,subjectId,data,back
+                ));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderResourceWorkspace(
+            String batchId,
+            String batchTitle,
+            String subjectId,
+            JSONObject data,
+            Runnable back
+    ){
+        screen="resources";
+        replace(ResourceManagerScreen.buildWorkspace(
+                this,ui,batchId,batchTitle,subjectId,data,back,
+                resource->saveLearningResource(
+                        batchId,batchTitle,subjectId,resource,back
+                )
+        ));
+    }
+
+    private void saveLearningResource(
+            String batchId,
+            String batchTitle,
+            String subjectId,
+            JSONObject resource,
+            Runnable back
+    ){
+        busy("Saving resource…");
+        io.execute(()->{
+            try{
+                api.saveLearningResource(resource);
+                runOnUiThread(()->{
+                    toast("Resource saved.");
+                    showResourceWorkspace(
+                            batchId,batchTitle,subjectId,back
+                    );
+                });
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    showResourceWorkspace(
+                            batchId,batchTitle,subjectId,back
+                    );
+                    toast(message(error));
+                });
+            }
+        });
     }
 
     private void showAssessmentTests(String batchId,Runnable back){

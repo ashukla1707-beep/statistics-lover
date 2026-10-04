@@ -499,6 +499,183 @@ Deno.serve(async (req) => {
       return json({ analytics: data ?? {} });
     }
 
+
+    if (action === "contentBatches") {
+      const client = userClient(requireToken(body));
+      const { data, error } = await client.from("batches").select(`
+        id,title,status,starts_on,ends_on,
+        course:courses!batches_course_id_fkey(id,title)
+      `).order("title").limit(200);
+      if (error) throw error;
+      return json({ batches: data ?? [] });
+    }
+
+    if (action === "resourceWorkspace") {
+      const client = userClient(requireToken(body));
+      const batchId = String(body.batchId ?? "").trim();
+      const subjectId = String(body.subjectId ?? "").trim();
+      if (!batchId) throw new Error("Batch is required.");
+
+      let subjectQuery = client.from("subjects")
+        .select("id,batch_id,title,code,position")
+        .eq("batch_id", batchId)
+        .order("position").order("title");
+      if (subjectId) subjectQuery = subjectQuery.eq("id", subjectId);
+
+      const { data: subjects, error: subjectError } = await subjectQuery;
+      if (subjectError) throw subjectError;
+
+      const subjectIds = (subjects ?? []).map((row: { id: string }) => row.id);
+      let modules: unknown[] = [];
+      let lectures: unknown[] = [];
+
+      if (subjectIds.length) {
+        const moduleResult = await client.from("modules")
+          .select("id,subject_id,title,position")
+          .in("subject_id", subjectIds)
+          .order("position").order("title");
+        if (moduleResult.error) throw moduleResult.error;
+        modules = moduleResult.data ?? [];
+
+        const moduleIds = (modules as Array<{ id: string }>).map((row) => row.id);
+        if (moduleIds.length) {
+          const lectureResult = await client.from("lectures")
+            .select("id,module_id,title,status,position")
+            .in("module_id", moduleIds)
+            .order("position").order("title");
+          if (lectureResult.error) throw lectureResult.error;
+          lectures = lectureResult.data ?? [];
+        }
+      }
+
+      const resourceResult = await client.from("learning_resources")
+        .select("id,batch_id,scope,subject_id,module_id,lecture_id,kind,title,description,status,release_at,position")
+        .eq("batch_id", batchId)
+        .order("position").order("title");
+      if (resourceResult.error) throw resourceResult.error;
+
+      const resources = resourceResult.data ?? [];
+      const resourceIds = resources.map((row: { id: string }) => row.id);
+      let sources: unknown[] = [];
+      if (resourceIds.length) {
+        const sourceResult = await client.from("learning_resource_sources")
+          .select("resource_id,provider,provider_reference,action_label,file_name,mime_type,size_bytes")
+          .in("resource_id", resourceIds);
+        if (sourceResult.error) throw sourceResult.error;
+        sources = sourceResult.data ?? [];
+      }
+
+      return json({
+        subjects: subjects ?? [],
+        modules,
+        lectures,
+        resources,
+        sources,
+      });
+    }
+
+    if (action === "saveLearningResource") {
+      const client = userClient(requireToken(body));
+      const input = (
+        body.resource && typeof body.resource === "object"
+          ? body.resource
+          : {}
+      ) as Record<string, unknown>;
+
+      const resourceId = String(input.id ?? "").trim();
+      const batchId = String(input.batchId ?? "").trim();
+      const scope = String(input.scope ?? "").trim();
+      const targetId = String(input.targetId ?? "").trim();
+      const kind = String(input.kind ?? "").trim();
+      const title = String(input.title ?? "").trim();
+      const description = String(input.description ?? "").trim();
+      const status = String(input.status ?? "").trim();
+      const releaseAtRaw = String(input.releaseAt ?? "").trim();
+      const provider = String(input.provider ?? "").trim();
+      const providerReference = String(input.providerReference ?? "").trim();
+      const actionLabel = String(input.actionLabel ?? "").trim();
+      const position = Number(input.position ?? 0);
+
+      if (!batchId) throw new Error("Batch is required.");
+      if (!["batch","subject","module","lecture"].includes(scope)) {
+        throw new Error("Invalid resource scope.");
+      }
+      if (scope !== "batch" && !targetId) throw new Error("Resource target is required.");
+      if (!["study_material","notes","pyq","reference"].includes(kind)) {
+        throw new Error("Invalid resource kind.");
+      }
+      if (!["draft","published","archived"].includes(status)) {
+        throw new Error("Invalid resource status.");
+      }
+      if (title.length < 2 || title.length > 180) {
+        throw new Error("Resource title must be 2 to 180 characters.");
+      }
+      if (!Number.isInteger(position) || position < 0) {
+        throw new Error("Position must be a non-negative whole number.");
+      }
+      if (!["google_drive","external"].includes(provider)) {
+        throw new Error("Invalid resource provider.");
+      }
+
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(providerReference);
+      } catch {
+        throw new Error("Resource link must be a valid HTTPS URL.");
+      }
+      if (parsedUrl.protocol !== "https:") {
+        throw new Error("Resource link must use HTTPS.");
+      }
+      if (provider === "google_drive" && parsedUrl.hostname !== "drive.google.com") {
+        throw new Error("Google Drive resources must use drive.google.com.");
+      }
+
+      const row = {
+        batch_id: batchId,
+        scope,
+        subject_id: scope === "subject" ? targetId : null,
+        module_id: scope === "module" ? targetId : null,
+        lecture_id: scope === "lecture" ? targetId : null,
+        kind,
+        title,
+        description: description || null,
+        status,
+        release_at: releaseAtRaw || null,
+        position,
+      };
+
+      let savedId = resourceId;
+      if (savedId) {
+        const updateResult = await client.from("learning_resources")
+          .update(row)
+          .eq("id", savedId)
+          .select("id")
+          .single();
+        if (updateResult.error) throw updateResult.error;
+      } else {
+        const insertResult = await client.from("learning_resources")
+          .insert(row)
+          .select("id")
+          .single();
+        if (insertResult.error) throw insertResult.error;
+        savedId = String(insertResult.data.id);
+      }
+
+      const sourceResult = await client.from("learning_resource_sources")
+        .upsert({
+          resource_id: savedId,
+          provider,
+          provider_reference: providerReference,
+          action_label: actionLabel || null,
+          file_name: null,
+          mime_type: null,
+          size_bytes: null,
+        }, { onConflict: "resource_id" });
+      if (sourceResult.error) throw sourceResult.error;
+
+      return json({ ok: true, resourceId: savedId });
+    }
+
     if (action === "operationsCourses") {
       const client = userClient(requireToken(body));
       const { data, error } = await client.from("courses")

@@ -187,6 +187,25 @@ final class NativeApiClient {
         return withRefresh(body);
     }
 
+    JSONObject contentBatches() throws Exception {
+        return authed("contentBatches");
+    }
+
+    JSONObject resourceWorkspace(String batchId, String subjectId) throws Exception {
+        JSONObject body = action("resourceWorkspace");
+        body.put("accessToken", session.accessToken());
+        body.put("batchId", batchId);
+        body.put("subjectId", subjectId == null ? "" : subjectId);
+        return withRefresh(body);
+    }
+
+    JSONObject saveLearningResource(JSONObject resource) throws Exception {
+        JSONObject body = action("saveLearningResource");
+        body.put("accessToken", session.accessToken());
+        body.put("resource", resource);
+        return withRefresh(body);
+    }
+
     JSONObject operationsCourses() throws Exception {
         return authed("operationsCourses");
     }

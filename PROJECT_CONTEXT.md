@@ -1031,3 +1031,33 @@ At the latest handoff:
 - Auto-update channel now advertises **1.0.32 / versionCode 33**.
 - The 1.0.31 Android-native theme/splash changes are rolled back and must not be reintroduced until this recovery is confirmed opening correctly on-device.
 - The web light/dark theme deployment remains untouched.
+
+
+### Android splash/theme correction — 1.0.34 / versionCode 35
+
+- User confirmed the 1.0.32 rollback reopened the app but did not resolve the duplicate splash/logo-quality problem.
+- Root cause: 1.0.32 restored the 1.0.30 system splash icon and the older 240x240 Android logo, so Android still showed a first masked/zoomed logo before the custom circular overlay.
+- Final fix deliberately preserves the known-working 1.0.32 startup architecture:
+  - system splash icon is transparent and has zero icon animation;
+  - logo appears only once in the custom native overlay;
+  - Android logo is the validated 420x420 web original (blob 4af648e1fcba3aa00ec481101b05cbe36ebc7393);
+  - custom logo uses FIT_CENTER + circular clipping instead of CENTER_CROP;
+  - no values-night/styles.xml override is used.
+- Native light/dark resources:
+  - light shell/splash/system bars #F7F8FB;
+  - dark shell/splash/system bars #0B1020;
+  - adaptive light/dark system-bar icons;
+  - spinner #C6005A light / #FF5397 dark;
+  - safe uiMode refresh updates native chrome without changing the Activity startup flow.
+- Web dark mode remains active through prefers-color-scheme; production currently serves bundle index-DaYV35YY.js.
+- Dedicated Android commits: f3b4121e7cbf5fd5e83b9110f2d51981b04f19b5, 2663cb82dd320eb4d2b945faaa12b2c216ea1195, a7ca7352ce8eedb530f6d9cdaca5a27d6f150f98.
+- Verified signed release: Statistics Lover 1.0.34 / versionCode 35.
+- Dedicated workflow run: 37186374672 — SUCCESS.
+- Signed release artifact ID: 11296689615.
+- Signature verification: PASSED.
+- Self-update publication: PASSED.
+- APK size: 672938 bytes.
+- APK SHA-256: 9bb92f9cc7a9557cb0aea70a2c239f3338b894419c65b929298e329cd5838a55.
+- Auto-update channel now advertises 1.0.34 / versionCode 35.
+- Monorepo source sync commits: 8702b508af45d780dbe828a07f2e8f2733120ef1, 26d4236a0e85c115c63000834467f0dc541513c2, 2df1c081b3b7e05bd476e540766d476ef2e06bb1.
+- Existing auth-aware startup/Home routing, website UI, stable session origin, single-transition recording startup, compact landscape fullscreen, inline-player exit fix and Drive seek stabilization are preserved.

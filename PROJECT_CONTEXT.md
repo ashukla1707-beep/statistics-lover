@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `ae6c3e83e67649c645b6c696a1ebb59db51dcb07`
-- Current focus: **Android A3 native teacher/admin editing workflows**. Recording, attendance, and assignment review/grading are implemented; next native layer is assessment/test operations.
+- Current handoff base before this documentation commit: `92e97349d2e4411915ecb5f37ff5a2dbb62fe09b`
+- Current focus: **Android A3 native teacher/admin editing workflows**. Recording, attendance, assignment grading, and assessment schedule/result operations are implemented; next native layer is content/resource editing.
 
 ## Deployment
 
@@ -579,3 +579,25 @@ At the latest handoff:
 - APK artifact id `11288244610`; artifact ZIP digest `sha256:8ee20fe8440dce21ee354b2002bb662f6d8eb2f1271e92a9da8b5062ebe9bc8e`.
 - Extracted debug APK SHA-256: `7a39abb48ae3f06d8b883fcf48dac6cc34b849ef2fbbe72a33d829870da860a2`.
 - Next native layer: assessment/test operations, then content/resource editing and the remaining admin modules.
+
+
+### Android checkpoint A3.4 — native assessment operations complete
+
+- Deployed repository-backed `native-api` version 4 with RLS-scoped assessment operations.
+- Added mobile API actions:
+  - `assessmentTests`: lists tests visible to the current content-manager/admin/owner or assignment-scoped teacher.
+  - `assessmentSchedules`: lists schedules for an authorized test.
+  - `setScheduleActive`: pauses/reactivates an existing schedule through normal schedule UPDATE RLS.
+  - `setManualResultsReleased`: calls the existing protected result-release RPC to release or hide manual-policy results.
+  - `assessmentAnalytics`: calls the existing staff/teacher test analytics RPC.
+- No assessment answer keys or student-private data are exposed outside the existing protected analytics/scheduling interfaces.
+- Added native `AssessmentOpsScreen` with role-scoped test discovery, schedule windows/status, pause/activate controls, manual-result release/hide controls, and summary performance metrics.
+- Teacher workspace exposes **Tests & results** per active batch assignment; subject-only teachers remain restricted by `private.has_teacher_test_access` and existing test/schedule RLS.
+- Content-manager/admin/owner Ops exposes **Tests & results** across the caller's RLS-visible scope.
+- This layer intentionally manages existing tests/schedules rather than recreating the full question-bank/test-builder editor on mobile. Question/test authoring remains a later native layer.
+- Android test version advanced to `1.0.6-test` / versionCode 7.
+- Assessment operations commit `92e97349d2e4411915ecb5f37ff5a2dbb62fe09b` passed GitHub Quality run `37164179952` and Android APK run `37164179736`.
+- Live Supabase `native-api` is ACTIVE at version 4 with all five assessment operations above.
+- APK artifact id `11288926723`; artifact ZIP digest `sha256:2728763e6c880ca59c8c89f105b2b5d0c6306188372930241c557519d28fb4fc`.
+- Extracted debug APK SHA-256: `7b859159a27671ceaff615a2f5b85d17d6fc2468b1a7379479faa95c8a5caa0b`.
+- Next native layer: content/resource editing (study resources and delivery-source management), then remaining admin operations and optional full assessment authoring.

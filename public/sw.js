@@ -1,5 +1,5 @@
-const CACHE_NAME='statistics-lover-static-v6'
-const SHELL=['/','/manifest.webmanifest','/brand/statistics-lover-logo.jpg']
+const CACHE_NAME='statistics-lover-static-v10'
+const SHELL=['/','/manifest.webmanifest','/brand/statistics-lover-logo-v2.jpg']
 
 self.addEventListener('install',(event)=>{
   event.waitUntil(caches.open(CACHE_NAME).then((cache)=>cache.addAll(SHELL)).then(()=>self.skipWaiting()))

@@ -1118,3 +1118,18 @@ At the latest handoff:
 - Web original-logo commit `06d0d0a769198814007f01f169c832bd25f0722b` has now passed GitHub Quality run **37189461579**.
 - At the last Vercel poll, no deployment for exact commit `06d0d0a...` had appeared yet. Do not claim the matching 1254×1254 web/header logo is live until a Vercel deployment for that exact commit is verified and assigned.
 - Future Android work must start from 1.0.37 rather than older 1.0.35/1.0.34 splash experiments.
+
+
+## LOGO / APK STARTUP CHECKPOINT — 2026-10-04
+
+- User recording confirmed that the previously deployed logo appeared blank in the website header while Android also showed a blank custom splash.
+- The 420×420 logo copy previously treated as healthy was structurally damaged despite having a JPEG header; strict decoding of the same bytes extracted from Android 1.0.38 failed.
+- Web authoritative logo source is now the clean pre-corruption 240×240 JPEG blob `86549c806ec54b82cbe8765082cffcc7a0a4c28f`.
+- Web repair commit: `faa50b124acbed7c48fa02aef3dbdba54e8decad`.
+- New cache-safe asset: `statistics-lover-logo-clean.jpg`.
+- Header imports the new clean asset; old public and bundled logo paths were also overwritten with clean bytes to prevent accidental reuse.
+- Service-worker cache advanced to `statistics-lover-static-v13`; public cache-bust is `?v=20261004-5`.
+- Vercel deployment `dpl_C3iFuqcRcwxsuxugG5zxcCwU9ZA6` is READY and `statistics-lover.vercel.app` is mapped to it.
+- Live production bundle `index-8bpmSzop.js` renders the header `brand-logo` from bundled asset `/assets/statistics-lover-logo-clean-Dqadk_XN.jpg`.
+- The bundled asset returns HTTP 200, `image/jpeg`, 13085 bytes, JFIF.
+- Matching Android baseline is **Statistics Lover 1.0.39 / versionCode 40**, which removes the second custom splash overlay and changes the launcher icon to the Statistics Lover logo.

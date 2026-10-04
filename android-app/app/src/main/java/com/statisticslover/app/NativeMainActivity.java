@@ -496,6 +496,11 @@ public class NativeMainActivity extends AppCompatActivity {
             review.setOnClickListener(v->
                     showManagedAssignments(batchId,this::showTeacher));
             ui.add(card,review,8);
+
+            Button tests=ui.button("Tests & results",false);
+            tests.setOnClickListener(v->
+                    showAssessmentTests(batchId,this::showTeacher));
+            ui.add(card,tests,8);
             body.addView(card);
         }
 
@@ -548,6 +553,11 @@ public class NativeMainActivity extends AppCompatActivity {
                 showManagedAssignments("",this::showOperations));
         ui.add(body,reviewAssignments,8);
 
+        Button tests=ui.button("Tests & results",false);
+        tests.setOnClickListener(v->
+                showAssessmentTests("",this::showOperations));
+        ui.add(body,tests,8);
+
         String[] modules=(roles.contains("admin")||roles.contains("owner"))
                 ? new String[]{"Academics","Content","Enrollments","Assignments","Attendance","Tests","Announcements","Commerce","Staff","Audit","Settings"}
                 : new String[]{"Academics","Content","Assignments","Attendance","Tests","Announcements"};
@@ -560,6 +570,125 @@ public class NativeMainActivity extends AppCompatActivity {
         }
 
         replace(scroll);
+    }
+
+    private void showAssessmentTests(String batchId,Runnable back){
+        busy("Loading tests…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.assessmentTests(batchId);
+                JSONArray tests=array(data,"tests");
+                runOnUiThread(()->renderAssessmentTests(tests,back));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderAssessmentTests(JSONArray tests,Runnable back){
+        screen="assessments";
+        replace(AssessmentOpsScreen.buildTests(
+                this,ui,tests,back,
+                (testId,testTitle)->showAssessmentTestDetail(
+                        testId,testTitle,()->renderAssessmentTests(tests,back)
+                )
+        ));
+    }
+
+    private void showAssessmentTestDetail(
+            String testId,
+            String testTitle,
+            Runnable back
+    ){
+        busy("Loading test operations…");
+        io.execute(()->{
+            try{
+                JSONObject scheduleData=api.assessmentSchedules(testId);
+                JSONObject analyticsData=api.assessmentAnalytics(testId);
+                JSONArray schedules=array(scheduleData,"schedules");
+                JSONObject analytics=analyticsData.optJSONObject("analytics");
+                if(analytics==null)analytics=new JSONObject();
+                JSONObject finalAnalytics=analytics;
+                runOnUiThread(()->renderAssessmentTestDetail(
+                        testId,testTitle,schedules,finalAnalytics,back
+                ));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderAssessmentTestDetail(
+            String testId,
+            String testTitle,
+            JSONArray schedules,
+            JSONObject analytics,
+            Runnable back
+    ){
+        screen="assessments";
+        replace(AssessmentOpsScreen.buildDetail(
+                this,ui,testTitle,schedules,analytics,back,
+                (scheduleId,active)->setAssessmentScheduleActive(
+                        testId,testTitle,scheduleId,active,back
+                ),
+                (scheduleId,released)->setManualAssessmentResultsReleased(
+                        testId,testTitle,scheduleId,released,back
+                )
+        ));
+    }
+
+    private void setAssessmentScheduleActive(
+            String testId,
+            String testTitle,
+            String scheduleId,
+            boolean active,
+            Runnable back
+    ){
+        busy(active?"Activating schedule…":"Pausing schedule…");
+        io.execute(()->{
+            try{
+                api.setScheduleActive(scheduleId,active);
+                runOnUiThread(()->{
+                    toast(active?"Schedule activated.":"Schedule paused.");
+                    showAssessmentTestDetail(testId,testTitle,back);
+                });
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    showAssessmentTestDetail(testId,testTitle,back);
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void setManualAssessmentResultsReleased(
+            String testId,
+            String testTitle,
+            String scheduleId,
+            boolean released,
+            Runnable back
+    ){
+        busy(released?"Releasing results…":"Hiding results…");
+        io.execute(()->{
+            try{
+                api.setManualResultsReleased(scheduleId,released);
+                runOnUiThread(()->{
+                    toast(released?"Results released.":"Results hidden.");
+                    showAssessmentTestDetail(testId,testTitle,back);
+                });
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    showAssessmentTestDetail(testId,testTitle,back);
+                    toast(message(error));
+                });
+            }
+        });
     }
 
     private void showManagedAssignments(String batchId,Runnable back){

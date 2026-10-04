@@ -426,6 +426,79 @@ Deno.serve(async (req) => {
       return json({ url: data.signedUrl });
     }
 
+
+    if (action === "assessmentTests") {
+      const client = userClient(requireToken(body));
+      const batchId = String(body.batchId ?? "").trim();
+
+      let query = client.from("assessment_tests").select(`
+        id,batch_id,scope,subject_id,title,description,status,duration_minutes,
+        max_attempts,shuffle_questions,shuffle_options,created_at,
+        batch:batches!assessment_tests_batch_id_fkey(
+          id,title,course:courses!batches_course_id_fkey(id,title)
+        ),
+        subject:subjects!assessment_tests_subject_id_fkey(id,title)
+      `).order("created_at", { ascending: false }).limit(200);
+
+      if (batchId) query = query.eq("batch_id", batchId);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return json({ tests: data ?? [] });
+    }
+
+    if (action === "assessmentSchedules") {
+      const client = userClient(requireToken(body));
+      const testId = String(body.testId ?? "").trim();
+      if (!testId) throw new Error("Test is required.");
+
+      const { data, error } = await client.from("assessment_test_schedules")
+        .select("id,test_id,title,opens_at,closes_at,audience,result_policy,results_release_at,is_active,manual_results_released")
+        .eq("test_id", testId)
+        .order("opens_at", { ascending: false });
+      if (error) throw error;
+      return json({ schedules: data ?? [] });
+    }
+
+    if (action === "setScheduleActive") {
+      const client = userClient(requireToken(body));
+      const scheduleId = String(body.scheduleId ?? "").trim();
+      const active = body.active === true;
+      if (!scheduleId) throw new Error("Schedule is required.");
+
+      const { error } = await client.from("assessment_test_schedules")
+        .update({ is_active: active })
+        .eq("id", scheduleId);
+      if (error) throw error;
+      return json({ ok: true });
+    }
+
+    if (action === "setManualResultsReleased") {
+      const client = userClient(requireToken(body));
+      const scheduleId = String(body.scheduleId ?? "").trim();
+      const released = body.released === true;
+      if (!scheduleId) throw new Error("Schedule is required.");
+
+      const { error } = await client.rpc("set_manual_assessment_results_released", {
+        target_schedule: scheduleId,
+        target_released: released,
+      });
+      if (error) throw error;
+      return json({ ok: true });
+    }
+
+    if (action === "assessmentAnalytics") {
+      const client = userClient(requireToken(body));
+      const testId = String(body.testId ?? "").trim();
+      if (!testId) throw new Error("Test is required.");
+
+      const { data, error } = await client.rpc("get_assessment_test_analytics", {
+        target_test: testId,
+      });
+      if (error) throw error;
+      return json({ analytics: data ?? {} });
+    }
+
     if (action === "operationsCourses") {
       const client = userClient(requireToken(body));
       const { data, error } = await client.from("courses")

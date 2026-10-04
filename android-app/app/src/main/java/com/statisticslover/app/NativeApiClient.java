@@ -150,6 +150,43 @@ final class NativeApiClient {
         return withRefresh(body);
     }
 
+    JSONObject assessmentTests(String batchId) throws Exception {
+        JSONObject body = action("assessmentTests");
+        body.put("accessToken", session.accessToken());
+        body.put("batchId", batchId == null ? "" : batchId);
+        return withRefresh(body);
+    }
+
+    JSONObject assessmentSchedules(String testId) throws Exception {
+        JSONObject body = action("assessmentSchedules");
+        body.put("accessToken", session.accessToken());
+        body.put("testId", testId);
+        return withRefresh(body);
+    }
+
+    JSONObject setScheduleActive(String scheduleId, boolean active) throws Exception {
+        JSONObject body = action("setScheduleActive");
+        body.put("accessToken", session.accessToken());
+        body.put("scheduleId", scheduleId);
+        body.put("active", active);
+        return withRefresh(body);
+    }
+
+    JSONObject setManualResultsReleased(String scheduleId, boolean released) throws Exception {
+        JSONObject body = action("setManualResultsReleased");
+        body.put("accessToken", session.accessToken());
+        body.put("scheduleId", scheduleId);
+        body.put("released", released);
+        return withRefresh(body);
+    }
+
+    JSONObject assessmentAnalytics(String testId) throws Exception {
+        JSONObject body = action("assessmentAnalytics");
+        body.put("accessToken", session.accessToken());
+        body.put("testId", testId);
+        return withRefresh(body);
+    }
+
     JSONObject operationsCourses() throws Exception {
         return authed("operationsCourses");
     }

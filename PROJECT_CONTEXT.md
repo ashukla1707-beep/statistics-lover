@@ -1364,3 +1364,29 @@ At the latest handoff:
 - Minimum webhook events: `payment.captured`, `payment.failed`.
 - Do **not** enable Razorpay yet; first complete frontend wiring, then configure test-mode secrets/webhook, execute a sandbox payment, and only then flip the rollout gate.
 - Android **1.0.41 / versionCode 42** remains unchanged; its WebView already handles `upi:` and `intent:` external navigation, so no Android change is currently required for Razorpay web checkout.
+
+
+## STAGE 7B COMPLETE — Razorpay web checkout wiring (2026-10-04)
+
+- Web checkout is now connected to the Stage 7A Razorpay backend and remains behind `commerce_razorpay_enabled=false`.
+- Store behavior:
+  - Razorpay disabled: existing manual-order behavior is preserved.
+  - Razorpay enabled: Statistics Lover creates a server-authoritative `razorpay` order, opens Razorpay Standard Checkout, and sends only payment/order/signature callback values to the authenticated verification function.
+- My Orders supports retrying pending Razorpay orders and shows a payment-success confirmation after verified checkout.
+- New client helper: `src/features/commerce/razorpayCheckout.ts`.
+- Public payment availability is read only through `get_public_commerce_config()`.
+- Razorpay Key Secret is never present in browser code; only public Key ID is returned by the backend when checkout is prepared.
+- Production CSP now allows `https://checkout.razorpay.com` plus required `https://*.razorpay.com` connection/frame endpoints.
+- CI correction during Stage 7B:
+  - fixed an accidental escaped-newline formatting error in `commerceService.ts`;
+  - removed impure `Date.now()` use from React render; order expiration remains server-authoritative.
+- GitHub Quality run **37200532510 — SUCCESS** (typecheck, lint, build).
+- Stage 7B audit: `docs/STAGE7B_RAZORPAY_WEB_CHECKOUT.md`.
+- Android remains **1.0.41 / versionCode 42**. No native change is currently required because the existing WebView handles JavaScript, third-party cookies, and external `upi:` / `intent:` schemes.
+- Razorpay remains intentionally **disabled** until external Test Mode configuration is available.
+- Required activation sequence:
+  1. configure Supabase Edge Function secrets `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`;
+  2. configure Razorpay Test Mode webhook to `https://wjsudutyvsssfhrdqvbr.supabase.co/functions/v1/razorpay-webhook` for at least `payment.captured` and `payment.failed`;
+  3. execute one complete sandbox payment;
+  4. verify order -> payment -> receipt -> enrollment and webhook idempotency;
+  5. only then set `commerce_razorpay_enabled=true`.

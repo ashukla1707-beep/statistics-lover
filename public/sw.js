@@ -1,4 +1,4 @@
-const CACHE_NAME='statistics-lover-static-v9'
+const CACHE_NAME='statistics-lover-static-v10'
 const SHELL=['/','/manifest.webmanifest','/brand/statistics-lover-logo.jpg?v=20261004-2']
 
 self.addEventListener('install',(event)=>{

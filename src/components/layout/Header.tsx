@@ -1,4 +1,5 @@
 import { useEffect,useState } from 'react'
+import brandLogo from '../../assets/statistics-lover-logo.jpg'
 import { Link } from 'react-router-dom'
 import { navigationItems, siteConfig } from '../../config/site'
 import { useAuth } from '../../features/auth'
@@ -37,7 +38,7 @@ export function Header() {
     <header className="site-header">
       <div className="container header-inner">
         <Link className="brand" to="/" onClick={closeMenu} aria-label="Statistics Lover home">
-          <img className="brand-logo" src={siteConfig.logoPath} alt="Statistics Lover logo" width="52" height="52" decoding="async" fetchPriority="high" />
+          <img className="brand-logo" src={brandLogo} alt="Statistics Lover logo" width="52" height="52" decoding="async" fetchPriority="high" />
           <span className="brand-copy">
             <strong>{siteConfig.name}</strong>
             <small>{siteConfig.tagline}</small>

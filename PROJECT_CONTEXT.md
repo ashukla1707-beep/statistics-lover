@@ -1211,3 +1211,35 @@ At the latest handoff:
 - Regression/acceptance test: `database/tests/teacher_workflow_acceptance.sql`.
 - Android **1.0.41 / versionCode 42** remains unchanged.
 - Next checkpoint: **Stage 4 — Content Manager content lifecycle and publishing boundaries**.
+
+
+## STAGE 4 COMPLETE — Content Manager lifecycle (2026-10-04)
+
+- Stage 4 Content Manager acceptance: **PASS**.
+- Rollback-only live fixtures verified end-to-end academic/content lifecycle.
+- Allowed and verified:
+  - course create/publish/archive;
+  - batch create/activate;
+  - subject/module create/publish;
+  - lecture create/publish;
+  - protected delivery source;
+  - learning resources/sources;
+  - assignments;
+  - question bank;
+  - test builder, schedules and analytics;
+  - scoped announcements.
+- Restricted and verified:
+  - hard-delete remains admin/owner-only;
+  - enrollment administration blocked;
+  - teacher assignment administration blocked;
+  - commerce offer mutation blocked;
+  - staff/role assignment blocked;
+  - attendance marking blocked;
+  - audit logs/settings blocked;
+  - direct profile visibility remains own profile only.
+- Frontend role gates match the database boundary; `AcademicManagementPage` already hides delete controls from Content Manager.
+- Audit: `docs/STAGE4_CONTENT_MANAGER_AUDIT.md`.
+- Acceptance test: `database/tests/content_manager_workflow_acceptance.sql`.
+- No schema fix was required in Stage 4.
+- Android **1.0.41 / versionCode 42** remains unchanged.
+- Next checkpoint: **Stage 5 — Admin and Owner administration, commerce, audit/settings and privileged-role boundaries**.

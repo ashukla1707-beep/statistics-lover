@@ -1335,3 +1335,32 @@ At the latest handoff:
   1. enable Supabase leaked-password protection;
   2. configure/verify production email and WhatsApp delivery credentials before depending on those channels;
   3. revisit performance-only RLS/index advisor findings after meaningful production traffic exists.
+
+
+## STAGE 7A COMPLETE — Razorpay payment backend foundation (2026-10-04)
+
+- Payment gateway integration has started from the audited Stage 6 baseline.
+- Razorpay selected as the first gateway adapter because the commerce schema already supports `razorpay` and Statistics Lover pricing is INR-oriented.
+- Live Supabase migration `razorpay_gateway_foundation` applied.
+- Repository migration: `database/migrations/0035_razorpay_gateway_foundation.sql`.
+- New live Edge Functions:
+  - `razorpay-checkout` — **ACTIVE**, `verify_jwt=true`;
+  - `razorpay-webhook` — **ACTIVE**, `verify_jwt=false` because Razorpay cannot supply a Supabase user JWT; the function verifies the Razorpay HMAC itself.
+- Security/authorization:
+  - provider order binding is service-role-only;
+  - gateway order refs are unique per provider;
+  - browser never receives Razorpay Key Secret;
+  - checkout callback HMAC uses the server-stored Razorpay order id;
+  - payment status/amount/currency are re-verified server-side before existing payment finalization/enrollment provisioning;
+  - webhook raw body is HMAC-verified;
+  - deterministic provider event ids preserve idempotency.
+- Rollout gate added: `commerce_razorpay_enabled=false`.
+- Public safe config RPC `get_public_commerce_config()` returns only the enabled boolean.
+- Required custom Edge Function secrets are not yet configured through the connected toolset:
+  - `RAZORPAY_KEY_ID`;
+  - `RAZORPAY_KEY_SECRET`;
+  - `RAZORPAY_WEBHOOK_SECRET`.
+- Required webhook URL: `https://wjsudutyvsssfhrdqvbr.supabase.co/functions/v1/razorpay-webhook`.
+- Minimum webhook events: `payment.captured`, `payment.failed`.
+- Do **not** enable Razorpay yet; first complete frontend wiring, then configure test-mode secrets/webhook, execute a sandbox payment, and only then flip the rollout gate.
+- Android **1.0.41 / versionCode 42** remains unchanged; its WebView already handles `upi:` and `intent:` external navigation, so no Android change is currently required for Razorpay web checkout.

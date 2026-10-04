@@ -1,35 +1,80 @@
 # Statistics Lover Android
 
-Native Android WebView application following the same shell pattern as Stat Archive Android.
+## Current architecture
 
-## Architecture
+The current Android source on `develop` is a **true native Android client**.
 
-- `LaunchReadyActivity` owns Android's launch/splash experience and keeps the native splash visible until the React app is ready.
-- `MainActivity` owns the WebView, native back navigation, file chooser, trusted-host routing, recording desktop-UA behavior, secure fullscreen and orientation.
-- `StatisticsLoverApplication` isolates this release in its own WebView profile.
-- AndroidX/AppCompat/Core SplashScreen are used, matching the Stat Archive app architecture style.
+Launch flow:
 
-## Test build
+```text
+SplashActivity -> NativeMainActivity
+```
 
-Debug loads:
-`https://statistics-lover-git-develop-statistics-lover.vercel.app`
+The application shell, authentication, dashboard, enrolled courses, learning hierarchy, inbox, orders, store and role-aware operations are rendered with native Android views.
 
-Release targets:
-`https://statistics-lover.vercel.app`
+The app does **not** load the Statistics Lover website as its main application shell.
 
-## Native behavior
+## Recording exception
 
-- Native Statistics Lover splash instead of showing an empty/loading webpage.
-- Portrait application shell with proper system insets.
-- App-specific WebView mode is injected after page load.
-- Browser history is handled by the Android Back dispatcher.
-- Recording route `/learn/:batchId/lecture/:lectureId` switches only that route to a desktop Chrome UA.
-- Web fullscreen enters immersive landscape and restores portrait on exit.
-- `FLAG_SECURE` blocks normal Android screenshots/screen recording of the app window.
-- Assignment file uploads use Android's file picker.
-- External links such as Google Meet open outside the app.
-- Cleartext HTTP is disabled and SSL errors are never bypassed.
+Google Drive recording playback is the one intentionally isolated provider surface that may use an Android WebView inside `RecordingActivity`.
 
-## Limitation
+That WebView is limited to recording playback. It must not be treated as the architecture for the rest of the app.
 
-Like Stat Archive, product screens are web-driven inside a native Android shell. This keeps the web and APK feature sets synchronized. `FLAG_SECURE` is a deterrent, not DRM.
+Google Meet and other external-provider actions can still open outside the app where appropriate.
+
+## Current native operations
+
+The native A3 track currently includes:
+
+- student login/session/bootstrap
+- dashboard and enrolled-course learning hierarchy
+- notifications, orders and course store
+- dedicated recording activity and Statistics Lover fullscreen control
+- attendance editing
+- assignment review and grading
+- assessment schedule/result operations
+- study-resource management
+- lecture live/recorded delivery-source management
+
+## Debug capture policy
+
+During current device testing, debug builds allow screenshots and screen recording.
+
+`FLAG_SECURE` is applied only to non-debug/release builds.
+
+## Important installed-build note
+
+An older Statistics Lover APK used a website/WebView shell. If a phone still opens the website as the whole application, that phone is running the older web-wrapper build, not the current A3 native APK.
+
+Do not infer the installed architecture from this repository README alone; validate the APK actually installed on the device.
+
+## Build
+
+The Android workflow builds:
+
+```text
+android-app/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Current test line after A3.6:
+
+```text
+versionCode 9
+versionName 1.0.8-test
+```
+
+Debug package:
+
+```text
+com.statisticslover.app.debug
+```
+
+Release package:
+
+```text
+com.statisticslover.app
+```
+
+## Web deployment
+
+The website remains a separate Vercel-deployed product surface. Web UI fixes and Android A3 native milestones must be tracked separately.

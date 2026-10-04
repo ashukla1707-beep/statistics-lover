@@ -657,3 +657,14 @@ At the latest handoff:
 - APK artifact id `11291349444`; artifact ZIP digest `sha256:794e9b5ffd0851fd6f15663ca05b93997b84d5b54c9f4f88d12d7c7f2b16a19c`.
 - Extracted debug APK SHA-256: `5759180c7de10d5ef123f1292aa62ed5f47dce0ebeb3fa17cabe8247d30b7426`.
 - Next native layer: remaining admin operations (enrollment management, announcements/communications, commerce/payment verification, staff/role administration and settings/audit), followed by optional full mobile assessment authoring. Continue real-device testing of the recording/fullscreen path in parallel with these native operations layers.
+
+
+### Android installed-build clarification
+
+- Real-device observation from the user: the APK currently installed on the phone is still behaving as the older **web/WebView application**.
+- This is distinct from the current `develop` Android source, whose launcher is `SplashActivity -> NativeMainActivity` and whose main shell is native.
+- Therefore A3.1–A3.6 describe the **new native APK source/build artifacts**, not proof that the user's currently installed APK has been replaced.
+- Do not say the user's phone is running A3.x until the latest native APK is explicitly installed and validated on that device.
+- `android-app/README.md` previously still described the obsolete WebView architecture and was stale; it has now been corrected to match the current source.
+- Current native test build uses versionCode 9 / versionName `1.0.8-test`; older A3 baseline used versionCode 3 / `1.0.2-test`.
+- Next device-validation step must first confirm the installed package/version and native launcher behavior before testing A3.6 features.

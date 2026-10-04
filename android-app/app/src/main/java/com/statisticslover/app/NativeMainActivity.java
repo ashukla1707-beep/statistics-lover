@@ -58,6 +58,8 @@ public class NativeMainActivity extends AppCompatActivity {
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ValueCallback<Uri[]> filePathCallback;
     private AppUpdateManager updateManager;
+    private String websiteUserAgent;
+    private String recordingUserAgent;
     private boolean appFullscreen;
 
     @Override
@@ -144,11 +146,11 @@ public class NativeMainActivity extends AppCompatActivity {
         settings.setAllowContentAccess(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setSupportMultipleWindows(false);
-        settings.setUserAgentString(
-                DESKTOP_USER_AGENT
-                        + " StatisticsLoverAndroid/"
-                        + BuildConfig.VERSION_NAME
-        );
+        websiteUserAgent = settings.getUserAgentString();
+        recordingUserAgent = DESKTOP_USER_AGENT
+                + " StatisticsLoverAndroid/"
+                + BuildConfig.VERSION_NAME;
+        settings.setUserAgentString(websiteUserAgent);
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
@@ -251,6 +253,21 @@ public class NativeMainActivity extends AppCompatActivity {
         String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
 
         if (("http".equals(scheme) || "https".equals(scheme)) && APP_HOSTS.contains(host)) {
+            boolean recording = isRecordingUrl(uri.toString());
+            String desiredUserAgent = recording ? recordingUserAgent : websiteUserAgent;
+            String currentUserAgent = webView == null
+                    ? ""
+                    : webView.getSettings().getUserAgentString();
+
+            if (webView != null
+                    && desiredUserAgent != null
+                    && !desiredUserAgent.equals(currentUserAgent)) {
+                webView.getSettings().setUserAgentString(desiredUserAgent);
+                syncRecordingMode(uri.toString(), false);
+                webView.loadUrl(uri.toString());
+                return true;
+            }
+
             syncRecordingMode(uri.toString(), false);
             return false;
         }
@@ -286,6 +303,21 @@ public class NativeMainActivity extends AppCompatActivity {
     private void syncRecordingMode(String url, boolean allowReload) {
         boolean recording = isRecordingUrl(url);
 
+        if (webView != null) {
+            String desiredUserAgent = recording ? recordingUserAgent : websiteUserAgent;
+            String currentUserAgent = webView.getSettings().getUserAgentString();
+
+            if (desiredUserAgent != null
+                    && !desiredUserAgent.equals(currentUserAgent)) {
+                webView.getSettings().setUserAgentString(desiredUserAgent);
+
+                if (allowReload && url != null && !url.isBlank()) {
+                    webView.loadUrl(url);
+                    return;
+                }
+            }
+        }
+
         if (recording) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
@@ -296,10 +328,6 @@ public class NativeMainActivity extends AppCompatActivity {
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
         }
-
-        // The APK uses a desktop Chrome user-agent from startup while keeping the
-        // real phone viewport width. This preserves the responsive mobile layout
-        // and lets Google Drive render its desktop-capable player immediately.
     }
 
     private final class StatisticsLoverNativeBridge {

@@ -854,3 +854,28 @@ At the latest handoff:
 - Verification: production and stable develop aliases both serve JS bundle `index-DC55xXSS.js`.
 - This preserves stored login/session continuity while delivering the current working homepage/header/footer/responsive fixes on the original app origin.
 - Fullscreen behavior remains the 1.0.23 compact landscape implementation.
+
+
+### Android UI correction — 1.0.26 / versionCode 27
+
+- User explicitly clarified that the APK should show the **same responsive web UI**, not a separate Android-specific UI.
+- Root cause: the always-on `StatisticsLoverAndroid/<version>` user-agent made `src/App.tsx` replace the normal website Header/Footer with `AndroidAppHeader` and `AndroidBottomNav`.
+- Web source commit `24f93fbce8bf71be20795774432c2efc37b4d327` also removes that layout substitution for future deployments; Quality run `37179835625` passed.
+- APK no longer depends on that web deployment to get the correct UI:
+  - normal pages use the WebView's real mobile website user-agent;
+  - recording pages alone switch to desktop Chrome + `StatisticsLoverAndroid/<version>` for Drive/native fullscreen;
+  - leaving recording restores the normal website user-agent.
+- Dedicated Android source commits:
+  - `ce99c08224bbb3dc45799abb44995190d02428de`
+  - `db01d079bbbf4c7c0c6f3e4df3e0a3de08cff185`
+- Verified signed release: **Statistics Lover 1.0.26 / versionCode 27**.
+- Dedicated workflow run: **37180060760 — SUCCESS**.
+- Signed release artifact ID: **11294094436**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **645119 bytes**.
+- APK SHA-256: **`b9fa02ead68b6db5f044ee330a99d9df64f6fef25cabc961c74bf756707bde42`**.
+- Auto-update channel now advertises **1.0.26 / versionCode 27**.
+- Stable app origin remains `https://statistics-lover.vercel.app/` so existing WebView/Supabase sessions remain on the same origin.
+- Fullscreen retains the compact landscape behavior from the accepted fullscreen line.
+- 1.0.25 is superseded.

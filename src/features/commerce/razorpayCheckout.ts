@@ -1,5 +1,7 @@
 import { requireSupabase } from '../../services/supabase/client'
 
+// Rollout remains server-gated by commerce_razorpay_enabled until Test Mode verification passes.
+
 type CheckoutResponse={
   keyId:string
   orderId:string

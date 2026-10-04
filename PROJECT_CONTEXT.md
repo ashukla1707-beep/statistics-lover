@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `1b728d205894d5560fd3890e7302813bef5a337a`
-- Current focus: **Android A3 native teacher/admin editing workflows**, with recording playback and native attendance now implemented. Next native workflow: assignment review/grading.
+- Current handoff base before this documentation commit: `ae6c3e83e67649c645b6c696a1ebb59db51dcb07`
+- Current focus: **Android A3 native teacher/admin editing workflows**. Recording, attendance, and assignment review/grading are implemented; next native layer is assessment/test operations.
 
 ## Deployment
 
@@ -558,3 +558,24 @@ At the latest handoff:
 - APK artifact id `11288462935`; artifact ZIP digest `sha256:bdc0c712d96e00762566396a5a1b23a399e26a580033f59bd5bbc3c247853dba`.
 - Extracted debug APK SHA-256: `0a99ceb674322777e19015567637225a7a4c9127f8dee888bd78cabad72ba8ec`.
 - Next native layer: assignment submission review/grading for teacher/admin, followed by assessment/content editing and the remaining admin operations modules.
+
+
+### Android checkpoint A3.3 — native assignment review & grading complete
+
+- Extended the repository-backed `native-api` and deployed live version 3 from the same source.
+- Added RLS-scoped mobile actions:
+  - `managedAssignments`: returns assignments visible to the caller with course/batch/subject/module/lecture context.
+  - `assignmentSubmissions`: uses the existing protected `get_assignment_submissions` RPC.
+  - `gradeSubmission`: updates only `graded`/`returned` status, nullable score and feedback through the caller's JWT/RLS, then reloads the protected submission list.
+  - `submissionSignedUrl`: creates a short-lived URL through the caller's private Storage permissions for an assignment attachment.
+- No service-role grading path was introduced. Existing `assignment_submissions_update_staff` RLS, teacher assignment scope hardening and the `validate_assignment_grade` database trigger remain authoritative. The trigger still rejects scores above the assignment max and stamps grader/time.
+- Added native `AssignmentReviewScreen` with assignment context, due/max-score information, submission text, protected attachment opening, grading/return status, decimal score validation and feedback.
+- Student draft submissions are visible to authorized staff but deliberately not gradable until submitted.
+- Teacher workspace now exposes **Review assignments** per active batch scope; database RLS automatically restricts subject-only teachers to assignments they are authorized to manage.
+- Content-manager/admin/owner Ops exposes **Review assignments** according to existing assignment RLS. Attendance remains admin/owner or assigned-teacher only.
+- Android test version advanced to `1.0.5-test` / versionCode 6.
+- Assignment grading commit `ae6c3e83e67649c645b6c696a1ebb59db51dcb07` passed GitHub Quality run `37163942305` and Android APK run `37163942343`.
+- Live Supabase `native-api` is ACTIVE at version 3 and contains all four assignment actions above.
+- APK artifact id `11288244610`; artifact ZIP digest `sha256:8ee20fe8440dce21ee354b2002bb662f6d8eb2f1271e92a9da8b5062ebe9bc8e`.
+- Extracted debug APK SHA-256: `7a39abb48ae3f06d8b883fcf48dac6cc34b849ef2fbbe72a33d829870da860a2`.
+- Next native layer: assessment/test operations, then content/resource editing and the remaining admin modules.

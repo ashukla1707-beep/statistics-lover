@@ -6,13 +6,13 @@ Canonical release record:
 
 - Dedicated repo: `ashukla1707-beep/statistics-lover-android`
 - Verified source commit: `7fff278316d50bf6ea3970f6d90ea52316acf8fc`
-- Version: **1.0.29**
-- versionCode: **30**
+- Version: **1.0.30**
+- versionCode: **31**
 - Package: `com.statisticslover.app`
-- Signed release workflow: `37181709525` — SUCCESS
-- Release artifact: `11295292272`
-- APK size: **655582 bytes**
-- APK SHA-256: `6fd0353834cd513d2af8a61784add36e833e78f3f41c1b46a687a31212410751`
+- Signed release workflow: `37183354378` — SUCCESS
+- Release artifact: `11296375705`
+- APK size: **669698 bytes**
+- APK SHA-256: `d4f21fa5e1c14b337c0880948e0a1adafe4ad83421b183fa4afe95625dd7ca5b`
 
 This release was rebuilt from the pinned 1.0.15 working runtime behavior and intentionally excludes the later 1.0.16–1.0.18 player-layout/scaling experiments.
 
@@ -22,7 +22,7 @@ The app checks the permanent signed update channel in the dedicated Android repo
 
 `https://raw.githubusercontent.com/ashukla1707-beep/statistics-lover-android/main/downloads/version.json`
 
-Current channel: **1.0.29 / versionCode 30**.
+Current channel: **1.0.30 / versionCode 31**.
 
 Do not move or duplicate that publication channel casually. Existing installed release APKs depend on the permanent signing certificate and the dedicated repo's published APK.
 
@@ -85,3 +85,16 @@ Version 1.0.29 fixes the Google Drive timeline/seek UI getting visually stuck wh
 - The compact 1024x576 fullscreen canvas no longer re-scales on transient resize events while the user is interacting with controls.
 - Scale is re-synchronized only on real orientation changes.
 - Website-style UI, single-transition recording startup, compact landscape fullscreen, session continuity and auto-update remain unchanged.
+
+
+## Smooth auth-aware launch
+
+Version 1.0.30 removes the old two-Activity splash handoff and launches directly into `NativeMainActivity`.
+
+- The WebView starts loading immediately behind a native splash overlay.
+- The splash uses the existing Statistics Lover logo and clips it to a true circular presentation.
+- The overlay remains until the web app finishes Supabase session hydration and renders the final startup destination.
+- Signed out -> Home.
+- Signed in -> Dashboard.
+- The Home menu link always opens Home because cold-start routing uses the dedicated `/app-start` route instead of hijacking `/`.
+- The splash fades out while the WebView fades in for a smoother transition.

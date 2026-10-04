@@ -17,9 +17,15 @@
 
         <activity
             android:name=".NativeMainActivity"
-            android:exported="false"
+            android:exported="true"
             android:launchMode="singleTask"
-            android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode" />
+            android:theme="@style/Theme.StatisticsLover.Splash"
+            android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -31,15 +37,5 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
-        <activity
-            android:name=".SplashActivity"
-            android:exported="true"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.StatisticsLover.Splash">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
     </application>
 </manifest>

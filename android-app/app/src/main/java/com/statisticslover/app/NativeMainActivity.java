@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,6 +27,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -32,6 +36,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.webkit.WebViewCompat;
@@ -58,6 +63,7 @@ public class NativeMainActivity extends AppCompatActivity {
     ));
 
     private FrameLayout root;
+    private FrameLayout launchOverlay;
     private WebView webView;
     private ProgressBar progressBar;
     private View customView;
@@ -65,9 +71,11 @@ public class NativeMainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> filePathCallback;
     private AppUpdateManager updateManager;
     private boolean appFullscreen;
+    private boolean webUiReady;
 
     @Override
     protected void onCreate(Bundle state) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(state);
 
         // Normal app mode is portrait. Fullscreen playback temporarily overrides
@@ -94,6 +102,7 @@ public class NativeMainActivity extends AppCompatActivity {
 
         webView = new WebView(this);
         webView.setBackgroundColor(0xFFF7F8FB);
+        webView.setAlpha(0f);
         root.addView(
                 webView,
                 new FrameLayout.LayoutParams(
@@ -114,6 +123,7 @@ public class NativeMainActivity extends AppCompatActivity {
         );
         progressParams.gravity = android.view.Gravity.TOP;
         root.addView(progressBar, progressParams);
+        addLaunchOverlay();
 
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
             Insets bars = insets.getInsets(
@@ -132,6 +142,73 @@ public class NativeMainActivity extends AppCompatActivity {
 
         setContentView(root);
         configureWebView();
+    }
+
+    private void addLaunchOverlay() {
+        launchOverlay = new FrameLayout(this);
+        launchOverlay.setBackgroundColor(Color.rgb(247, 248, 251));
+        launchOverlay.setClickable(true);
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.statistics_lover_logo);
+        logo.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+        GradientDrawable circle = new GradientDrawable();
+        circle.setShape(GradientDrawable.OVAL);
+        circle.setColor(Color.WHITE);
+        logo.setBackground(circle);
+        logo.setClipToOutline(true);
+        logo.setElevation(dp(6));
+
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(188), dp(188));
+        content.addView(logo, logoParams);
+
+        ProgressBar spinner = new ProgressBar(this);
+        spinner.setIndeterminate(true);
+        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(dp(30), dp(30));
+        spinnerParams.topMargin = dp(22);
+        content.addView(spinner, spinnerParams);
+
+        FrameLayout.LayoutParams contentParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+        );
+        contentParams.gravity = android.view.Gravity.CENTER;
+        launchOverlay.addView(content, contentParams);
+
+        root.addView(
+                launchOverlay,
+                new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                )
+        );
+    }
+
+    private void revealWebContent() {
+        if (webUiReady) return;
+        webUiReady = true;
+
+        if (webView != null) {
+            webView.animate().alpha(1f).setDuration(180L).start();
+        }
+
+        if (launchOverlay != null) {
+            launchOverlay.animate()
+                    .alpha(0f)
+                    .setDuration(220L)
+                    .withEndAction(() -> {
+                        if (root != null && launchOverlay != null) {
+                            root.removeView(launchOverlay);
+                        }
+                        launchOverlay = null;
+                    })
+                    .start();
+        }
     }
 
     private void configureWebView() {
@@ -200,6 +277,12 @@ public class NativeMainActivity extends AppCompatActivity {
                 progressBar.setProgress(100);
                 progressBar.setVisibility(View.GONE);
                 CookieManager.getInstance().flush();
+
+                // Safety fallback for an old/stale web bundle: the preferred path
+                // is StatisticsLoverNative.appReady() after auth-aware routing.
+                view.postDelayed(() -> {
+                    if (!webUiReady) revealWebContent();
+                }, 10000L);
             }
         });
 
@@ -436,6 +519,11 @@ public class NativeMainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void exitFullscreen() {
             runOnUiThread(() -> exitAppFullscreen(false));
+        }
+
+        @JavascriptInterface
+        public void appReady() {
+            runOnUiThread(() -> revealWebContent());
         }
     }
 

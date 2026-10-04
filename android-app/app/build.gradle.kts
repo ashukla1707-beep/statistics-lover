@@ -12,8 +12,8 @@ android {
         applicationId = "com.statisticslover.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 30
-        versionName = "1.0.29"
+        versionCode = 31
+        versionName = "1.0.30"
     }
 
     buildFeatures {
@@ -33,7 +33,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/\"")
+            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/app-start\"")
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
@@ -47,7 +47,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/\"")
+            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/app-start\"")
         }
     }
 

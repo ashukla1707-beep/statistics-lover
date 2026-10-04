@@ -1,5 +1,5 @@
-import { lazy,Suspense } from 'react'
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { lazy,Suspense,useEffect } from 'react'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { Footer } from './components/layout/Footer'
 import { Header } from './components/layout/Header'
 import { RouteFocus } from './components/layout/RouteFocus'
@@ -48,16 +48,14 @@ const TeacherWorkspacePage=lazy(()=>import('./features/teacher/TeacherWorkspaceP
 function StartupLandingPage() {
   const { status } = useAuth()
 
-  // Browser users always see the public homepage at "/".
+  // /app-start is an APK-only cold-start route. Normal Home navigation always
+  // uses "/" and therefore never redirects a signed-in user back to Dashboard.
   if (!isStatisticsLoverNativeShell()) {
-    return <HomePage />
+    return <Navigate to="/" replace />
   }
 
-  // In the APK, wait for Supabase to hydrate the persisted session before
-  // choosing the landing page. This avoids flashing Home before Dashboard.
-  if (status === 'booting') {
-    return <div className="route-loading" role="status" aria-live="polite">Opening Statistics Lover…</div>
-  }
+  // Keep the native splash overlay visible while Supabase restores the session.
+  if (status === 'booting') return null
 
   if (status === 'authenticated') {
     return <Navigate to="/dashboard" replace />
@@ -67,7 +65,33 @@ function StartupLandingPage() {
     return <Navigate to="/account-suspended" replace />
   }
 
-  return <HomePage />
+  return <Navigate to="/" replace />
+}
+
+function NativeReadySignal() {
+  const { status } = useAuth()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (!isStatisticsLoverNativeShell()) return
+    if (status === 'booting' || location.pathname === '/app-start') return
+
+    const bridge = (window as Window & {
+      StatisticsLoverNative?: { appReady?: () => void }
+    }).StatisticsLoverNative
+
+    let secondFrame = 0
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => bridge?.appReady?.())
+    })
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      if (secondFrame) window.cancelAnimationFrame(secondFrame)
+    }
+  }, [location.pathname, status])
+
+  return null
 }
 
 function SiteLayout() {
@@ -87,6 +111,7 @@ function SiteLayout() {
 export default function App() {
   return (
     <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading page…</div>}>
+      <NativeReadySignal />
       <Routes>
       <Route
         path="learn/:batchId/test/:scheduleId"
@@ -115,7 +140,8 @@ export default function App() {
       />
 
       <Route element={<SiteLayout />}>
-        <Route index element={<StartupLandingPage />} />
+        <Route index element={<HomePage />} />
+        <Route path="app-start" element={<StartupLandingPage />} />
         <Route path="store" element={<StorePage />} />
         <Route
           path="notifications"

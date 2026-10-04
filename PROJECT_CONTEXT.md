@@ -1157,3 +1157,32 @@ At the latest handoff:
 - Repeatable rollback-only test suite added at `database/tests/auth_role_acceptance.sql`.
 - Audit record added at `docs/STAGE1_AUTH_AUDIT.md`.
 - Next major checkpoint: **Stage 2 — Student end-to-end workflow**, including enrollment isolation, learning content release boundaries, lectures/resources, assignments/submissions, tests/results, notifications and orders.
+
+
+## STAGE 2 COMPLETE — Student end-to-end workflow (2026-10-04)
+
+- Stage 2 was executed against the connected live Supabase project with temporary fixtures inside a transaction; **all fixture/data changes were rolled back**.
+- Student workflow acceptance: **PASS**.
+- Verified:
+  - active enrollment grants protected batch learning access;
+  - a non-enrolled catalog batch does not grant protected content access;
+  - released lectures are visible and future lectures are hidden;
+  - raw lecture delivery/provider-source rows remain hidden from students;
+  - safe delivery-action RPC exposes only allowed released actions;
+  - learning-resource RPC exposes released resources only; future/draft resources remain hidden;
+  - released assignments appear, future/draft assignments do not;
+  - open assignment submission works; future assignment submission is rejected;
+  - assigned open test schedules appear through the student RPC;
+  - raw question bank, answer keys and internal attempt snapshots are not directly readable;
+  - active attempt payload is sanitized and contains no answer-key fields;
+  - answer-save + submit flow works;
+  - manual result policy withholds results until staff release;
+  - released result becomes visible and contributes to student analytics;
+  - notifications are isolated by user and availability window;
+  - mark-read and notification-preference updates operate on the current user;
+  - student can create/read an own pending commerce order and cannot read another user's orders.
+- Student pages/services were checked against these same server-authoritative RPC/RLS surfaces.
+- Audit record: `docs/STAGE2_STUDENT_AUDIT.md`.
+- Repeatable test: `database/tests/student_workflow_acceptance.sql`.
+- No production schema or Android changes were required. Android **1.0.41 / versionCode 42** remains the authoritative APK baseline.
+- Next checkpoint: **Stage 3 — Teacher workflow and assignment-scoped authoring/attendance/grading/testing boundaries**.

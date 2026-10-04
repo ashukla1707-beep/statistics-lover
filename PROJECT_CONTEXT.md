@@ -789,3 +789,19 @@ At the latest handoff:
   - WebView resize/orientation reflow is forced across the transition.
   - immersive bars are re-applied on focus return.
 - Monorepo Android source has been advanced from the mirrored 1.0.20 source to this 1.0.21 fix and should remain aligned with the dedicated repo for future APK changes.
+
+
+### Android fullscreen layout correction — 1.0.22 / versionCode 23
+
+- User clarified with screenshots that fullscreen should match the compact 16:9 Drive presentation, not the stretched full-viewport desktop controls.
+- Dedicated Android fix commit: `100b1e582da341d6cd153b9d183296a78ae3d28f`.
+- Verified signed release: **Statistics Lover 1.0.22 / versionCode 23**.
+- Dedicated workflow run: **37178429643 — SUCCESS**.
+- Signed release artifact ID: **11294076787**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **644751 bytes**.
+- APK SHA-256: **`65b0b90f9db13dd55ff162079db6f1ae390e7c0286db99a074f07907d61586d8`**.
+- Auto-update channel now advertises **1.0.22 / versionCode 23**.
+- Layout fix preserves 1.0.21 native fullscreen stability while restoring the 1.0.18 compact geometry: fixed 1024x576 Drive canvas + uniform fit-to-viewport scale, with overlay/button/logo using the same scale.
+- Do not return to the 1.0.21 stretched 100% x 100% iframe geometry unless explicitly requested.

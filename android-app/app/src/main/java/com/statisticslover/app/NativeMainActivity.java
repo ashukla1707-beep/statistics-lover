@@ -510,13 +510,22 @@ public class NativeMainActivity extends AppCompatActivity {
                             batchId,resourceBatchTitle,subjectId,this::showTeacher
                     ));
             ui.add(card,resources,8);
+
+            Button delivery=ui.button("Live & recording access",false);
+            String deliveryBatchTitle=batch==null
+                    ?batchId:batch.optString("title",batchId);
+            delivery.setOnClickListener(v->
+                    showDeliveryWorkspace(
+                            batchId,deliveryBatchTitle,subjectId,this::showTeacher
+                    ));
+            ui.add(card,delivery,8);
             body.addView(card);
         }
 
         LinearLayout note=ui.card();
         note.addView(ui.text("Native teaching modules",16,NativeUi.NAVY,true));
         note.addView(ui.text(
-                "Attendance is available now. Grading, tests and content-management workflows follow in the next native layers.",
+                "Attendance, assignment review, tests and study resources are native. Lecture delivery access is available within your assigned teaching scope.",
                 12,NativeUi.MUTED,false));
         body.addView(note);
 
@@ -571,6 +580,11 @@ public class NativeMainActivity extends AppCompatActivity {
         resources.setOnClickListener(v->
                 showResourceBatches(this::showOperations));
         ui.add(body,resources,8);
+
+        Button delivery=ui.button("Manage lecture delivery",false);
+        delivery.setOnClickListener(v->
+                showDeliveryBatches(this::showOperations));
+        ui.add(body,delivery,8);
 
         String[] modules=(roles.contains("admin")||roles.contains("owner"))
                 ? new String[]{"Academics","Content","Enrollments","Assignments","Attendance","Tests","Announcements","Commerce","Staff","Audit","Settings"}
@@ -671,6 +685,138 @@ public class NativeMainActivity extends AppCompatActivity {
             }catch(Exception error){
                 runOnUiThread(()->{
                     showResourceWorkspace(
+                            batchId,batchTitle,subjectId,back
+                    );
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+
+    private void showDeliveryBatches(Runnable back){
+        busy("Loading delivery batches…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.contentBatches();
+                JSONArray batches=array(data,"batches");
+                runOnUiThread(()->renderDeliveryBatches(batches,back));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderDeliveryBatches(JSONArray batches,Runnable back){
+        screen="delivery";
+        replace(DeliveryManagerScreen.buildBatches(
+                this,ui,batches,back,
+                (batchId,batchTitle)->showDeliveryWorkspace(
+                        batchId,batchTitle,"",
+                        ()->renderDeliveryBatches(batches,back)
+                )
+        ));
+    }
+
+    private void showDeliveryWorkspace(
+            String batchId,
+            String batchTitle,
+            String subjectId,
+            Runnable back
+    ){
+        busy("Loading lecture delivery…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.deliveryWorkspace(batchId,subjectId);
+                runOnUiThread(()->renderDeliveryWorkspace(
+                        batchId,batchTitle,subjectId,data,back
+                ));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderDeliveryWorkspace(
+            String batchId,
+            String batchTitle,
+            String subjectId,
+            JSONObject data,
+            Runnable back
+    ){
+        screen="delivery";
+        Runnable reload=()->showDeliveryWorkspace(
+                batchId,batchTitle,subjectId,back
+        );
+        boolean canDelete=roles.contains("admin")||roles.contains("owner");
+        replace(DeliveryManagerScreen.buildWorkspace(
+                this,ui,batchTitle,data,back,reload,
+                source->saveDeliverySource(
+                        batchId,batchTitle,subjectId,source,back
+                ),
+                (lectureId,actionKind)->deleteDeliverySource(
+                        batchId,batchTitle,subjectId,
+                        lectureId,actionKind,back
+                ),
+                canDelete
+        ));
+    }
+
+    private void saveDeliverySource(
+            String batchId,
+            String batchTitle,
+            String subjectId,
+            JSONObject source,
+            Runnable back
+    ){
+        busy("Saving lecture access…");
+        io.execute(()->{
+            try{
+                api.saveDeliverySource(source);
+                runOnUiThread(()->{
+                    toast("Lecture access saved.");
+                    showDeliveryWorkspace(
+                            batchId,batchTitle,subjectId,back
+                    );
+                });
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    showDeliveryWorkspace(
+                            batchId,batchTitle,subjectId,back
+                    );
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void deleteDeliverySource(
+            String batchId,
+            String batchTitle,
+            String subjectId,
+            String lectureId,
+            String actionKind,
+            Runnable back
+    ){
+        busy("Removing lecture access…");
+        io.execute(()->{
+            try{
+                api.deleteDeliverySource(lectureId,actionKind);
+                runOnUiThread(()->{
+                    toast("Lecture access removed.");
+                    showDeliveryWorkspace(
+                            batchId,batchTitle,subjectId,back
+                    );
+                });
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    showDeliveryWorkspace(
                             batchId,batchTitle,subjectId,back
                     );
                     toast(message(error));

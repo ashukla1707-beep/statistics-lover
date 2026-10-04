@@ -676,6 +676,158 @@ Deno.serve(async (req) => {
       return json({ ok: true, resourceId: savedId });
     }
 
+
+
+    if (action === "deliveryWorkspace") {
+      const client = userClient(requireToken(body));
+      const batchId = String(body.batchId ?? "").trim();
+      const subjectId = String(body.subjectId ?? "").trim();
+      if (!batchId) throw new Error("Batch is required.");
+
+      let subjectQuery = client.from("subjects")
+        .select("id,batch_id,title,code,position")
+        .eq("batch_id", batchId)
+        .order("position").order("title");
+      if (subjectId) subjectQuery = subjectQuery.eq("id", subjectId);
+
+      const { data: subjects, error: subjectError } = await subjectQuery;
+      if (subjectError) throw subjectError;
+
+      const subjectIds = (subjects ?? []).map((row: { id: string }) => row.id);
+      let modules: unknown[] = [];
+      let lectures: unknown[] = [];
+      let sources: unknown[] = [];
+
+      if (subjectIds.length) {
+        const moduleResult = await client.from("modules")
+          .select("id,subject_id,title,position")
+          .in("subject_id", subjectIds)
+          .order("position").order("title");
+        if (moduleResult.error) throw moduleResult.error;
+        modules = moduleResult.data ?? [];
+
+        const moduleIds = (modules as Array<{ id: string }>).map((row) => row.id);
+        if (moduleIds.length) {
+          const lectureResult = await client.from("lectures")
+            .select("id,module_id,title,status,delivery_mode,position,scheduled_at,duration_minutes")
+            .in("module_id", moduleIds)
+            .order("position").order("title");
+          if (lectureResult.error) throw lectureResult.error;
+          lectures = lectureResult.data ?? [];
+
+          const lectureIds = (lectures as Array<{ id: string }>).map((row) => row.id);
+          if (lectureIds.length) {
+            const sourceResult = await client.from("lecture_delivery_sources")
+              .select("id,lecture_id,action_kind,provider,provider_reference,label,available_from,available_until")
+              .in("lecture_id", lectureIds)
+              .order("action_kind");
+            if (sourceResult.error) throw sourceResult.error;
+            sources = sourceResult.data ?? [];
+          }
+        }
+      }
+
+      return json({ subjects: subjects ?? [], modules, lectures, sources });
+    }
+
+    if (action === "saveDeliverySource") {
+      const client = userClient(requireToken(body));
+      const input = (
+        body.source && typeof body.source === "object"
+          ? body.source
+          : {}
+      ) as Record<string, unknown>;
+
+      const lectureId = String(input.lectureId ?? "").trim();
+      const actionKind = String(input.actionKind ?? "").trim();
+      const provider = String(input.provider ?? "").trim();
+      const providerReference = String(input.providerReference ?? "").trim();
+      const label = String(input.label ?? "").trim();
+      const availableFromRaw = String(input.availableFrom ?? "").trim();
+      const availableUntilRaw = String(input.availableUntil ?? "").trim();
+
+      if (!lectureId) throw new Error("Lecture is required.");
+      if (!["join","watch"].includes(actionKind)) throw new Error("Invalid delivery action.");
+      if (!["google_meet","google_drive","cloudflare_stream","external"].includes(provider)) {
+        throw new Error("Invalid delivery provider.");
+      }
+      if (label.length > 120) throw new Error("Student button label is too long.");
+
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(providerReference);
+      } catch {
+        throw new Error("Provider link must be a valid HTTPS URL.");
+      }
+      if (parsedUrl.protocol !== "https:") throw new Error("Provider link must use HTTPS.");
+
+      const host = parsedUrl.hostname.toLowerCase();
+      if (provider === "google_meet") {
+        if (actionKind !== "join" || host !== "meet.google.com") {
+          throw new Error("Google Meet is only valid for live join links from meet.google.com.");
+        }
+      } else if (provider === "google_drive") {
+        if (actionKind !== "watch" || host !== "drive.google.com") {
+          throw new Error("Google Drive is only valid for recording links from drive.google.com.");
+        }
+      } else if (provider === "cloudflare_stream") {
+        const allowed = host === "videodelivery.net"
+          || host.endsWith(".videodelivery.net")
+          || host === "cloudflarestream.com"
+          || host.endsWith(".cloudflarestream.com");
+        if (actionKind !== "watch" || !allowed) {
+          throw new Error("Cloudflare Stream is only valid for recording delivery.");
+        }
+      }
+
+      const parseTime = (raw: string, labelText: string) => {
+        if (!raw) return null;
+        const value = new Date(raw);
+        if (Number.isNaN(value.getTime())) throw new Error(labelText + " must be a valid ISO date/time.");
+        return value.toISOString();
+      };
+
+      const availableFrom = parseTime(availableFromRaw, "Available from");
+      const availableUntil = parseTime(availableUntilRaw, "Available until");
+      if (availableFrom && availableUntil && new Date(availableFrom) > new Date(availableUntil)) {
+        throw new Error("Available until must be after available from.");
+      }
+
+      const { data, error } = await client.from("lecture_delivery_sources")
+        .upsert({
+          lecture_id: lectureId,
+          action_kind: actionKind,
+          provider,
+          provider_reference: providerReference,
+          label: label || null,
+          available_from: availableFrom,
+          available_until: availableUntil,
+        }, { onConflict: "lecture_id,action_kind" })
+        .select("id,lecture_id,action_kind,provider,provider_reference,label,available_from,available_until")
+        .single();
+      if (error) throw error;
+      return json({ ok: true, source: data });
+    }
+
+    if (action === "deleteDeliverySource") {
+      const client = userClient(requireToken(body));
+      const lectureId = String(body.lectureId ?? "").trim();
+      const actionKind = String(body.actionKind ?? "").trim();
+      if (!lectureId) throw new Error("Lecture is required.");
+      if (!["join","watch"].includes(actionKind)) throw new Error("Invalid delivery action.");
+
+      const { data, error } = await client.from("lecture_delivery_sources")
+        .delete()
+        .eq("lecture_id", lectureId)
+        .eq("action_kind", actionKind)
+        .select("id");
+      if (error) throw error;
+      if (!(data ?? []).length) {
+        throw new Error("This delivery source could not be removed with your current access.");
+      }
+      return json({ ok: true });
+    }
+
     if (action === "operationsCourses") {
       const client = userClient(requireToken(body));
       const { data, error } = await client.from("courses")

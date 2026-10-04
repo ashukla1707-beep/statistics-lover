@@ -934,3 +934,21 @@ At the latest handoff:
 - Vercel deployment `dpl_9gqkdAYqoHbvaeoY3LG3gKNVK4Sq` is READY and `statistics-lover.vercel.app` now serves that deployment.
 - Production and preview were verified to serve the same JS bundle: `index-DUc0RxZf.js`.
 - No APK rebuild is required: Statistics Lover 1.0.29 already launches `https://statistics-lover.vercel.app/` on the stable session origin.
+
+
+### APK launch/navigation + splash integration — web side for Android 1.0.30
+
+- User requested:
+  - anonymous APK cold start -> Home;
+  - authenticated APK cold start -> Dashboard;
+  - clicking Home from the website menu -> Home even while authenticated;
+  - a smooth logo splash while the website/session is loading.
+- Web commit `f874aad193f934a098c94ffb688bb66692504d72` separates startup routing from normal Home navigation:
+  - root `/` is always `HomePage`;
+  - APK cold-start route `/app-start` alone performs auth-aware startup routing;
+  - while auth status is `booting`, `/app-start` renders nothing so the native splash remains visible;
+  - authenticated -> `/dashboard`, suspended -> `/account-suspended`, anonymous -> `/`.
+- Added `NativeReadySignal`, which calls `StatisticsLoverNative.appReady()` after auth has hydrated and the final non-startup route has rendered. This lets Android keep a circular logo splash over the WebView until the actual destination is ready.
+- Quality run `37183208568` passed.
+- Vercel deployment `dpl_8j8Fbyyfna9woyqwe2tbTuSk7PCH` is READY and assigned to production alias `statistics-lover.vercel.app`.
+- Android 1.0.30 / versionCode 31 uses `https://statistics-lover.vercel.app/app-start` as its cold-start URL, while all menu Home navigation still uses `/`.

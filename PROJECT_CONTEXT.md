@@ -1014,3 +1014,20 @@ At the latest handoff:
   - system theme is re-applied on `uiMode` changes.
 - Monorepo Android mirror synced through commits `242e50e1f54a5448168268a96c6a007520aadf3d`, `8ce5d8398d2c206d494c38bfa3b922d88a951ac5`, `fb997d76e22986fa800854f6e8b03722b50cbe41`, `2b7b8f048ab1b944b7f1e13bf60129a690e598d0`, `16272074bdb789610ba9a39b7d1dda95c04c4653`, and `a46f4a1d05f5d914aad637c2ce164f94c1980235`.
 - Existing auth-aware startup/Home behavior, website UI, session continuity, single-transition recording startup, compact landscape fullscreen, inline-player exit and Drive seek fixes remain preserved.
+
+
+### Android startup recovery — 1.0.32 / versionCode 33
+
+- User reported the app stopped opening after the 1.0.31 native splash/theme experiment.
+- Dedicated Android recovery commit: `93f09e2040d92b0cef02010c27b1895df00aff97`.
+- Recovery restores the exact known-working 1.0.30 native startup/splash implementation while preserving current web routing, recording/fullscreen fixes, seek-control fixes, signing and auto-update lineage.
+- Verified signed release: **Statistics Lover 1.0.32 / versionCode 33**.
+- Dedicated workflow run: **37185313234 — SUCCESS**.
+- Signed release artifact ID: **11296617602**.
+- APK size: **669694 bytes**.
+- APK SHA-256: **`9f9d75b65ee75f7f9a4d0384cbb5047783d67c24720e039a4dedf89cf8e42211`**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- Auto-update channel now advertises **1.0.32 / versionCode 33**.
+- The 1.0.31 Android-native theme/splash changes are rolled back and must not be reintroduced until this recovery is confirmed opening correctly on-device.
+- The web light/dark theme deployment remains untouched.

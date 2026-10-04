@@ -37,7 +37,7 @@ export function Header() {
     <header className="site-header">
       <div className="container header-inner">
         <Link className="brand" to="/" onClick={closeMenu} aria-label="Statistics Lover home">
-          <img className="brand-logo" src={siteConfig.logoPath} alt="Statistics Lover logo" />
+          <img className="brand-logo" src={siteConfig.logoPath} alt="Statistics Lover logo" width="52" height="52" decoding="async" fetchPriority="high" />
           <span className="brand-copy">
             <strong>{siteConfig.name}</strong>
             <small>{siteConfig.tagline}</small>

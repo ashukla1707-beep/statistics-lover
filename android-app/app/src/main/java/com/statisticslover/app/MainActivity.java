@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String DESKTOP_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) " +
-            "Chrome/126.0.0.0 Safari/537.36 StatisticsLoverAndroid/1.0.16";
+            "Chrome/126.0.0.0 Safari/537.36 StatisticsLoverAndroid/1.0.15";
 
     protected WebView webView;
     private FrameLayout root;
@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSER_REQUEST = 4107;
+    private AppUpdateManager appUpdateManager;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -85,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
 
         configureWebView();
         configureBackNavigation();
+        appUpdateManager = new AppUpdateManager(this);
+        appUpdateManager.checkForUpdate();
 
         if (savedInstanceState == null) {
             webView.loadUrl(BuildConfig.APP_URL);
@@ -117,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
             webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         }
 
-        mobileUserAgent = s.getUserAgentString() + " StatisticsLoverAndroid/1.0.16";
+        mobileUserAgent = s.getUserAgentString() + " StatisticsLoverAndroid/1.0.15";
         s.setUserAgentString(mobileUserAgent);
 
         CookieManager cookies = CookieManager.getInstance();
@@ -463,10 +466,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         webView.onResume();
+        if (appUpdateManager != null) appUpdateManager.onResume();
     }
 
     @Override
     protected void onDestroy() {
+        if (appUpdateManager != null) appUpdateManager.close();
         if (webView != null) {
             webView.loadUrl("about:blank");
             webView.stopLoading();

@@ -1,52 +1,39 @@
 # Statistics Lover Android
 
-## Canonical architecture
+## Recovered stable line
 
-Statistics Lover Android uses the complete Vercel-deployed web product inside a native Android WebView shell.
+Canonical recovery target:
 
-The website is the source of truth for student, teacher, content-manager, admin and owner screens. Android handles platform integration rather than duplicating product screens.
+- Version name: **1.0.15**
+- Version code: **16**
+- Architecture: app-first Android WebView shell
+- Debug package: `com.statisticslover.app.debug`
 
-## Launcher
+The original 1.0.15 binary was not retained in GitHub history/Actions, so this recovery uses the preserved pre-native WebView architecture plus the current Statistics Lover Android app-mode/fullscreen bridge.
 
-```text
-LaunchReadyActivity -> MainActivity WebView
-```
-
-## Native shell responsibilities
-
-- native splash/launch overlay until React is ready
-- system-bar/safe-inset handling
-- Android Back navigation
-- assignment/file uploads through Android file picker
-- trusted Statistics Lover Vercel hosts stay in-app
-- external providers such as Google Meet open outside the app
-- recording route switches to desktop-style UA while retaining the `StatisticsLoverAndroid` marker
-- Statistics Lover custom fullscreen uses the `StatisticsLoverNative` JavaScript bridge
-- native immersive landscape on fullscreen and portrait restoration on exit
-- Android Back exits custom fullscreen before navigating away
-- cleartext HTTP is disabled and SSL errors are never bypassed
-- debug builds allow screenshots and screen recording; release builds use `FLAG_SECURE`
-
-## Current test build
+## Launch flow
 
 ```text
-versionCode 16
-versionName 1.0.16-test
-debug package: com.statisticslover.app.debug
+LaunchReadyActivity -> MainActivity -> Statistics Lover WebView
 ```
 
-Debug loads:
+The WebView is the application surface; internal Statistics Lover navigation stays inside the app. External providers such as Google Meet open outside the app.
 
-```text
-https://statistics-lover-git-develop-statistics-lover.vercel.app/dashboard
-```
+## Auto-update
 
-Release targets:
+The app checks `BuildConfig.UPDATE_MANIFEST_URL` on startup. If the manifest advertises a higher `versionCode`, the app:
 
-```text
-https://statistics-lover.vercel.app/dashboard
-```
+1. prompts for the update;
+2. downloads the APK with Android DownloadManager;
+3. verifies SHA-256 when the manifest supplies one;
+4. opens Android's package installer without routing the Statistics Lover UI through an external browser.
 
-## Native A3 history
+The current recovery manifest advertises versionCode 16, so 1.0.15 will not try to update itself until a later APK is intentionally published.
 
-A3.1-A3.6 true-native screens remain in Git history/source as an abandoned experiment. They are not the active launcher or current product direction.
+## Recording/fullscreen
+
+The recording route keeps the `StatisticsLoverAndroid/1.0.15` marker while using a desktop-style user agent for Google Drive. The Statistics Lover custom fullscreen button uses the native JavaScript bridge for immersive landscape and Android Back restores the inline player.
+
+## Capture policy
+
+Debug builds allow screenshots/screen recording. Release builds retain `FLAG_SECURE`.

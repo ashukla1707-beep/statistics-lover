@@ -11,7 +11,7 @@ android {
         minSdk = 24
         targetSdk = 35
         versionCode = 16
-        versionName = "1.0.16-test"
+        versionName = "1.0.15"
     }
 
     buildFeatures {
@@ -21,8 +21,8 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "APP_URL", "\"https://statistics-lover-git-develop-statistics-lover.vercel.app/dashboard\"")
+            buildConfigField("String", "UPDATE_MANIFEST_URL", "\"https://statistics-lover-git-develop-statistics-lover.vercel.app/android-update.json\"")
             applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
         }
         release {
             isMinifyEnabled = true
@@ -32,6 +32,7 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/dashboard\"")
+            buildConfigField("String", "UPDATE_MANIFEST_URL", "\"https://statistics-lover.vercel.app/android-update.json\"")
         }
     }
 

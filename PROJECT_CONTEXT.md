@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `92e97349d2e4411915ecb5f37ff5a2dbb62fe09b`
-- Current focus: **Android A3 native teacher/admin editing workflows**. Recording, attendance, assignment grading, and assessment schedule/result operations are implemented; next native layer is content/resource editing.
+- Current handoff base before this documentation commit: `ff140ed53a6276dc278f34fb07c0cd0727ed63fc`
+- Current focus: **Android A3 native teacher/admin editing workflows**. Recording, attendance, grading, assessment operations, and study-resource management are implemented; next native layer is lecture delivery-source management.
 
 ## Deployment
 
@@ -601,3 +601,30 @@ At the latest handoff:
 - APK artifact id `11288926723`; artifact ZIP digest `sha256:2728763e6c880ca59c8c89f105b2b5d0c6306188372930241c557519d28fb4fc`.
 - Extracted debug APK SHA-256: `7b859159a27671ceaff615a2f5b85d17d6fc2468b1a7379479faa95c8a5caa0b`.
 - Next native layer: content/resource editing (study resources and delivery-source management), then remaining admin operations and optional full assessment authoring.
+
+
+### Android checkpoint A3.5 — native study-resource management complete
+
+- Deployed repository-backed `native-api` version 5 with native learning-resource management.
+- Added API actions:
+  - `contentBatches`: lists RLS-visible batches for the operations workspace.
+  - `resourceWorkspace`: loads the authorized subject/module/lecture hierarchy plus visible learning resources and their source metadata.
+  - `saveLearningResource`: validates resource scope/kind/status/position/provider/HTTPS URL, enforces Google Drive host rules, then inserts/updates the resource and upserts its source through the caller's JWT/RLS.
+- No service-role bypass was introduced. Existing teacher manage-scope hardening remains authoritative: subject-only teachers cannot edit batch-wide resources even when those resources are visible for teaching context.
+- Added native `ResourceManagerScreen` with:
+  - batch selection for content-manager/admin/owner operations;
+  - batch/subject/module/lecture target selection;
+  - Study Material / Notes / PYQ / Reference kinds;
+  - Draft / Published / Archived lifecycle;
+  - optional release time and ordering;
+  - Google Drive / external provider selection and student-facing action label;
+  - create and edit flows.
+- Teacher workspace exposes **Study resources** per assignment scope. Subject teachers can create/edit subject/module/lecture resources within their assigned subject; visible batch resources are rendered read-only. Whole-batch teachers can manage batch scope.
+- Operations workspace exposes **Manage study resources** for content-manager/admin/owner.
+- Navigation hardening commit `ff140ed53a6276dc278f34fb07c0cd0727ed63fc` ensures Cancel exits the editor cleanly and the create action is hidden when no authorized hierarchy target exists.
+- Android test version advanced to `1.0.7-test` / versionCode 8.
+- Resource implementation commit `cf3460bde5a24526b3b5d8a3d3f5fcab5bed3d49` and hardening commit `ff140ed53a6276dc278f34fb07c0cd0727ed63fc` are Quality-green; latest Quality run `37164468783` and Android APK run `37164468784` both succeeded.
+- Live Supabase `native-api` is ACTIVE at version 5.
+- APK artifact id `11289171194`; artifact ZIP digest `sha256:aa9cf323a13be65b4e4f9ada1d3ec1dd61ccbc8c9cf62e33c72ff1aba92e9d2e`.
+- Extracted debug APK SHA-256: `b216a066bd0168dd84cbf12580b70173bb7e74f646620190e503eea538bb8451`.
+- Next native layer: lecture delivery-source management (Meet/Drive/external availability windows), then remaining admin operations.

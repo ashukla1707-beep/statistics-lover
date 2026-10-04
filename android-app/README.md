@@ -1,40 +1,52 @@
 # Statistics Lover Android
 
-## Canonical direction
+## Canonical architecture
 
-The Android app should use the **Statistics Lover web product inside a native Android WebView shell**.
+Statistics Lover Android uses the complete Vercel-deployed web product inside a native Android WebView shell.
 
-This is now the preferred architecture because the web application already contains the complete student, teacher, content-manager, admin and owner experience. The APK should stay synchronized with the Vercel-deployed product rather than rebuilding every product screen separately in native Android.
+The website is the source of truth for student, teacher, content-manager, admin and owner screens. Android handles platform integration rather than duplicating product screens.
+
+## Launcher
+
+```text
+LaunchReadyActivity -> MainActivity WebView
+```
 
 ## Native shell responsibilities
 
-The Android layer should handle:
+- native splash/launch overlay until React is ready
+- system-bar/safe-inset handling
+- Android Back navigation
+- assignment/file uploads through Android file picker
+- trusted Statistics Lover Vercel hosts stay in-app
+- external providers such as Google Meet open outside the app
+- recording route switches to desktop-style UA while retaining the `StatisticsLoverAndroid` marker
+- Statistics Lover custom fullscreen uses the `StatisticsLoverNative` JavaScript bridge
+- native immersive landscape on fullscreen and portrait restoration on exit
+- Android Back exits custom fullscreen before navigating away
+- cleartext HTTP is disabled and SSL errors are never bypassed
+- debug builds allow screenshots and screen recording; release builds use `FLAG_SECURE`
 
-- native splash / launch experience
-- safe system insets
-- Android back navigation
-- file chooser / assignment uploads
-- external links such as Google Meet
-- trusted-host routing
-- recording-specific desktop user-agent behavior where needed
-- Statistics Lover custom fullscreen / immersive landscape handling
-- portrait restoration on fullscreen exit
-- debug screenshot / screen-recording policy
+## Current test build
 
-## Web content
+```text
+versionCode 16
+versionName 1.0.16-test
+debug package: com.statisticslover.app.debug
+```
 
-Debug should load the stable `develop` Vercel deployment.
+Debug loads:
 
-Release should load the production Statistics Lover Vercel deployment.
+```text
+https://statistics-lover-git-develop-statistics-lover.vercel.app/dashboard
+```
 
-The website remains the source of truth for product UI and feature behavior.
+Release targets:
 
-## Recording behavior
-
-The recording route may receive special Android treatment for Google Drive compatibility. Keep the user-preferred Statistics Lover custom fullscreen flow and avoid reintroducing rejected scaling/layout experiments.
+```text
+https://statistics-lover.vercel.app/dashboard
+```
 
 ## Native A3 history
 
-The A3.1–A3.6 true-native client work is retained in Git history as an experiment, but it is **not the current product direction**.
-
-Do not continue adding native product screens unless the user explicitly requests a return to the native architecture.
+A3.1-A3.6 true-native screens remain in Git history/source as an abandoned experiment. They are not the active launcher or current product direction.

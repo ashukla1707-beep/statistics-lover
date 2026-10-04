@@ -10,8 +10,8 @@ android {
         applicationId = "com.statisticslover.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.0.8-test"
+        versionCode = 16
+        versionName = "1.0.16-test"
     }
 
     buildFeatures {

@@ -1243,3 +1243,32 @@ At the latest handoff:
 - No schema fix was required in Stage 4.
 - Android **1.0.41 / versionCode 42** remains unchanged.
 - Next checkpoint: **Stage 5 — Admin and Owner administration, commerce, audit/settings and privileged-role boundaries**.
+
+
+## STAGE 4 COMPLETE — Content Manager content lifecycle (2026-10-04)
+
+- Stage 4 Content Manager workflow acceptance: **PASS**.
+- Live tests used rollback-only fixtures; **no temporary content, roles, enrollments, assessments, announcements, or commerce data were retained**.
+- Verified Content Manager can create/edit/publish:
+  - courses and batches;
+  - subjects, modules and lectures;
+  - lecture delivery sources;
+  - learning resources/provider sources;
+  - assignments;
+  - question bank entries;
+  - tests and schedules;
+  - manual result-release state;
+  - announcements.
+- Verified restricted boundaries:
+  - own-profile-only identity visibility;
+  - no enrollment visibility/management;
+  - no commerce-order visibility;
+  - no audit-log/settings visibility;
+  - no privileged role escalation;
+  - core academic/content deletion remains Admin/Owner-only.
+- Frontend delete affordances for core content already match those RLS boundaries; schedule deletion is intentionally staff-scoped.
+- Audit record: `docs/STAGE4_CONTENT_MANAGER_AUDIT.md`.
+- Repeatable test: `database/tests/content_manager_workflow_acceptance.sql`.
+- No schema or Android change was required in Stage 4.
+- Android **1.0.41 / versionCode 42** remains authoritative.
+- Next checkpoint: **Stage 5 — Admin and Owner operations, enrollment/staff/commerce/settings/audit and destructive-operation boundaries**.

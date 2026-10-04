@@ -4,47 +4,56 @@ Date: 2026-10-04
 
 ## Result
 
-**PASS** on the live Supabase project using rollback-only fixtures.
+**PASS** on the connected live Supabase project using rollback-only fixtures.
 
-No permanent content/course/user/commerce changes were retained.
+No temporary course, batch, content, assessment, announcement, role, enrollment or commerce data was retained.
 
-## Verified capabilities
+## Verified content-manager lifecycle
 
-- create a draft course with a returned row;
-- publish/update the course;
-- create and activate a batch;
-- create/publish subject and module;
-- create/publish a lecture;
-- attach protected delivery source;
-- create/publish learning resource + source;
-- create/publish assignment;
-- create question through protected question RPC;
-- create published test through protected test-builder RPC;
-- create test schedule;
-- access test analytics;
-- create/publish scoped announcement;
-- archive a course through lifecycle state.
+| Workflow | Result |
+| --- | --- |
+| Create/update/publish course | PASS |
+| Create/update/activate batch | PASS |
+| Create/update/publish subject | PASS |
+| Create/update/publish module | PASS |
+| Create/update/publish lecture | PASS |
+| Create lecture delivery source | PASS |
+| Create/update/publish learning resource | PASS |
+| Create resource provider source | PASS |
+| Create/update/publish assignment | PASS |
+| Create question through protected RPC | PASS |
+| Create/publish test through protected RPC | PASS |
+| Create/update test schedule | PASS |
+| Toggle manual result release | PASS |
+| Create/update/publish announcement | PASS |
+| Own-profile-only identity visibility | PASS |
+| No audit/settings visibility | PASS |
+| No enrollment visibility or management | PASS |
+| No commerce-order visibility | PASS |
+| No role escalation | PASS |
+| Core course deletion remains admin/owner-only | PASS |
+| Test-schedule deletion remains allowed staff operation | PASS |
 
-## Verified restrictions
+## Frontend correspondence
 
-Content Manager does **not** automatically gain:
+The deployable routes for academics, content, delivery, resources, assignments, question bank, tests, schedules, analytics and announcements all admit `content_manager`.
 
-- hard-delete authority on courses/batches/content reserved to admin/owner;
-- student enrollment administration;
-- teacher assignment administration;
-- commerce offer mutation;
-- role/staff assignment authority;
-- attendance marking;
-- audit-log visibility;
-- app-settings visibility;
-- platform-wide profile visibility.
+Core delete buttons for course/content/resource/assignment/question/test pages are already hidden in the UI unless the identity is `admin` or `owner`, matching the live RLS delete policies.
 
-The hard-delete acceptance check explicitly uses affected-row count because RLS may safely reduce an unauthorized DELETE to zero affected rows instead of raising an exception.
+Test-schedule deletion is intentionally a staff-scoped operation and the current UI exposes it to Content Manager.
 
-## Frontend consistency
+## Security boundary
 
-The route matrix exposes content-management workspaces to `content_manager` and keeps attendance, commerce, enrollments, staff, audit and settings routes restricted to `admin`/`owner`.
+Content Manager remains a content-production role, not an account/commerce/platform-administration role. Live RLS confirmed that Content Manager cannot:
 
-`AcademicManagementPage` already hides delete controls unless the current identity includes `admin` or `owner`, matching the database boundary.
+- enumerate user profiles beyond self;
+- read or mutate enrollments;
+- read commerce orders;
+- read audit logs;
+- read application settings;
+- grant itself Admin;
+- delete core academic/content records reserved for Admin/Owner.
 
-Regression test: `database/tests/content_manager_workflow_acceptance.sql`.
+## Repeatable test
+
+`database/tests/content_manager_workflow_acceptance.sql`

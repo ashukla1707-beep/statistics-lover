@@ -3,7 +3,7 @@ import { requireSupabase } from '../../services/supabase/client'
 export type CommercePaymentProvider='manual'|'razorpay'|'stripe'|'external'
 export type CommerceOrderStatus='pending'|'paid'|'cancelled'|'failed'|'refunded'
 
-export interface PublicBatchOffer{
+export interface CommerceConfig{\n  razorpayEnabled:boolean\n}\n\nexport interface PublicBatchOffer{
   offerId:string
   batchId:string
   batchTitle:string
@@ -49,6 +49,13 @@ export async function loadPublicBatchOffers():Promise<PublicBatchOffer[]>{
   if(error)throw error
   return ((data??[]) as OfferRow[]).map((r)=>({offerId:r.offer_id,batchId:r.batch_id,batchTitle:r.batch_title,batchCode:r.batch_code,courseId:r.course_id,courseTitle:r.course_title,courseSlug:r.course_slug,currency:r.currency,listPriceMinor:r.list_price_minor,salePriceMinor:r.sale_price_minor,accessDays:r.access_days}))
 }
+export async function loadPublicCommerceConfig():Promise<CommerceConfig>{
+  const {data,error}=await requireSupabase().rpc('get_public_commerce_config')
+  if(error)throw error
+  const row=((data??[]) as Array<{razorpay_enabled:boolean}>)[0]
+  return {razorpayEnabled:row?.razorpay_enabled===true}
+}
+
 export async function createCommerceOrder(input:{batchId:string;couponCode:string;provider?:CommercePaymentProvider}){
   const {data,error}=await requireSupabase().rpc('create_commerce_order',{target_batch:input.batchId,coupon_code:input.couponCode.trim()||null,payment_provider:input.provider??'manual'})
   if(error)throw error

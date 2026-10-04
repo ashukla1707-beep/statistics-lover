@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `e0afd4b34cc41ab5a9be1941752ac30d7133f508`
-- Current focus: **WebView APK device acceptance on top of the stabilized Vercel web app**. Native A3 screen redevelopment is abandoned unless explicitly requested again.
+- Current handoff base before this documentation commit: `9a385f341765c424430d59def3ad6ad52d3e4c5f`
+- Current focus: **device acceptance of recovered Statistics Lover 1.0.15 / versionCode 16 WebView APK**. Do not advance the Android version line until this recovered baseline is validated.
 
 ## Deployment
 
@@ -701,3 +701,34 @@ At the latest handoff:
 - APK artifact id `11291408941`; artifact ZIP digest `sha256:69e20ad378f87d3285c2c0480209abfe7b31361f0c5e5e0936b1d3beb9a84d8f`.
 - Extracted debug APK SHA-256: `d202ce3c17ae53e0c9abfee2632f8f4fd16dd46c3571bb46ae0801e2832e9087`.
 - Next acceptance: install this exact WebView APK and validate login/session, Android app chrome, Home/Dashboard/Learning navigation, assignment upload, Watch Recording startup, custom fullscreen enter/exit, Android Back, safe status-bar inset, screenshot/screen recording, and external Google Meet routing.
+
+
+### Android recovery checkpoint — Statistics Lover 1.0.15 / versionCode 16
+
+- User explicitly requested recovery of **Statistics Lover 1.0.15 — versionCode 16** after rejecting the accidentally recreated 1.0.16-test line.
+- Important provenance: the original historical 1.0.15 APK binary was not retained in reachable GitHub commits, releases or Actions artifacts. The recovery therefore uses the preserved pre-native WebView shell architecture and current Android app-mode/fullscreen integration rather than falsely claiming byte-for-byte recovery of the old APK.
+- Recovery source commit: `9a385f341765c424430d59def3ad6ad52d3e4c5f`.
+- Android metadata is now exactly:
+  - versionName `1.0.15`
+  - versionCode `16`
+  - debug package `com.statisticslover.app.debug`
+- Canonical architecture remains the app-first WebView shell:
+  - `LaunchReadyActivity -> MainActivity`
+  - Statistics Lover internal/Vercel navigation remains inside the app;
+  - external providers such as Google Meet can open externally;
+  - Android app-mode UA marker is `StatisticsLoverAndroid/1.0.15`;
+  - recording route keeps desktop-style Drive playback behavior plus the Statistics Lover native fullscreen bridge.
+- Restored an in-app update mechanism in `AppUpdateManager`:
+  - checks `/android-update.json` on startup;
+  - only prompts when the manifest advertises a higher versionCode;
+  - uses Android DownloadManager rather than opening the Statistics Lover UI in a browser;
+  - can request Android's per-app install permission;
+  - verifies SHA-256 when supplied by the update manifest before opening the package installer.
+- Current `public/android-update.json` advertises versionCode 16, so the recovered 1.0.15 build will not update itself until a later APK is intentionally published and the manifest is advanced.
+- Debug capture remains enabled for testing; release builds keep `FLAG_SECURE`.
+- GitHub Quality run `37174214861` passed typecheck, lint and production web build.
+- Android APK run `37174214907` completed successfully.
+- APK artifact id `11292850972`; artifact ZIP digest `sha256:a140c1f8357abcbdb5d430f975ac9109dd1ba292ed01f2aa7b0377674693aac3`.
+- Extracted APK SHA-256: `212b49b53435677b93231a647d38b7db230c8d48081a3e59691fc5fc8b7119bf`.
+- The previous W1 1.0.16-test checkpoint is **superseded** by this recovery decision. Do not treat 1.0.16-test as the stable Android baseline.
+- Next: install this exact recovered APK and validate launch experience, internal navigation, update-check behavior, recording playback/fullscreen, Android Back, uploads and system insets before making any further APK changes.

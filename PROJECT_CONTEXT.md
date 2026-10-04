@@ -1300,3 +1300,38 @@ At the latest handoff:
 - No schema or Android change was required in Stage 5.
 - Android **1.0.41 / versionCode 42** remains authoritative.
 - Next checkpoint: **Stage 6 — production hardening, runtime health, performance/security advisors, deployment consistency and final audit closure**.
+
+
+## STAGE 6 COMPLETE — Production hardening and audit closure (2026-10-04)
+
+- The staged post-APK platform audit is complete through Stage 6.
+- Runtime/deployment checks:
+  - latest completed GitHub Quality run before the Stage 6 checkpoint: **PASS**;
+  - Vercel runtime error scan for the checked 24-hour window: **no runtime error clusters**;
+  - canonical website, manifest and service worker return HTTP 200;
+  - canonical security headers are present;
+  - service-worker cache remains `statistics-lover-static-v13`.
+- Supabase Security Advisor remaining warning:
+  - **Leaked Password Protection Disabled** — external Auth configuration item; connected tools do not expose this setting.
+- Supabase Performance Advisor found 4 unindexed foreign keys.
+- Live migration `foreign_key_covering_indexes` applied successfully.
+- Repository migration: `database/migrations/0034_foreign_key_covering_indexes.sql`.
+- Added indexes:
+  - `learning_resource_sources_created_by_idx`;
+  - `learning_resources_created_by_idx`;
+  - `lecture_attendance_marked_by_idx`;
+  - `teacher_assignments_assigned_by_idx`.
+- Remaining advisor findings about unused indexes and multiple permissive RLS policies are intentionally deferred until representative production traffic exists; changing them now would add regression risk without a demonstrated bottleneck.
+- Audit closure:
+  - Stage 1 Auth/Roles: PASS.
+  - Stage 2 Student: PASS.
+  - Stage 3 Teacher: PASS after teacher `INSERT ... RETURNING` RLS fix.
+  - Stage 4 Content Manager: PASS.
+  - Stage 5 Admin/Owner: PASS.
+  - Stage 6 Hardening/Runtime: PASS with external configuration items noted.
+- Audit record: `docs/STAGE6_PRODUCTION_HARDENING.md`.
+- Android **1.0.41 / versionCode 42** remains the authoritative APK baseline.
+- Remaining external/configuration work:
+  1. enable Supabase leaked-password protection;
+  2. configure/verify production email and WhatsApp delivery credentials before depending on those channels;
+  3. revisit performance-only RLS/index advisor findings after meaningful production traffic exists.

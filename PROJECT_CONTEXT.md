@@ -1390,3 +1390,39 @@ At the latest handoff:
   3. execute one complete sandbox payment;
   4. verify order -> payment -> receipt -> enrollment and webhook idempotency;
   5. only then set `commerce_razorpay_enabled=true`.
+
+
+## STAGE 7C COMPLETE — Razorpay pre-activation verification (2026-10-04)
+
+- Statistics Lover-side Razorpay integration is complete up to the external merchant-credential boundary.
+- Production frontend deployment:
+  - source commit with deployed checkout tree: `94c478ad8da379e4531b31b95cb7432adb7f4e02`;
+  - Vercel deployment `dpl_3nP47KJYuLgJcASzuXSRySB4dbwh` — **READY**;
+  - GitHub Quality run **37200948393 — SUCCESS**;
+  - canonical alias `statistics-lover.vercel.app` reassigned to this deployment;
+  - live bundle `index-D4X7g2U9.js`;
+  - live CSP verified to include Razorpay checkout script/connection/frame origins.
+- Rollout state remains safe: `get_public_commerce_config()` returns `razorpay_enabled=false`.
+- Live rollback-only internal Razorpay payment-domain acceptance: **PASS**.
+- Verified:
+  - student Razorpay order creation;
+  - trusted provider-order binding;
+  - amount mismatch rejection;
+  - no premature enrollment on rejected payment;
+  - valid verified payment -> paid order;
+  - provider payment reference persistence;
+  - receipt generation;
+  - enrollment activation;
+  - idempotent verified-event replay;
+  - no duplicate payment event or receipt.
+- Repeatable acceptance test: `database/tests/razorpay_gateway_acceptance.sql`.
+- Audit record: `docs/STAGE7C_RAZORPAY_PREACTIVATION.md`.
+- Required external Razorpay Test Mode configuration remains:
+  - `RAZORPAY_KEY_ID`;
+  - `RAZORPAY_KEY_SECRET`;
+  - `RAZORPAY_WEBHOOK_SECRET`;
+  - webhook URL `https://wjsudutyvsssfhrdqvbr.supabase.co/functions/v1/razorpay-webhook`;
+  - events `payment.captured` and `payment.failed`.
+- After external secrets/webhook are configured, execute a real Razorpay Test Mode sandbox payment and verify order -> payment -> receipt -> enrollment before setting `commerce_razorpay_enabled=true`.
+- Do not commit or expose Razorpay Key Secret/webhook secret in browser code, Vercel public env, GitHub, or APK.
+- Android remains **1.0.41 / versionCode 42**; no native change is required at this checkpoint.

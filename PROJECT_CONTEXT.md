@@ -10,8 +10,8 @@
 - Repository: `ashukla1707-beep/statistics-lover`
 - Active development branch: **`develop`**
 - Do not use `main` as the source of truth for ongoing feature work unless explicitly requested.
-- Current handoff base before this documentation commit: `cc8bbb1f72221c4c23de3edb39fdf1768f3997c3`
-- Current focus: **Android A3 native operations completion and real-device acceptance**. Web UI is deployed on Vercel and no longer blocks native work.
+- Current handoff base before this documentation commit: `e0afd4b34cc41ab5a9be1941752ac30d7133f508`
+- Current focus: **WebView APK device acceptance on top of the stabilized Vercel web app**. Native A3 screen redevelopment is abandoned unless explicitly requested again.
 
 ## Deployment
 
@@ -679,3 +679,25 @@ At the latest handoff:
 - Keep native Android responsibilities focused on the shell: splash, system insets, back handling, file chooser/uploads, trusted-host/external-link routing, recording-specific desktop UA where needed, custom Statistics Lover fullscreen/orientation, and debug screenshot/screen-recording policy.
 - Preserve the latest user preference for recording UX: use the Statistics Lover custom fullscreen control rather than relying on Google Drive fullscreen; avoid the rejected player scaling/layout experiments.
 - The next Android deliverable should be a refreshed WebView APK built from the current stabilized Vercel web UI, not another native A3 APK.
+
+
+### Android checkpoint W1 — canonical WebView APK restored
+
+- User explicitly rejected the true-native A3 experience and selected the WebView APK as the preferred/canonical Android experience.
+- Restored the proven WebView launcher architecture from the last pre-native shell:
+  - `LaunchReadyActivity -> MainActivity`
+  - complete Statistics Lover Vercel app remains the UI/source of truth;
+  - Android retains splash, system insets, Back navigation, file chooser, external-link routing and recording/fullscreen integration.
+- Debug loads `https://statistics-lover-git-develop-statistics-lover.vercel.app/dashboard`; release targets the production Vercel dashboard.
+- WebView user agent includes `StatisticsLoverAndroid/1.0.16`. The recording route switches to desktop Chrome UA while retaining that marker, so the web app stays in Android-app mode and bypasses the normal mobile-browser desktop-site gate.
+- Added the `StatisticsLoverNative` JavaScript bridge expected by the current recording page:
+  - custom Statistics Lover fullscreen enters native immersive sensor-landscape mode;
+  - exit restores portrait/system bars;
+  - Android Back exits custom fullscreen first and dispatches the web fullscreen-exit event instead of navigating away.
+- Debug builds allow screenshots/screen recording; non-debug/release builds retain `FLAG_SECURE`.
+- Restored native launch-ready overlay so the WebView is not exposed while React is still starting.
+- WebView test version is `1.0.16-test` with versionCode 16. The deliberately higher versionCode is intended to supersede earlier test installs, including the previously referenced 1.0.15 generation.
+- Source commit `e0afd4b34cc41ab5a9be1941752ac30d7133f508` passed GitHub Quality run `37173287927` and Android APK run `37173288085`.
+- APK artifact id `11291408941`; artifact ZIP digest `sha256:69e20ad378f87d3285c2c0480209abfe7b31361f0c5e5e0936b1d3beb9a84d8f`.
+- Extracted debug APK SHA-256: `d202ce3c17ae53e0c9abfee2632f8f4fd16dd46c3571bb46ae0801e2832e9087`.
+- Next acceptance: install this exact WebView APK and validate login/session, Android app chrome, Home/Dashboard/Learning navigation, assignment upload, Watch Recording startup, custom fullscreen enter/exit, Android Back, safe status-bar inset, screenshot/screen recording, and external Google Meet routing.

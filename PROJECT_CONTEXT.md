@@ -1186,3 +1186,28 @@ At the latest handoff:
 - Repeatable test: `database/tests/student_workflow_acceptance.sql`.
 - No production schema or Android changes were required. Android **1.0.41 / versionCode 42** remains the authoritative APK baseline.
 - Next checkpoint: **Stage 3 — Teacher workflow and assignment-scoped authoring/attendance/grading/testing boundaries**.
+
+
+## STAGE 3 COMPLETE — Teacher scoped workflow (2026-10-04)
+
+- Stage 3 teacher end-to-end acceptance is complete and **PASS**.
+- One real production defect was discovered and fixed:
+  - teacher lecture creation and assignment creation failed when the frontend requested the newly inserted row/id (`INSERT ... RETURNING`);
+  - plain inserts worked, proving the insert authorization itself was correct;
+  - the failure came from self-referential teacher SELECT policies that re-queried the newly inserted table row by id.
+- Live Supabase migration `teacher_insert_returning_rls` applied successfully.
+- Repository migration: `database/migrations/0033_teacher_insert_returning_rls.sql`.
+- The fix keeps existing teacher scope boundaries and only rewrites teacher SELECT visibility to equivalent row-field checks.
+- Regression probes for frontend-style lecture/assignment creation with returned rows: **PASS**.
+- Full rollback-only teacher matrix: **PASS**.
+- Verified:
+  - subject assignment grants batch read context but not whole-batch management;
+  - assigned subject/module authoring works;
+  - unassigned subject/module authoring is blocked;
+  - lecture delivery, resources, assignments, attendance, grading, question-bank, test builder/scheduling/analytics and subject announcements work in assigned scope;
+  - whole-batch resource/assignment/test/announcement operations remain blocked for a subject-scoped teacher;
+  - audit logs/settings remain inaccessible and direct profile visibility remains own-profile only.
+- Audit record: `docs/STAGE3_TEACHER_AUDIT.md`.
+- Regression/acceptance test: `database/tests/teacher_workflow_acceptance.sql`.
+- Android **1.0.41 / versionCode 42** remains unchanged.
+- Next checkpoint: **Stage 4 — Content Manager content lifecycle and publishing boundaries**.

@@ -3,7 +3,11 @@ import { requireSupabase } from '../../services/supabase/client'
 export type CommercePaymentProvider='manual'|'razorpay'|'stripe'|'external'
 export type CommerceOrderStatus='pending'|'paid'|'cancelled'|'failed'|'refunded'
 
-export interface CommerceConfig{\n  razorpayEnabled:boolean\n}\n\nexport interface PublicBatchOffer{
+export interface CommerceConfig{
+  razorpayEnabled:boolean
+}
+
+export interface PublicBatchOffer{
   offerId:string
   batchId:string
   batchTitle:string

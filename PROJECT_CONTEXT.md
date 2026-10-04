@@ -918,3 +918,19 @@ At the latest handoff:
 - APK SHA-256: **`6fd0353834cd513d2af8a61784add36e833e78f3f41c1b46a687a31212410751`**.
 - Auto-update channel now advertises **1.0.29 / versionCode 30**.
 - Existing website UI, A15 single-transition recording startup, compact landscape fullscreen and stable session origin are preserved.
+
+
+### APK startup landing behavior — auth-aware root routing
+
+- User requested APK startup behavior:
+  - anonymous / not signed in -> public Home page;
+  - authenticated -> Dashboard;
+  - suspended -> Account suspended.
+- Implemented in web commit `d12f60e5b2258021d72179aa2ffad47f8c2a86c5`.
+- Browser behavior is unchanged: normal website visitors at `/` still see Home.
+- APK detection uses the native JavaScript bridge (`window.StatisticsLoverNative`) rather than the user-agent marker, because current APKs intentionally hide that marker on ordinary web routes to preserve website UI.
+- The root route waits for `AuthProvider` session hydration before deciding, preventing a signed-in user from briefly seeing Home before Dashboard.
+- GitHub Quality run `37182500981` passed typecheck, lint and production build.
+- Vercel deployment `dpl_9gqkdAYqoHbvaeoY3LG3gKNVK4Sq` is READY and `statistics-lover.vercel.app` now serves that deployment.
+- Production and preview were verified to serve the same JS bundle: `index-DUc0RxZf.js`.
+- No APK rebuild is required: Statistics Lover 1.0.29 already launches `https://statistics-lover.vercel.app/` on the stable session origin.

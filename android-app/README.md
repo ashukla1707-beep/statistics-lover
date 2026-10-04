@@ -1,80 +1,40 @@
 # Statistics Lover Android
 
-## Current architecture
+## Canonical direction
 
-The current Android source on `develop` is a **true native Android client**.
+The Android app should use the **Statistics Lover web product inside a native Android WebView shell**.
 
-Launch flow:
+This is now the preferred architecture because the web application already contains the complete student, teacher, content-manager, admin and owner experience. The APK should stay synchronized with the Vercel-deployed product rather than rebuilding every product screen separately in native Android.
 
-```text
-SplashActivity -> NativeMainActivity
-```
+## Native shell responsibilities
 
-The application shell, authentication, dashboard, enrolled courses, learning hierarchy, inbox, orders, store and role-aware operations are rendered with native Android views.
+The Android layer should handle:
 
-The app does **not** load the Statistics Lover website as its main application shell.
+- native splash / launch experience
+- safe system insets
+- Android back navigation
+- file chooser / assignment uploads
+- external links such as Google Meet
+- trusted-host routing
+- recording-specific desktop user-agent behavior where needed
+- Statistics Lover custom fullscreen / immersive landscape handling
+- portrait restoration on fullscreen exit
+- debug screenshot / screen-recording policy
 
-## Recording exception
+## Web content
 
-Google Drive recording playback is the one intentionally isolated provider surface that may use an Android WebView inside `RecordingActivity`.
+Debug should load the stable `develop` Vercel deployment.
 
-That WebView is limited to recording playback. It must not be treated as the architecture for the rest of the app.
+Release should load the production Statistics Lover Vercel deployment.
 
-Google Meet and other external-provider actions can still open outside the app where appropriate.
+The website remains the source of truth for product UI and feature behavior.
 
-## Current native operations
+## Recording behavior
 
-The native A3 track currently includes:
+The recording route may receive special Android treatment for Google Drive compatibility. Keep the user-preferred Statistics Lover custom fullscreen flow and avoid reintroducing rejected scaling/layout experiments.
 
-- student login/session/bootstrap
-- dashboard and enrolled-course learning hierarchy
-- notifications, orders and course store
-- dedicated recording activity and Statistics Lover fullscreen control
-- attendance editing
-- assignment review and grading
-- assessment schedule/result operations
-- study-resource management
-- lecture live/recorded delivery-source management
+## Native A3 history
 
-## Debug capture policy
+The A3.1–A3.6 true-native client work is retained in Git history as an experiment, but it is **not the current product direction**.
 
-During current device testing, debug builds allow screenshots and screen recording.
-
-`FLAG_SECURE` is applied only to non-debug/release builds.
-
-## Important installed-build note
-
-An older Statistics Lover APK used a website/WebView shell. If a phone still opens the website as the whole application, that phone is running the older web-wrapper build, not the current A3 native APK.
-
-Do not infer the installed architecture from this repository README alone; validate the APK actually installed on the device.
-
-## Build
-
-The Android workflow builds:
-
-```text
-android-app/app/build/outputs/apk/debug/app-debug.apk
-```
-
-Current test line after A3.6:
-
-```text
-versionCode 9
-versionName 1.0.8-test
-```
-
-Debug package:
-
-```text
-com.statisticslover.app.debug
-```
-
-Release package:
-
-```text
-com.statisticslover.app
-```
-
-## Web deployment
-
-The website remains a separate Vercel-deployed product surface. Web UI fixes and Android A3 native milestones must be tracked separately.
+Do not continue adding native product screens unless the user explicitly requests a return to the native architecture.

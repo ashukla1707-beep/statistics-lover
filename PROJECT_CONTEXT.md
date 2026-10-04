@@ -668,3 +668,14 @@ At the latest handoff:
 - `android-app/README.md` previously still described the obsolete WebView architecture and was stale; it has now been corrected to match the current source.
 - Current native test build uses versionCode 9 / versionName `1.0.8-test`; older A3 baseline used versionCode 3 / `1.0.2-test`.
 - Next device-validation step must first confirm the installed package/version and native launcher behavior before testing A3.6 features.
+
+
+### Android direction reset — WebView APK is canonical
+
+- User rejected the native A3 APK experience after installing/testing the native build and explicitly preferred the WebView APK.
+- Effective immediately, **the canonical Android direction is the WebView shell**, not continued native-screen redevelopment.
+- A3.1–A3.6 remain as historical experimental/native implementation checkpoints only. Do not continue A3.7/native admin-screen work unless the user explicitly reverses this decision.
+- The WebView APK should reuse the Vercel-deployed Statistics Lover web product so Home, authentication, dashboards, teaching/admin tools and future UI fixes stay synchronized automatically.
+- Keep native Android responsibilities focused on the shell: splash, system insets, back handling, file chooser/uploads, trusted-host/external-link routing, recording-specific desktop UA where needed, custom Statistics Lover fullscreen/orientation, and debug screenshot/screen-recording policy.
+- Preserve the latest user preference for recording UX: use the Statistics Lover custom fullscreen control rather than relying on Google Drive fullscreen; avoid the rejected player scaling/layout experiments.
+- The next Android deliverable should be a refreshed WebView APK built from the current stabilized Vercel web UI, not another native A3 APK.

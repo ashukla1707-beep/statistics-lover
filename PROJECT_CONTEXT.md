@@ -1104,3 +1104,17 @@ At the latest handoff:
   - a Vercel deployment for that exact commit had **not yet appeared** in the last deployment poll;
   - therefore do **not** claim the 1254×1254 web/header logo is live in production until the Quality run and matching Vercel deployment are verified.
 - Android 1.0.37 already uses the same 1254×1254 original logo and its signed release is verified.
+
+
+### CURRENT ANDROID BASELINE REFERENCE — Statistics Lover 1.0.37
+
+- The authoritative APK baseline is **Statistics Lover 1.0.37 / versionCode 38**.
+- Dedicated Android source commit: `1b101de64428322554afe1f637c708d25ef54491`.
+- Android workflow run: **37189418107 — SUCCESS**.
+- Signed release artifact ID: **11297979731**.
+- Signed APK SHA-256: **`1ee53781bcd0e3375f4a458768c50c292d2cea97499e6de48de1a660c84a1415`**.
+- Auto-update channel: **1.0.37 / versionCode 38**.
+- The clean original **1254×1254** Statistics Lover logo is the canonical logo source for both Android splash and website/header work.
+- Web original-logo commit `06d0d0a769198814007f01f169c832bd25f0722b` has now passed GitHub Quality run **37189461579**.
+- At the last Vercel poll, no deployment for exact commit `06d0d0a...` had appeared yet. Do not claim the matching 1254×1254 web/header logo is live until a Vercel deployment for that exact commit is verified and assigned.
+- Future Android work must start from 1.0.37 rather than older 1.0.35/1.0.34 splash experiments.

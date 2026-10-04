@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -77,6 +78,7 @@ public class NativeMainActivity extends AppCompatActivity {
     protected void onCreate(Bundle state) {
         SplashScreen.installSplashScreen(this);
         super.onCreate(state);
+        applySystemTheme();
 
         // Normal app mode is portrait. Fullscreen playback temporarily overrides
         // this to landscape through the native bridge.
@@ -101,7 +103,7 @@ public class NativeMainActivity extends AppCompatActivity {
         root = new FrameLayout(this);
 
         webView = new WebView(this);
-        webView.setBackgroundColor(0xFFF7F8FB);
+        webView.setBackgroundColor(shellBackgroundColor());
         webView.setAlpha(0f);
         root.addView(
                 webView,
@@ -146,7 +148,7 @@ public class NativeMainActivity extends AppCompatActivity {
 
     private void addLaunchOverlay() {
         launchOverlay = new FrameLayout(this);
-        launchOverlay.setBackgroundColor(Color.rgb(247, 248, 251));
+        launchOverlay.setBackgroundColor(shellBackgroundColor());
         launchOverlay.setClickable(true);
 
         LinearLayout content = new LinearLayout(this);
@@ -155,21 +157,30 @@ public class NativeMainActivity extends AppCompatActivity {
 
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.statistics_lover_logo);
-        logo.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        logo.setAdjustViewBounds(true);
 
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.WHITE);
+        circle.setColor(isNightMode() ? Color.rgb(20, 27, 45) : Color.WHITE);
+        circle.setStroke(dp(1), isNightMode()
+                ? Color.argb(72, 255, 255, 255)
+                : Color.argb(28, 10, 37, 79));
         logo.setBackground(circle);
         logo.setClipToOutline(true);
-        logo.setElevation(dp(6));
+        logo.setElevation(dp(4));
 
-        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(188), dp(188));
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(176), dp(176));
         content.addView(logo, logoParams);
 
         ProgressBar spinner = new ProgressBar(this);
         spinner.setIndeterminate(true);
-        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(dp(30), dp(30));
+        spinner.setIndeterminateTintList(
+                ColorStateList.valueOf(isNightMode()
+                        ? Color.rgb(255, 83, 151)
+                        : Color.rgb(198, 0, 90))
+        );
+        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(dp(28), dp(28));
         spinnerParams.topMargin = dp(22);
         content.addView(spinner, spinnerParams);
 
@@ -209,6 +220,53 @@ public class NativeMainActivity extends AppCompatActivity {
                     })
                     .start();
         }
+    }
+
+    private boolean isNightMode() {
+        int nightMode = getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK;
+        return nightMode == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    private int shellBackgroundColor() {
+        return isNightMode()
+                ? Color.rgb(11, 16, 32)
+                : Color.rgb(247, 248, 251);
+    }
+
+    private void applySystemTheme() {
+        boolean dark = isNightMode();
+        int background = shellBackgroundColor();
+
+        getWindow().setStatusBarColor(background);
+        getWindow().setNavigationBarColor(background);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                int appearance = dark ? 0
+                        : WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                        | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+                controller.setSystemBarsAppearance(
+                        appearance,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                                | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+                );
+            }
+        } else {
+            int flags = 0;
+            if (!dark && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            }
+            if (!dark && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+            getWindow().getDecorView().setSystemUiVisibility(flags);
+        }
+
+        if (root != null) root.setBackgroundColor(background);
+        if (webView != null && !appFullscreen) webView.setBackgroundColor(background);
+        if (launchOverlay != null) launchOverlay.setBackgroundColor(background);
     }
 
     private void configureWebView() {
@@ -760,6 +818,7 @@ public class NativeMainActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        applySystemTheme();
         if (root != null) ViewCompat.requestApplyInsets(root);
 
         // Reflow aggressively only while entering/remaining in our custom

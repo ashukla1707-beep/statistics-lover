@@ -805,3 +805,31 @@ At the latest handoff:
 - Auto-update channel now advertises **1.0.22 / versionCode 23**.
 - Layout fix preserves 1.0.21 native fullscreen stability while restoring the 1.0.18 compact geometry: fixed 1024x576 Drive canvas + uniform fit-to-viewport scale, with overlay/button/logo using the same scale.
 - Do not return to the 1.0.21 stretched 100% x 100% iframe geometry unless explicitly requested.
+
+
+### Android correction — 1.0.23 / versionCode 24
+
+- User reported two issues after 1.0.22:
+  - custom fullscreen should open in landscape;
+  - APK homepage was still the older production homepage rather than the working homepage fixed earlier in this project.
+- Verified causes:
+  - `NativeMainActivity` still had `android:screenOrientation="portrait"` in the manifest;
+  - APK `APP_URL` still targeted `https://statistics-lover.vercel.app/`.
+- Dedicated Android fix commit: `1f1d510059de11116913ecdb3ced82d8438c11ad`.
+- Verified signed release: **Statistics Lover 1.0.23 / versionCode 24**.
+- Dedicated workflow run: **37179092335 — SUCCESS**.
+- Signed release artifact ID: **11294711461**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **644851 bytes**.
+- APK SHA-256: **`01c2098f2e4ae24acf21827aabaf0a6868a7f446ade30e7b1345fbc88882bb92`**.
+- Auto-update channel now advertises **1.0.23 / versionCode 24**.
+- Fullscreen now:
+  - removes the manifest portrait lock;
+  - keeps portrait for normal app use via `onCreate`;
+  - enters fixed landscape for Statistics Lover custom fullscreen;
+  - reasserts landscape at 80 ms and 240 ms during the transition;
+  - retains the compact 1024x576 scaled Drive layout from 1.0.22.
+- APK web source now points to the stable Vercel develop alias:
+  `https://statistics-lover-git-develop-statistics-lover.vercel.app/`.
+- This intentionally uses the current working homepage/header/footer/responsive fixes without merging `develop` into production `main`.

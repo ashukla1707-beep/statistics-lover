@@ -64,6 +64,10 @@ public class NativeMainActivity extends AppCompatActivity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
 
+        // Normal app mode is portrait. Fullscreen playback temporarily overrides
+        // this to landscape through the native bridge.
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         // Temporary product decision: allow screenshots and screen recording.
         // Do not set FLAG_SECURE here while this mode is enabled.
         updateManager = new AppUpdateManager(this);
@@ -402,6 +406,17 @@ public class NativeMainActivity extends AppCompatActivity {
 
         if (root != null) ViewCompat.requestApplyInsets(root);
         queueWebViewportSync();
+
+        if (webView != null) {
+            webView.postDelayed(
+                    () -> setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
+                    80L
+            );
+            webView.postDelayed(
+                    () -> setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
+                    240L
+            );
+        }
     }
 
     private void exitImmersivePortrait() {

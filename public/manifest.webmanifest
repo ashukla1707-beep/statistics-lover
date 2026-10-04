@@ -14,14 +14,14 @@
   ],
   "icons": [
     {
-      "src": "/brand/statistics-lover-logo.jpg",
-      "sizes": "420x420",
+      "src": "/brand/statistics-lover-logo.jpg?v=20261004-3",
+      "sizes": "1254x1254",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/brand/statistics-lover-logo.jpg",
-      "sizes": "420x420",
+      "src": "/brand/statistics-lover-logo.jpg?v=20261004-3",
+      "sizes": "1254x1254",
       "type": "image/jpeg"
     }
   ]

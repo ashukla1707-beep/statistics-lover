@@ -115,19 +115,17 @@ final class ResourceManagerScreen {
                     source.optString("resource_id"),source);
         }
 
-        Button create=ui.button("Create resource",true);
-        create.setOnClickListener(v->{
-            body.removeAllViews();
-            body.addView(backButton);
-            body.addView(resourceForm(
-                    context,ui,batchId,null,null,targets,save,
-                    ()->buildWorkspace(
-                            context,ui,batchId,batchTitle,subjectFilter,
-                            data,back,save
-                    )
-            ));
-        });
-        ui.add(body,create,12);
+        if(!targets.isEmpty()){
+            Button create=ui.button("Create resource",true);
+            create.setOnClickListener(v->{
+                body.removeAllViews();
+                body.addView(backButton);
+                body.addView(resourceForm(
+                        context,ui,batchId,null,null,targets,save,back
+                ));
+            });
+            ui.add(body,create,12);
+        }
 
         if(resources.length()==0){
             ui.add(body,ui.text(
@@ -183,11 +181,7 @@ final class ResourceManagerScreen {
                     body.removeAllViews();
                     body.addView(backButton);
                     body.addView(resourceForm(
-                            context,ui,batchId,row,source,targets,save,
-                            ()->buildWorkspace(
-                                    context,ui,batchId,batchTitle,subjectFilter,
-                                    data,back,save
-                            )
+                            context,ui,batchId,row,source,targets,save,back
                     ));
                 });
                 ui.add(card,edit,8);

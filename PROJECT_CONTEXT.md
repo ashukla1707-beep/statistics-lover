@@ -732,3 +732,13 @@ At the latest handoff:
 - Extracted APK SHA-256: `212b49b53435677b93231a647d38b7db230c8d48081a3e59691fc5fc8b7119bf`.
 - The previous W1 1.0.16-test checkpoint is **superseded** by this recovery decision. Do not treat 1.0.16-test as the stable Android baseline.
 - Next: install this exact recovered APK and validate launch experience, internal navigation, update-check behavior, recording playback/fullscreen, Android Back, uploads and system insets before making any further APK changes.
+
+
+### Android authoritative baseline — Statistics Lover 1.0.20 / versionCode 20
+
+- User confirmed that **Statistics Lover 1.0.20 — versionCode 20** was built successfully in the prior project work and is the current stable Android baseline.
+- This supersedes the attempted 1.0.15 recovery, the accidental 1.0.16-test rebuild, and all true-native A3 experimental APKs for future Android work.
+- Do **not** rebuild Android from the early A1/A2/native-A3 checkpoints unless the user explicitly requests a historical recovery.
+- Preserve the successful 1.0.20 behavior, including its stable in-app experience and auto-update channel, as the starting point for future APK changes.
+- The repository branch currently visible from this chat has not yet caught up to that successful 1.0.20 source/build metadata, so do not overwrite Android source blindly. First locate/import the exact 1.0.20 implementation or artifact from the prior project work before making further Android changes.
+- Until the exact 1.0.20 source/artifact is reattached to this branch, treat version 1.0.20 / versionCode 20 as **user-confirmed authoritative state**, not as reconstructed code from the current 1.0.15 files.

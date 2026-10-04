@@ -1133,3 +1133,27 @@ At the latest handoff:
 - Live production bundle `index-8bpmSzop.js` renders the header `brand-logo` from bundled asset `/assets/statistics-lover-logo-clean-Dqadk_XN.jpg`.
 - The bundled asset returns HTTP 200, `image/jpeg`, 13085 bytes, JFIF.
 - Matching Android baseline is **Statistics Lover 1.0.39 / versionCode 40**, which removes the second custom splash overlay and changes the launcher icon to the Statistics Lover logo.
+
+
+## STAGE 1 COMPLETE — Authentication, roles and authorization (2026-10-04)
+
+- Stage 1 of the post-APK platform audit is complete.
+- Live Supabase role/RLS acceptance was executed using rollback-only transactions; **no permanent account, role, course, assignment, or suspension changes were retained**.
+- Verified role boundaries:
+  - Student isolation: **PASS**.
+  - Teacher assignment-scoped access: **PASS**.
+  - Content Manager content scope: **PASS**.
+  - Admin normal staff grant + privileged escalation block: **PASS**.
+  - Owner privileged role authority: **PASS**.
+  - Suspended-account server enforcement: **PASS**.
+- Every public application table currently reports RLS enabled.
+- Frontend `RequireAuth` route matrix was reviewed and matches the intended five-role model.
+- Current browser auth session restoration and suspension routing were reviewed.
+- Production Vercel runtime errors for the checked 24-hour window: **none**.
+- Supabase runtime Auth traffic shows successful login/refresh/logout; observed error classes were ordinary invalid-credential, stale-token/session and email-send-rate-limit cases.
+- Supabase Security Advisor has one remaining Auth warning: **Leaked Password Protection Disabled**. This is an Auth configuration item, not a migration, and is deferred to production hardening because the connected toolset does not expose that setting.
+- `native-api` remains `verify_jwt=false` intentionally because it mixes public auth actions with token-protected actions. Protected actions validate/use the supplied access token and remain constrained by RLS. Do not flip the entire function to platform JWT verification without first splitting public/protected endpoints.
+- Android **1.0.41 / versionCode 42** remains the authoritative APK baseline; Stage 1 made no Android release changes.
+- Repeatable rollback-only test suite added at `database/tests/auth_role_acceptance.sql`.
+- Audit record added at `docs/STAGE1_AUTH_AUDIT.md`.
+- Next major checkpoint: **Stage 2 — Student end-to-end workflow**, including enrollment isolation, learning content release boundaries, lectures/resources, assignments/submissions, tests/results, notifications and orders.

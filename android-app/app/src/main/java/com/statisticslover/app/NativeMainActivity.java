@@ -1,1189 +1,533 @@
 package com.statisticslover.app;
 
-import android.graphics.Color;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.widget.Button;
+import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 public class NativeMainActivity extends AppCompatActivity {
-    private final ExecutorService io=Executors.newSingleThreadExecutor();
-    private final Set<String> roles=new HashSet<>();
+    private static final int FILE_CHOOSER_REQUEST = 4102;
+    private static final Pattern RECORDING_ROUTE =
+            Pattern.compile(".*/learn/[^/]+/lecture/[^/?#]+(?:[/?#].*)?$");
+    private static final String DESKTOP_USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    + "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    + "Chrome/126.0.0.0 Safari/537.36";
+    private static final Set<String> APP_HOSTS = new HashSet<>(Arrays.asList(
+            "hstatistics.workers.dev",
+            "statistics-lover.vercel.app",
+            "statistics-lover-git-develop-statistics-lover.vercel.app"
+    ));
 
-    private NativeApiClient api;
-    private NativeUi ui;
-    private LinearLayout root;
-    private FrameLayout content;
-    private LinearLayout nav;
-    private String screen="login";
-
-    private JSONObject profile=new JSONObject();
-    private JSONObject summary=new JSONObject();
-    private JSONArray enrollments=new JSONArray();
-    private JSONArray orders=new JSONArray();
-    private JSONArray teacherAssignments=new JSONArray();
+    private WebView webView;
+    private ProgressBar progressBar;
+    private View customView;
+    private WebChromeClient.CustomViewCallback customViewCallback;
+    private ValueCallback<Uri[]> filePathCallback;
+    private AppUpdateManager updateManager;
+    private boolean appFullscreen;
 
     @Override
-    protected void onCreate(Bundle state){
+    protected void onCreate(Bundle state) {
         super.onCreate(state);
-        if(!BuildConfig.DEBUG) getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        api=new NativeApiClient(this);
-        ui=new NativeUi(this);
-        createRoot();
-        configureBack();
-        if(api.session().hasSession()) bootstrap(); else showLogin();
-    }
 
-    private void createRoot(){
-        root=new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(NativeUi.BG);
-        ViewCompat.setOnApplyWindowInsetsListener(root,(v,i)->{
-            Insets b=i.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(b.left,b.top,b.right,b.bottom);
-            return i;
-        });
-        content=new FrameLayout(this);
-        root.addView(content,new LinearLayout.LayoutParams(-1,0,1f));
-        setContentView(root);
-    }
+        // Temporary product decision: allow screenshots and screen recording.
+        // Do not set FLAG_SECURE here while this mode is enabled.
+        updateManager = new AppUpdateManager(this);
+        buildWebShell();
+        configureBackNavigation();
 
-    private void configureBack(){
-        getOnBackPressedDispatcher().addCallback(this,new OnBackPressedCallback(true){
-            @Override public void handleOnBackPressed(){
-                if("login".equals(screen)) finish();
-                else if("home".equals(screen)) moveTaskToBack(true);
-                else showHome();
-            }
-        });
-    }
-
-    private void replace(View view){
-        content.removeAllViews();
-        content.addView(view,new FrameLayout.LayoutParams(-1,-1));
-    }
-
-    private void busy(String message){
-        screen="busy";
-        LinearLayout box=new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setGravity(Gravity.CENTER);
-        box.addView(new ProgressBar(this));
-        ui.add(box,ui.text(message,14,NativeUi.MUTED,false),12);
-        replace(box);
-    }
-
-    private void showLogin(){
-        screen="login";
-        root.removeAllViews();
-        content=new FrameLayout(this);
-        root.addView(content,new LinearLayout.LayoutParams(-1,0,1f));
-        nav=null;
-        replace(LoginScreen.build(this,ui,(email,credential)->{
-            if(email.isBlank()||credential.isBlank()){
-                toast("Enter email and password.");
-                return;
-            }
-            busy("Signing in…");
-            io.execute(()->{
-                try{
-                    api.signIn(email,credential);
-                    runOnUiThread(this::bootstrap);
-                }catch(Exception error){
-                    runOnUiThread(()->{
-                        showLogin();
-                        toast(message(error));
-                    });
-                }
-            });
-        }));
-    }
-
-    private void bootstrap(){
-        busy("Loading your account…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.bootstrap();
-                profile=data.optJSONObject("profile");
-                if(profile==null||!"active".equals(profile.optString("account_status"))){
-                    throw new Exception("This account is not active.");
-                }
-
-                roles.clear();
-                JSONArray roleRows=array(data,"roles");
-                for(int i=0;i<roleRows.length();i++) roles.add(roleRows.optString(i));
-
-                enrollments=array(data,"enrollments");
-                orders=array(data,"orders");
-                teacherAssignments=array(data,"teacherAssignments");
-                summary=data.optJSONObject("notificationSummary");
-                if(summary==null)summary=new JSONObject();
-
-                runOnUiThread(()->{
-                    buildChrome();
-                    showHome();
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    api.signOut();
-                    showLogin();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void buildChrome(){
-        root.removeAllViews();
-
-        LinearLayout top=new LinearLayout(this);
-        top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setPadding(ui.dp(18),ui.dp(8),ui.dp(10),ui.dp(8));
-        top.setBackgroundColor(Color.WHITE);
-        top.addView(ui.text("Statistics Lover",20,NativeUi.NAVY,true),
-                new LinearLayout.LayoutParams(0,-2,1f));
-
-        Button logout=ui.button("Logout",false);
-        logout.setOnClickListener(v->{
-            api.signOut();
-            showLogin();
-        });
-        top.addView(logout,new LinearLayout.LayoutParams(ui.dp(92),ui.dp(44)));
-        root.addView(top);
-
-        content=new FrameLayout(this);
-        root.addView(content,new LinearLayout.LayoutParams(-1,0,1f));
-
-        nav=new LinearLayout(this);
-        nav.setOrientation(LinearLayout.HORIZONTAL);
-        nav.setBackgroundColor(Color.WHITE);
-
-        addNav("Home",this::showHome);
-        addNav("Courses",this::showCourses);
-        addNav("Inbox",this::showInbox);
-        addNav("Orders",this::showOrders);
-        if(roles.contains("teacher")) addNav("Teach",this::showTeacher);
-        else if(hasOperationsRole()) addNav("Ops",this::showOperations);
-        else addNav("Store",this::showStore);
-
-        root.addView(nav,new LinearLayout.LayoutParams(-1,ui.dp(62)));
-    }
-
-    private void addNav(String label,Runnable action){
-        Button button=new Button(this);
-        button.setText(label);
-        button.setAllCaps(false);
-        button.setTextSize(11);
-        button.setTextColor(NativeUi.NAVY);
-        button.setBackgroundColor(Color.TRANSPARENT);
-        button.setOnClickListener(v->action.run());
-        nav.addView(button,new LinearLayout.LayoutParams(0,-1,1f));
-    }
-
-    private void showHome(){
-        screen="home";
-        String name=profile.optString("full_name","");
-        if(name.isBlank()||"null".equals(name)) name=api.session().email();
-
-        ScrollView scroll=ui.page("Welcome, "+name,"Your native Statistics Lover dashboard");
-        LinearLayout body=ui.body(scroll);
-
-        LinearLayout role=ui.card();
-        role.addView(ui.text("Roles",12,NativeUi.MAGENTA,true));
-        role.addView(ui.text(roles.isEmpty()?"student":String.join(" • ",roles),15,NativeUi.NAVY,true));
-        body.addView(role);
-
-        metric(body,"Enrolled batches",String.valueOf(enrollments.length()),"Open Courses to study");
-        metric(body,"Unread notifications",String.valueOf(summary.optInt("unread_count",0)),"Open Inbox to review");
-        metric(body,"Orders",String.valueOf(orders.length()),"Payment and receipt status");
-        if(roles.contains("teacher")){
-            metric(body,"Teaching assignments",String.valueOf(teacherAssignments.length()),"Active teaching scope");
+        if (state == null) {
+            webView.loadUrl(BuildConfig.APP_URL);
+        } else {
+            webView.restoreState(state);
         }
 
-        Button coursesButton=ui.button("Open my courses",true);
-        coursesButton.setOnClickListener(v->showCourses());
-        ui.add(body,coursesButton,4);
-
-        Button storeButton=ui.button("Browse course store",false);
-        storeButton.setOnClickListener(v->showStore());
-        ui.add(body,storeButton,10);
-
-        replace(scroll);
+        updateManager.checkForUpdate();
     }
 
-    private void metric(LinearLayout body,String label,String value,String note){
-        LinearLayout card=ui.card();
-        card.addView(ui.text(label,12,NativeUi.MUTED,true));
-        card.addView(ui.text(value,28,NativeUi.NAVY,true));
-        card.addView(ui.text(note,12,NativeUi.MUTED,false));
-        body.addView(card);
-    }
+    private void buildWebShell() {
+        FrameLayout root = new FrameLayout(this);
 
-    private void showCourses(){
-        screen="courses";
-        ScrollView scroll=ui.page("My courses","Your enrolled batches");
-        LinearLayout body=ui.body(scroll);
+        webView = new WebView(this);
+        webView.setBackgroundColor(0xFFF7F8FB);
+        root.addView(
+                webView,
+                new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                )
+        );
 
-        if(enrollments.length()==0){
-            body.addView(ui.text("No active enrollment yet.",15,NativeUi.MUTED,false));
-        }
+        progressBar = new ProgressBar(
+                this,
+                null,
+                android.R.attr.progressBarStyleHorizontal
+        );
+        progressBar.setMax(100);
+        FrameLayout.LayoutParams progressParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                dp(3)
+        );
+        progressParams.gravity = android.view.Gravity.TOP;
+        root.addView(progressBar, progressParams);
 
-        for(int i=0;i<enrollments.length();i++){
-            JSONObject row=enrollments.optJSONObject(i);
-            JSONObject batch=row==null?null:row.optJSONObject("batch");
-            JSONObject course=batch==null?null:batch.optJSONObject("course");
-            if(batch==null||course==null)continue;
-
-            LinearLayout card=ui.card();
-            card.addView(ui.text(course.optString("title","Course"),18,NativeUi.NAVY,true));
-            card.addView(ui.text(batch.optString("title","Batch"),13,NativeUi.MUTED,false));
-            card.addView(ui.text(row.optString("status",""),11,NativeUi.MAGENTA,true));
-
-            String batchId=batch.optString("id");
-            String courseTitle=course.optString("title","Course");
-            String batchTitle=batch.optString("title","Batch");
-            Button open=ui.button("Open learning",true);
-            open.setOnClickListener(v->showLearning(batchId,courseTitle,batchTitle));
-            ui.add(card,open,10);
-            body.addView(card);
-        }
-
-        replace(scroll);
-    }
-
-    private void showLearning(String batchId,String courseTitle,String batchTitle){
-        busy("Loading "+batchTitle+"…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.learning(batchId);
-                runOnUiThread(()->replace(
-                        LearningScreen.build(
-                                this,ui,courseTitle,batchTitle,data,
-                                this::showCourses,
-                                this::openLearningAction
-                        )
-                ));
-                screen="learning";
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showCourses();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void openLearningAction(JSONObject action){
-        String url=action.optString("action_url",action.optString("actionUrl",""));
-        if(url.isBlank()) return;
-
-        String actionKind=action.optString("action_kind",action.optString("actionKind",""));
-        String provider=action.optString("provider","");
-        if("watch".equals(actionKind)&&"google_drive".equals(provider)){
-            RecordingActivity.open(
-                    this,
-                    action.optString("label","Watch recording"),
-                    url
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            Insets bars = insets.getInsets(
+                    WindowInsetsCompat.Type.statusBars()
+                            | WindowInsetsCompat.Type.navigationBars()
+                            | WindowInsetsCompat.Type.displayCutout()
             );
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(root);
+
+        setContentView(root);
+        configureWebView();
+    }
+
+    private void configureWebView() {
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(false);
+        settings.setSupportZoom(false);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setAllowFileAccess(false);
+        settings.setAllowContentAccess(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        settings.setSupportMultipleWindows(false);
+        settings.setUserAgentString(
+                DESKTOP_USER_AGENT
+                        + " StatisticsLoverAndroid/"
+                        + BuildConfig.VERSION_NAME
+        );
+
+        CookieManager cookies = CookieManager.getInstance();
+        cookies.setAcceptCookie(true);
+        cookies.setAcceptThirdPartyCookies(webView, true);
+
+        webView.addJavascriptInterface(
+                new StatisticsLoverNativeBridge(),
+                "StatisticsLoverNative"
+        );
+
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(
+                    WebView view,
+                    WebResourceRequest request
+            ) {
+                return handleNavigation(request.getUrl());
+            }
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                syncRecordingMode(url, false);
+                progressBar.setVisibility(View.VISIBLE);
+                progressBar.setProgress(10);
+            }
+
+            @Override
+            public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+                syncRecordingMode(url, true);
+                super.doUpdateVisitedHistory(view, url, isReload);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                syncRecordingMode(url, false);
+                installNativeFullscreenFallback();
+                progressBar.setProgress(100);
+                progressBar.setVisibility(View.GONE);
+                CookieManager.getInstance().flush();
+            }
+        });
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                if (customView != null) {
+                    callback.onCustomViewHidden();
+                    return;
+                }
+
+                customView = view;
+                customViewCallback = callback;
+
+                FrameLayout contentRoot = findViewById(android.R.id.content);
+                contentRoot.addView(
+                        customView,
+                        new FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                );
+                webView.setVisibility(View.GONE);
+                enterImmersiveLandscape();
+            }
+
+            @Override
+            public void onHideCustomView() {
+                hideCustomView();
+            }
+
+            @Override
+            public void onProgressChanged(WebView view, int progress) {
+                progressBar.setProgress(progress);
+                progressBar.setVisibility(progress >= 100 ? View.GONE : View.VISIBLE);
+            }
+
+            @Override
+            public boolean onShowFileChooser(
+                    WebView view,
+                    ValueCallback<Uri[]> callback,
+                    FileChooserParams params
+            ) {
+                if (filePathCallback != null) {
+                    filePathCallback.onReceiveValue(null);
+                }
+                filePathCallback = callback;
+
+                try {
+                    startActivityForResult(params.createIntent(), FILE_CHOOSER_REQUEST);
+                    return true;
+                } catch (ActivityNotFoundException error) {
+                    filePathCallback.onReceiveValue(null);
+                    filePathCallback = null;
+                    Toast.makeText(
+                            NativeMainActivity.this,
+                            "No file picker is available on this device.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    return false;
+                }
+            }
+        });
+
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) ->
+                openExternal(Uri.parse(url))
+        );
+    }
+
+    private boolean handleNavigation(Uri uri) {
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+
+        if (("http".equals(scheme) || "https".equals(scheme)) && APP_HOSTS.contains(host)) {
+            syncRecordingMode(uri.toString(), false);
+            return false;
+        }
+
+        if ("http".equals(scheme) || "https".equals(scheme)) {
+            openExternal(uri);
+            return true;
+        }
+
+        if ("mailto".equals(scheme)
+                || "tel".equals(scheme)
+                || "sms".equals(scheme)
+                || "upi".equals(scheme)
+                || "intent".equals(scheme)) {
+            openExternal(uri);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isRecordingUrl(String url) {
+        if (url == null || url.isEmpty()) return false;
+        try {
+            Uri uri = Uri.parse(url);
+            String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+            return APP_HOSTS.contains(host) && RECORDING_ROUTE.matcher(url).matches();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private void syncRecordingMode(String url, boolean allowReload) {
+        boolean recording = isRecordingUrl(url);
+
+        if (recording) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            if (appFullscreen) {
+                exitAppFullscreen(true);
+            }
+            if (customView == null) {
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+        }
+
+        // The APK uses a desktop Chrome user-agent from startup while keeping the
+        // real phone viewport width. This preserves the responsive mobile layout
+        // and lets Google Drive render its desktop-capable player immediately.
+    }
+
+    private final class StatisticsLoverNativeBridge {
+        @JavascriptInterface
+        public void enterFullscreen() {
+            runOnUiThread(() -> {
+                if (webView == null || !isRecordingUrl(webView.getUrl())) return;
+                appFullscreen = true;
+                enterImmersiveLandscape();
+            });
+        }
+
+        @JavascriptInterface
+        public void exitFullscreen() {
+            runOnUiThread(() -> exitAppFullscreen(false));
+        }
+    }
+
+    private void exitAppFullscreen(boolean notifyWeb) {
+        if (!appFullscreen) return;
+        appFullscreen = false;
+
+        if (notifyWeb && webView != null) {
+            webView.evaluateJavascript(
+                    "window.dispatchEvent(new CustomEvent('statisticslover:exit-fullscreen'))",
+                    null
+            );
+        }
+
+        exitImmersivePortrait();
+    }
+
+    private void installNativeFullscreenFallback() {
+        if (webView == null) return;
+
+        String script =
+                "(function(){"
+                + "if(window.__SL_NATIVE_FULLSCREEN_FALLBACK__)return;"
+                + "window.__SL_NATIVE_FULLSCREEN_FALLBACK__=true;"
+                + "var s=document.createElement('style');"
+                + "s.id='sl-native-fullscreen-style';"
+                + "s.textContent='"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100dvw!important;height:100dvh!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;border:0!important;border-radius:0!important;background:#000!important;box-shadow:none!important;overflow:hidden!important;}"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-media{position:absolute!important;inset:0!important;left:0!important;top:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;transform:none!important;will-change:auto!important;}"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-media iframe{width:100%!important;height:100%!important;}"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-overlay{position:absolute!important;inset:0!important;left:0!important;top:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;transform:none!important;will-change:auto!important;z-index:40!important;}"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-fullscreen{right:18px!important;bottom:18px!important;width:48px!important;height:48px!important;border-radius:10px!important;background:rgba(0,0,0,.72)!important;box-shadow:0 3px 12px rgba(0,0,0,.3)!important;}"
+                + ".lecture-player-stage.lecture-player-stage-app-fullscreen .lecture-player-drive-brand-blocker{top:12px!important;right:12px!important;width:64px!important;height:64px!important;transform:none!important;}"
+                + "';"
+                + "document.head.appendChild(s);"
+                + "function setButton(b,on){"
+                + "b.setAttribute('aria-label',on?'Exit full screen':'Enter full screen');"
+                + "b.setAttribute('title',on?'Exit full screen':'Full screen');"
+                + "}"
+                + "document.addEventListener('click',function(e){"
+                + "var b=e.target&&e.target.closest?e.target.closest('.lecture-player-fullscreen'):null;"
+                + "if(!b)return;"
+                + "var stage=b.closest('.lecture-player-stage');"
+                + "if(!stage)return;"
+                + "e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();"
+                + "var on=!stage.classList.contains('lecture-player-stage-app-fullscreen');"
+                + "stage.classList.toggle('lecture-player-stage-app-fullscreen',on);"
+                + "document.documentElement.style.overflow=on?'hidden':'';"
+                + "document.body.style.overflow=on?'hidden':'';"
+                + "setButton(b,on);"
+                + "try{if(on){window.StatisticsLoverNative&&window.StatisticsLoverNative.enterFullscreen&&window.StatisticsLoverNative.enterFullscreen();}"
+                + "else{window.StatisticsLoverNative&&window.StatisticsLoverNative.exitFullscreen&&window.StatisticsLoverNative.exitFullscreen();}}catch(_){ }"
+                + "},true);"
+                + "window.addEventListener('statisticslover:exit-fullscreen',function(){"
+                + "var stage=document.querySelector('.lecture-player-stage-app-fullscreen');"
+                + "if(stage)stage.classList.remove('lecture-player-stage-app-fullscreen');"
+                + "document.documentElement.style.overflow='';document.body.style.overflow='';"
+                + "var b=document.querySelector('.lecture-player-fullscreen');if(b)setButton(b,false);"
+                + "});"
+                + "})();";
+
+        webView.evaluateJavascript(script, null);
+    }
+
+    private void enterImmersiveLandscape() {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                );
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            );
+        }
+    }
+
+    private void exitImmersivePortrait() {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+        }
+
+        if (!isRecordingUrl(webView == null ? null : webView.getUrl())) {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+    private void hideCustomView() {
+        if (customView == null) return;
+
+        FrameLayout contentRoot = findViewById(android.R.id.content);
+        contentRoot.removeView(customView);
+        customView = null;
+
+        if (webView != null) {
+            webView.setVisibility(View.VISIBLE);
+        }
+        exitImmersivePortrait();
+
+        if (customViewCallback != null) {
+            customViewCallback.onCustomViewHidden();
+            customViewCallback = null;
+        }
+    }
+
+    private void openExternal(Uri uri) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+        } catch (Exception error) {
+            Toast.makeText(
+                    this,
+                    "No app is available to open this link.",
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+
+    private void configureBackNavigation() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (appFullscreen) {
+                    exitAppFullscreen(true);
+                } else if (customView != null) {
+                    hideCustomView();
+                } else if (webView != null && webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    finish();
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(
+            int requestCode,
+            int resultCode,
+            @Nullable Intent data
+    ) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != FILE_CHOOSER_REQUEST || filePathCallback == null) {
             return;
         }
-        openExternal(url);
-    }
 
-    private void showInbox(){
-        busy("Loading inbox…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.notifications();
-                JSONArray rows=array(data,"notifications");
-                runOnUiThread(()->renderInbox(rows));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showHome();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderInbox(JSONArray rows){
-        screen="inbox";
-        ScrollView scroll=ui.page("Notifications","Announcements and account updates");
-        LinearLayout body=ui.body(scroll);
-
-        Button mark=ui.button("Mark all read",false);
-        mark.setOnClickListener(v->{
-            busy("Updating inbox…");
-            io.execute(()->{
-                try{
-                    api.markAllRead();
-                    JSONObject fresh=api.notifications();
-                    runOnUiThread(()->renderInbox(array(fresh,"notifications")));
-                }catch(Exception error){
-                    runOnUiThread(()->toast(message(error)));
-                }
-            });
-        });
-        body.addView(mark);
-
-        if(rows.length()==0)ui.add(body,ui.text("You are all caught up.",15,NativeUi.MUTED,false),12);
-
-        for(int i=0;i<rows.length();i++){
-            JSONObject row=rows.optJSONObject(i);
-            if(row==null)continue;
-            LinearLayout card=ui.card();
-            card.addView(ui.text(row.optString("title","Notification"),16,NativeUi.NAVY,true));
-            card.addView(ui.text(row.optString("body",""),13,NativeUi.MUTED,false));
-            body.addView(card);
-        }
-
-        replace(scroll);
-    }
-
-    private void showOrders(){
-        busy("Loading orders…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.orders();
-                orders=array(data,"orders");
-                runOnUiThread(()->renderOrders(orders));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showHome();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderOrders(JSONArray rows){
-        screen="orders";
-        ScrollView scroll=ui.page("My orders","Payment verification and receipts");
-        LinearLayout body=ui.body(scroll);
-        NumberFormat money=NumberFormat.getCurrencyInstance(new Locale("en","IN"));
-
-        if(rows.length()==0)body.addView(ui.text("No orders yet.",15,NativeUi.MUTED,false));
-
-        for(int i=0;i<rows.length();i++){
-            JSONObject row=rows.optJSONObject(i);
-            if(row==null)continue;
-            JSONObject batch=row.optJSONObject("batch");
-            JSONObject course=batch==null?null:batch.optJSONObject("course");
-
-            LinearLayout card=ui.card();
-            card.addView(ui.text(row.optString("order_number","Order"),12,NativeUi.MAGENTA,true));
-            card.addView(ui.text(course==null?"Course":course.optString("title","Course"),17,NativeUi.NAVY,true));
-            card.addView(ui.text(
-                    money.format(row.optLong("total_minor",0)/100.0)+" • "+row.optString("status",""),
-                    13,
-                    "paid".equals(row.optString("status"))?NativeUi.GREEN:NativeUi.MUTED,
-                    true
-            ));
-            body.addView(card);
-        }
-
-        replace(scroll);
-    }
-
-    private void showStore(){
-        busy("Loading store…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.offers();
-                JSONArray offers=array(data,"offers");
-                runOnUiThread(()->replace(
-                        StoreScreen.build(
-                                this,ui,offers,
-                                (batchId,coupon)->createOrder(batchId,coupon),
-                                this::showHome
-                        )
-                ));
-                screen="store";
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showHome();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void createOrder(String batchId,String coupon){
-        busy("Creating order…");
-        io.execute(()->{
-            try{
-                api.createOrder(batchId,coupon);
-                JSONObject data=api.orders();
-                orders=array(data,"orders");
-                runOnUiThread(()->{
-                    toast("Order created.");
-                    renderOrders(orders);
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showStore();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void showTeacher(){
-        screen="teacher";
-        ScrollView scroll=ui.page("Teacher workspace","Your active teaching scope");
-        LinearLayout body=ui.body(scroll);
-
-        if(teacherAssignments.length()==0){
-            body.addView(ui.text("No active teaching assignment.",15,NativeUi.MUTED,false));
-        }
-
-        for(int i=0;i<teacherAssignments.length();i++){
-            JSONObject row=teacherAssignments.optJSONObject(i);
-            if(row==null)continue;
-
-            JSONObject batch=row.optJSONObject("batch");
-            JSONObject course=batch==null?null:batch.optJSONObject("course");
-            JSONObject subject=row.optJSONObject("subject");
-
-            String batchId=row.optString("batch_id","");
-            String subjectId=row.isNull("subject_id")?"":row.optString("subject_id","");
-
-            LinearLayout card=ui.card();
-            card.addView(ui.text(
-                    subjectId.isBlank()?"Whole-batch scope":"Subject scope",
-                    12,NativeUi.MAGENTA,true));
-            card.addView(ui.text(
-                    course==null?"Course":course.optString("title","Course"),
-                    17,NativeUi.NAVY,true));
-            card.addView(ui.text(
-                    batch==null?batchId:batch.optString("title",batchId),
-                    13,NativeUi.MUTED,false));
-            if(!subjectId.isBlank()){
-                card.addView(ui.text(
-                        subject==null?subjectId:subject.optString("title",subjectId),
-                        13,NativeUi.NAVY,true));
-            }
-
-            Button attendance=ui.button("Take attendance",true);
-            attendance.setOnClickListener(v->
-                    showAttendanceLectures(batchId,subjectId,this::showTeacher));
-            ui.add(card,attendance,10);
-
-            Button review=ui.button("Review assignments",false);
-            review.setOnClickListener(v->
-                    showManagedAssignments(batchId,this::showTeacher));
-            ui.add(card,review,8);
-
-            Button tests=ui.button("Tests & results",false);
-            tests.setOnClickListener(v->
-                    showAssessmentTests(batchId,this::showTeacher));
-            ui.add(card,tests,8);
-
-            Button resources=ui.button("Study resources",false);
-            String resourceBatchTitle=batch==null
-                    ?batchId:batch.optString("title",batchId);
-            resources.setOnClickListener(v->
-                    showResourceWorkspace(
-                            batchId,resourceBatchTitle,subjectId,this::showTeacher
-                    ));
-            ui.add(card,resources,8);
-
-            Button delivery=ui.button("Live & recording access",false);
-            String deliveryBatchTitle=batch==null
-                    ?batchId:batch.optString("title",batchId);
-            delivery.setOnClickListener(v->
-                    showDeliveryWorkspace(
-                            batchId,deliveryBatchTitle,subjectId,this::showTeacher
-                    ));
-            ui.add(card,delivery,8);
-            body.addView(card);
-        }
-
-        LinearLayout note=ui.card();
-        note.addView(ui.text("Native teaching modules",16,NativeUi.NAVY,true));
-        note.addView(ui.text(
-                "Attendance, assignment review, tests and study resources are native. Lecture delivery access is available within your assigned teaching scope.",
-                12,NativeUi.MUTED,false));
-        body.addView(note);
-
-        replace(scroll);
-    }
-
-    private void showOperations(){
-        busy("Loading operations…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.operationsCourses();
-                JSONArray courses=array(data,"courses");
-                runOnUiThread(()->renderOperations(courses));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showHome();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderOperations(JSONArray courses){
-        screen="operations";
-        ScrollView scroll=ui.page("Operations","Role-aware native workspace");
-        LinearLayout body=ui.body(scroll);
-
-        LinearLayout access=ui.card();
-        access.addView(ui.text("Access",12,NativeUi.MAGENTA,true));
-        access.addView(ui.text(String.join(" • ",roles),15,NativeUi.NAVY,true));
-        access.addView(ui.text(courses.length()+" courses visible in your scope",12,NativeUi.MUTED,false));
-        body.addView(access);
-
-        if(roles.contains("admin")||roles.contains("owner")){
-            Button attendance=ui.button("Manage attendance",true);
-            attendance.setOnClickListener(v->
-                    showAttendanceLectures("","",this::showOperations));
-            ui.add(body,attendance,4);
-        }
-
-        Button reviewAssignments=ui.button("Review assignments",false);
-        reviewAssignments.setOnClickListener(v->
-                showManagedAssignments("",this::showOperations));
-        ui.add(body,reviewAssignments,8);
-
-        Button tests=ui.button("Tests & results",false);
-        tests.setOnClickListener(v->
-                showAssessmentTests("",this::showOperations));
-        ui.add(body,tests,8);
-
-        Button resources=ui.button("Manage study resources",false);
-        resources.setOnClickListener(v->
-                showResourceBatches(this::showOperations));
-        ui.add(body,resources,8);
-
-        Button delivery=ui.button("Manage lecture delivery",false);
-        delivery.setOnClickListener(v->
-                showDeliveryBatches(this::showOperations));
-        ui.add(body,delivery,8);
-
-        String[] modules=(roles.contains("admin")||roles.contains("owner"))
-                ? new String[]{"Academics","Content","Enrollments","Assignments","Attendance","Tests","Announcements","Commerce","Staff","Audit","Settings"}
-                : new String[]{"Academics","Content","Assignments","Attendance","Tests","Announcements"};
-
-        for(String module:modules){
-            LinearLayout card=ui.card();
-            card.addView(ui.text(module,16,NativeUi.NAVY,true));
-            card.addView(ui.text("Native management workflow will be added in the next Android layer.",12,NativeUi.MUTED,false));
-            body.addView(card);
-        }
-
-        replace(scroll);
-    }
-
-    private void showResourceBatches(Runnable back){
-        busy("Loading batches…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.contentBatches();
-                JSONArray batches=array(data,"batches");
-                runOnUiThread(()->renderResourceBatches(batches,back));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderResourceBatches(JSONArray batches,Runnable back){
-        screen="resources";
-        replace(ResourceManagerScreen.buildBatches(
-                this,ui,batches,back,
-                (batchId,batchTitle)->showResourceWorkspace(
-                        batchId,batchTitle,"",
-                        ()->renderResourceBatches(batches,back)
-                )
-        ));
-    }
-
-    private void showResourceWorkspace(
-            String batchId,
-            String batchTitle,
-            String subjectId,
-            Runnable back
-    ){
-        busy("Loading study resources…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.resourceWorkspace(batchId,subjectId);
-                runOnUiThread(()->renderResourceWorkspace(
-                        batchId,batchTitle,subjectId,data,back
-                ));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderResourceWorkspace(
-            String batchId,
-            String batchTitle,
-            String subjectId,
-            JSONObject data,
-            Runnable back
-    ){
-        screen="resources";
-        replace(ResourceManagerScreen.buildWorkspace(
-                this,ui,batchId,batchTitle,subjectId,data,back,
-                resource->saveLearningResource(
-                        batchId,batchTitle,subjectId,resource,back
-                )
-        ));
-    }
-
-    private void saveLearningResource(
-            String batchId,
-            String batchTitle,
-            String subjectId,
-            JSONObject resource,
-            Runnable back
-    ){
-        busy("Saving resource…");
-        io.execute(()->{
-            try{
-                api.saveLearningResource(resource);
-                runOnUiThread(()->{
-                    toast("Resource saved.");
-                    showResourceWorkspace(
-                            batchId,batchTitle,subjectId,back
-                    );
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showResourceWorkspace(
-                            batchId,batchTitle,subjectId,back
-                    );
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-
-    private void showDeliveryBatches(Runnable back){
-        busy("Loading delivery batches…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.contentBatches();
-                JSONArray batches=array(data,"batches");
-                runOnUiThread(()->renderDeliveryBatches(batches,back));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderDeliveryBatches(JSONArray batches,Runnable back){
-        screen="delivery";
-        replace(DeliveryManagerScreen.buildBatches(
-                this,ui,batches,back,
-                (batchId,batchTitle)->showDeliveryWorkspace(
-                        batchId,batchTitle,"",
-                        ()->renderDeliveryBatches(batches,back)
-                )
-        ));
-    }
-
-    private void showDeliveryWorkspace(
-            String batchId,
-            String batchTitle,
-            String subjectId,
-            Runnable back
-    ){
-        busy("Loading lecture delivery…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.deliveryWorkspace(batchId,subjectId);
-                runOnUiThread(()->renderDeliveryWorkspace(
-                        batchId,batchTitle,subjectId,data,back
-                ));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderDeliveryWorkspace(
-            String batchId,
-            String batchTitle,
-            String subjectId,
-            JSONObject data,
-            Runnable back
-    ){
-        screen="delivery";
-        Runnable reload=()->showDeliveryWorkspace(
-                batchId,batchTitle,subjectId,back
-        );
-        boolean canDelete=roles.contains("admin")||roles.contains("owner");
-        replace(DeliveryManagerScreen.buildWorkspace(
-                this,ui,batchTitle,data,back,reload,
-                source->saveDeliverySource(
-                        batchId,batchTitle,subjectId,source,back
-                ),
-                (lectureId,actionKind)->deleteDeliverySource(
-                        batchId,batchTitle,subjectId,
-                        lectureId,actionKind,back
-                ),
-                canDelete
-        ));
-    }
-
-    private void saveDeliverySource(
-            String batchId,
-            String batchTitle,
-            String subjectId,
-            JSONObject source,
-            Runnable back
-    ){
-        busy("Saving lecture access…");
-        io.execute(()->{
-            try{
-                api.saveDeliverySource(source);
-                runOnUiThread(()->{
-                    toast("Lecture access saved.");
-                    showDeliveryWorkspace(
-                            batchId,batchTitle,subjectId,back
-                    );
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showDeliveryWorkspace(
-                            batchId,batchTitle,subjectId,back
-                    );
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void deleteDeliverySource(
-            String batchId,
-            String batchTitle,
-            String subjectId,
-            String lectureId,
-            String actionKind,
-            Runnable back
-    ){
-        busy("Removing lecture access…");
-        io.execute(()->{
-            try{
-                api.deleteDeliverySource(lectureId,actionKind);
-                runOnUiThread(()->{
-                    toast("Lecture access removed.");
-                    showDeliveryWorkspace(
-                            batchId,batchTitle,subjectId,back
-                    );
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showDeliveryWorkspace(
-                            batchId,batchTitle,subjectId,back
-                    );
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void showAssessmentTests(String batchId,Runnable back){
-        busy("Loading tests…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.assessmentTests(batchId);
-                JSONArray tests=array(data,"tests");
-                runOnUiThread(()->renderAssessmentTests(tests,back));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderAssessmentTests(JSONArray tests,Runnable back){
-        screen="assessments";
-        replace(AssessmentOpsScreen.buildTests(
-                this,ui,tests,back,
-                (testId,testTitle)->showAssessmentTestDetail(
-                        testId,testTitle,()->renderAssessmentTests(tests,back)
-                )
-        ));
-    }
-
-    private void showAssessmentTestDetail(
-            String testId,
-            String testTitle,
-            Runnable back
-    ){
-        busy("Loading test operations…");
-        io.execute(()->{
-            try{
-                JSONObject scheduleData=api.assessmentSchedules(testId);
-                JSONObject analyticsData=api.assessmentAnalytics(testId);
-                JSONArray schedules=array(scheduleData,"schedules");
-                JSONObject analytics=analyticsData.optJSONObject("analytics");
-                if(analytics==null)analytics=new JSONObject();
-                JSONObject finalAnalytics=analytics;
-                runOnUiThread(()->renderAssessmentTestDetail(
-                        testId,testTitle,schedules,finalAnalytics,back
-                ));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderAssessmentTestDetail(
-            String testId,
-            String testTitle,
-            JSONArray schedules,
-            JSONObject analytics,
-            Runnable back
-    ){
-        screen="assessments";
-        replace(AssessmentOpsScreen.buildDetail(
-                this,ui,testTitle,schedules,analytics,back,
-                (scheduleId,active)->setAssessmentScheduleActive(
-                        testId,testTitle,scheduleId,active,back
-                ),
-                (scheduleId,released)->setManualAssessmentResultsReleased(
-                        testId,testTitle,scheduleId,released,back
-                )
-        ));
-    }
-
-    private void setAssessmentScheduleActive(
-            String testId,
-            String testTitle,
-            String scheduleId,
-            boolean active,
-            Runnable back
-    ){
-        busy(active?"Activating schedule…":"Pausing schedule…");
-        io.execute(()->{
-            try{
-                api.setScheduleActive(scheduleId,active);
-                runOnUiThread(()->{
-                    toast(active?"Schedule activated.":"Schedule paused.");
-                    showAssessmentTestDetail(testId,testTitle,back);
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showAssessmentTestDetail(testId,testTitle,back);
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void setManualAssessmentResultsReleased(
-            String testId,
-            String testTitle,
-            String scheduleId,
-            boolean released,
-            Runnable back
-    ){
-        busy(released?"Releasing results…":"Hiding results…");
-        io.execute(()->{
-            try{
-                api.setManualResultsReleased(scheduleId,released);
-                runOnUiThread(()->{
-                    toast(released?"Results released.":"Results hidden.");
-                    showAssessmentTestDetail(testId,testTitle,back);
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showAssessmentTestDetail(testId,testTitle,back);
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void showManagedAssignments(String batchId,Runnable back){
-        busy("Loading assignments…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.managedAssignments(batchId);
-                JSONArray assignments=array(data,"assignments");
-                runOnUiThread(()->renderManagedAssignments(assignments,back));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderManagedAssignments(JSONArray assignments,Runnable back){
-        screen="assignments";
-        replace(AssignmentReviewScreen.buildAssignments(
-                this,ui,assignments,back,
-                (assignmentId,assignmentTitle,maxScore)->
-                        showAssignmentSubmissions(
-                                assignmentId,
-                                assignmentTitle,
-                                maxScore,
-                                ()->renderManagedAssignments(assignments,back)
-                        )
-        ));
-    }
-
-    private void showAssignmentSubmissions(
-            String assignmentId,
-            String assignmentTitle,
-            Double maxScore,
-            Runnable back
-    ){
-        busy("Loading submissions…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.assignmentSubmissions(assignmentId);
-                JSONArray submissions=array(data,"submissions");
-                runOnUiThread(()->renderAssignmentSubmissions(
-                        assignmentId,assignmentTitle,maxScore,submissions,back
-                ));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderAssignmentSubmissions(
-            String assignmentId,
-            String assignmentTitle,
-            Double maxScore,
-            JSONArray submissions,
-            Runnable back
-    ){
-        screen="assignments";
-        replace(AssignmentReviewScreen.buildSubmissions(
-                this,ui,assignmentTitle,maxScore,submissions,back,
-                (submissionId,status,score,feedback)->
-                        gradeSubmission(
-                                assignmentId,assignmentTitle,maxScore,
-                                submissionId,status,score,feedback,back
-                        ),
-                this::openSubmissionAttachment
-        ));
-    }
-
-    private void gradeSubmission(
-            String assignmentId,
-            String assignmentTitle,
-            Double maxScore,
-            String submissionId,
-            String status,
-            Double score,
-            String feedback,
-            Runnable back
-    ){
-        busy("Saving grade…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.gradeSubmission(
-                        assignmentId,submissionId,status,score,feedback
-                );
-                JSONArray submissions=array(data,"submissions");
-                runOnUiThread(()->{
-                    toast("Submission updated.");
-                    renderAssignmentSubmissions(
-                            assignmentId,assignmentTitle,maxScore,submissions,back
-                    );
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showAssignmentSubmissions(
-                            assignmentId,assignmentTitle,maxScore,back
-                    );
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void openSubmissionAttachment(String path){
-        if(path==null||path.isBlank())return;
-        io.execute(()->{
-            try{
-                JSONObject data=api.submissionSignedUrl(path);
-                String url=data.optString("url","");
-                runOnUiThread(()->{
-                    if(url.isBlank())toast("Attachment is unavailable.");
-                    else openExternal(url);
-                });
-            }catch(Exception error){
-                runOnUiThread(()->toast(message(error)));
-            }
-        });
-    }
-
-    private void showAttendanceLectures(
-            String batchId,
-            String subjectId,
-            Runnable back
-    ){
-        busy("Loading attendance lectures…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.attendanceLectures(batchId,subjectId);
-                runOnUiThread(()->renderAttendanceLectures(data,back));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderAttendanceLectures(JSONObject data,Runnable back){
-        screen="attendance";
-        replace(AttendanceScreen.buildLectures(
-                this,ui,data,back,
-                (lectureId,lectureTitle)->
-                        showAttendanceRoster(
-                                lectureId,
-                                lectureTitle,
-                                ()->renderAttendanceLectures(data,back)
-                        )
-        ));
-    }
-
-    private void showAttendanceRoster(
-            String lectureId,
-            String lectureTitle,
-            Runnable back
-    ){
-        busy("Loading attendance roster…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.attendanceRoster(lectureId);
-                JSONArray roster=array(data,"roster");
-                runOnUiThread(()->renderAttendanceRoster(
-                        lectureId,lectureTitle,roster,back
-                ));
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    back.run();
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private void renderAttendanceRoster(
-            String lectureId,
-            String lectureTitle,
-            JSONArray roster,
-            Runnable back
-    ){
-        screen="attendance";
-        replace(AttendanceScreen.buildRoster(
-                this,ui,lectureTitle,roster,back,
-                rows->saveAttendance(lectureId,lectureTitle,rows,back)
-        ));
-    }
-
-    private void saveAttendance(
-            String lectureId,
-            String lectureTitle,
-            JSONArray rows,
-            Runnable back
-    ){
-        busy("Saving attendance…");
-        io.execute(()->{
-            try{
-                JSONObject data=api.saveAttendance(lectureId,rows);
-                JSONArray roster=array(data,"roster");
-                runOnUiThread(()->{
-                    toast("Attendance saved.");
-                    renderAttendanceRoster(
-                            lectureId,lectureTitle,roster,back
-                    );
-                });
-            }catch(Exception error){
-                runOnUiThread(()->{
-                    showAttendanceRoster(lectureId,lectureTitle,back);
-                    toast(message(error));
-                });
-            }
-        });
-    }
-
-    private boolean hasOperationsRole(){
-        return roles.contains("content_manager")||roles.contains("admin")||roles.contains("owner");
-    }
-
-    private void openExternal(String url){
-        ExternalActions.open(this,url);
-    }
-
-    private JSONArray array(JSONObject object,String key){
-        JSONArray value=object.optJSONArray(key);
-        return value==null?new JSONArray():value;
-    }
-
-    private String message(Exception error){
-        String value=error.getMessage();
-        return value==null||value.isBlank()?"Something went wrong.":value;
-    }
-
-    private void toast(String value){
-        Toast.makeText(this,value,Toast.LENGTH_LONG).show();
+        Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+        filePathCallback.onReceiveValue(result);
+        filePathCallback = null;
     }
 
     @Override
-    protected void onDestroy(){
-        io.shutdownNow();
+    protected void onSaveInstanceState(Bundle outState) {
+        if (webView != null) {
+            webView.saveState(outState);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) {
+            webView.onResume();
+        }
+        if (updateManager != null) {
+            updateManager.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (webView != null) {
+            webView.onPause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (appFullscreen) {
+            exitAppFullscreen(false);
+        }
+        if (customView != null) {
+            hideCustomView();
+        }
+        if (webView != null) {
+            webView.stopLoading();
+            webView.setWebChromeClient(null);
+            webView.setWebViewClient(null);
+            webView.destroy();
+            webView = null;
+        }
         super.onDestroy();
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }

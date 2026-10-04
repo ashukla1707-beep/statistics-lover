@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
 }
 
+val releaseKeystorePath = System.getenv("KEYSTORE_FILE")
+
 android {
     namespace = "com.statisticslover.app"
     compileSdk = 35
@@ -10,29 +12,42 @@ android {
         applicationId = "com.statisticslover.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 16
-        versionName = "1.0.15"
+        versionCode = 21
+        versionName = "1.0.20"
     }
 
     buildFeatures {
         buildConfig = true
     }
 
+    signingConfigs {
+        create("release") {
+            if (!releaseKeystorePath.isNullOrBlank()) {
+                storeFile = file(releaseKeystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
-            buildConfigField("String", "APP_URL", "\"https://statistics-lover-git-develop-statistics-lover.vercel.app/dashboard\"")
-            buildConfigField("String", "UPDATE_MANIFEST_URL", "\"https://statistics-lover-git-develop-statistics-lover.vercel.app/android-update.json\"")
+            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/\"")
             applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
         release {
+            if (!releaseKeystorePath.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/dashboard\"")
-            buildConfigField("String", "UPDATE_MANIFEST_URL", "\"https://statistics-lover.vercel.app/android-update.json\"")
+            buildConfigField("String", "APP_URL", "\"https://statistics-lover.vercel.app/\"")
         }
     }
 

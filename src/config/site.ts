@@ -5,7 +5,7 @@ export const siteConfig = {
     'A focused statistics learning platform for live classes, recorded lectures, tests, PYQs, assignments and study resources.',
   phone: '9264927804',
   whatsappNumber: '919264927804',
-  logoPath: '/brand/statistics-lover-logo.jpg?v=20261004-4',
+  logoPath: '/brand/statistics-lover-logo-clean.jpg?v=20261004-5',
 } as const
 
 export const navigationItems = [

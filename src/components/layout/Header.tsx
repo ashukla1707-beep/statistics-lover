@@ -1,5 +1,5 @@
 import { useEffect,useState } from 'react'
-import brandLogo from '../../assets/statistics-lover-logo.jpg'
+import brandLogo from '../../assets/statistics-lover-logo-clean.jpg'
 import { Link } from 'react-router-dom'
 import { navigationItems, siteConfig } from '../../config/site'
 import { useAuth } from '../../features/auth'

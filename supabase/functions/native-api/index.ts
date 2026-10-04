@@ -345,6 +345,87 @@ Deno.serve(async (req) => {
       return json({ ok: true, roster: rosterResult.data ?? [] });
     }
 
+
+    if (action === "managedAssignments") {
+      const client = userClient(requireToken(body));
+      const batchId = String(body.batchId ?? "").trim();
+
+      let query = client.from("assignments").select(`
+        id,batch_id,scope,subject_id,module_id,lecture_id,title,instructions,status,
+        release_at,due_at,allow_late,max_score,position,created_at,
+        batch:batches!assignments_batch_id_fkey(
+          id,title,course:courses!batches_course_id_fkey(id,title)
+        ),
+        subject:subjects!assignments_subject_id_fkey(id,title),
+        module:modules!assignments_module_id_fkey(id,title),
+        lecture:lectures!assignments_lecture_id_fkey(id,title)
+      `).order("created_at", { ascending: false }).limit(200);
+
+      if (batchId) query = query.eq("batch_id", batchId);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return json({ assignments: data ?? [] });
+    }
+
+    if (action === "assignmentSubmissions") {
+      const client = userClient(requireToken(body));
+      const assignmentId = String(body.assignmentId ?? "").trim();
+      if (!assignmentId) throw new Error("Assignment is required.");
+
+      const { data, error } = await client.rpc("get_assignment_submissions", {
+        target_assignment: assignmentId,
+      });
+      if (error) throw error;
+      return json({ submissions: data ?? [] });
+    }
+
+    if (action === "gradeSubmission") {
+      const client = userClient(requireToken(body));
+      const assignmentId = String(body.assignmentId ?? "").trim();
+      const submissionId = String(body.submissionId ?? "").trim();
+      const status = String(body.status ?? "").trim();
+      const feedback = String(body.feedback ?? "").trim();
+
+      if (!assignmentId || !submissionId) throw new Error("Submission is required.");
+      if (status !== "graded" && status !== "returned") {
+        throw new Error("Invalid grading status.");
+      }
+      if (feedback.length > 5000) throw new Error("Feedback is too long.");
+
+      const rawScore = body.score;
+      let score: number | null = null;
+      if (rawScore !== null && rawScore !== undefined && String(rawScore).trim() !== "") {
+        score = Number(rawScore);
+        if (!Number.isFinite(score) || score < 0) throw new Error("Invalid score.");
+      }
+
+      const { error } = await client.from("assignment_submissions").update({
+        status,
+        score,
+        feedback: feedback || null,
+      }).eq("id", submissionId);
+      if (error) throw error;
+
+      const fresh = await client.rpc("get_assignment_submissions", {
+        target_assignment: assignmentId,
+      });
+      if (fresh.error) throw fresh.error;
+      return json({ ok: true, submissions: fresh.data ?? [] });
+    }
+
+    if (action === "submissionSignedUrl") {
+      const client = userClient(requireToken(body));
+      const path = String(body.path ?? "").trim();
+      if (!path) throw new Error("Attachment path is required.");
+
+      const { data, error } = await client.storage
+        .from("assignment-submissions")
+        .createSignedUrl(path, 60 * 15);
+      if (error) throw error;
+      return json({ url: data.signedUrl });
+    }
+
     if (action === "operationsCourses") {
       const client = userClient(requireToken(body));
       const { data, error } = await client.from("courses")

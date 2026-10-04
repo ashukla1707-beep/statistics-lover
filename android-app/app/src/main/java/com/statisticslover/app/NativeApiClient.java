@@ -111,6 +111,45 @@ final class NativeApiClient {
         return withRefresh(body);
     }
 
+    JSONObject managedAssignments(String batchId) throws Exception {
+        JSONObject body = action("managedAssignments");
+        body.put("accessToken", session.accessToken());
+        body.put("batchId", batchId == null ? "" : batchId);
+        return withRefresh(body);
+    }
+
+    JSONObject assignmentSubmissions(String assignmentId) throws Exception {
+        JSONObject body = action("assignmentSubmissions");
+        body.put("accessToken", session.accessToken());
+        body.put("assignmentId", assignmentId);
+        return withRefresh(body);
+    }
+
+    JSONObject gradeSubmission(
+            String assignmentId,
+            String submissionId,
+            String status,
+            Double score,
+            String feedback
+    ) throws Exception {
+        JSONObject body = action("gradeSubmission");
+        body.put("accessToken", session.accessToken());
+        body.put("assignmentId", assignmentId);
+        body.put("submissionId", submissionId);
+        body.put("status", status);
+        if(score==null) body.put("score", JSONObject.NULL);
+        else body.put("score", score);
+        body.put("feedback", feedback == null ? "" : feedback);
+        return withRefresh(body);
+    }
+
+    JSONObject submissionSignedUrl(String path) throws Exception {
+        JSONObject body = action("submissionSignedUrl");
+        body.put("accessToken", session.accessToken());
+        body.put("path", path);
+        return withRefresh(body);
+    }
+
     JSONObject operationsCourses() throws Exception {
         return authed("operationsCourses");
     }

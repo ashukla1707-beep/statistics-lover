@@ -491,6 +491,11 @@ public class NativeMainActivity extends AppCompatActivity {
             attendance.setOnClickListener(v->
                     showAttendanceLectures(batchId,subjectId,this::showTeacher));
             ui.add(card,attendance,10);
+
+            Button review=ui.button("Review assignments",false);
+            review.setOnClickListener(v->
+                    showManagedAssignments(batchId,this::showTeacher));
+            ui.add(card,review,8);
             body.addView(card);
         }
 
@@ -538,6 +543,11 @@ public class NativeMainActivity extends AppCompatActivity {
             ui.add(body,attendance,4);
         }
 
+        Button reviewAssignments=ui.button("Review assignments",false);
+        reviewAssignments.setOnClickListener(v->
+                showManagedAssignments("",this::showOperations));
+        ui.add(body,reviewAssignments,8);
+
         String[] modules=(roles.contains("admin")||roles.contains("owner"))
                 ? new String[]{"Academics","Content","Enrollments","Assignments","Attendance","Tests","Announcements","Commerce","Staff","Audit","Settings"}
                 : new String[]{"Academics","Content","Assignments","Attendance","Tests","Announcements"};
@@ -550,6 +560,128 @@ public class NativeMainActivity extends AppCompatActivity {
         }
 
         replace(scroll);
+    }
+
+    private void showManagedAssignments(String batchId,Runnable back){
+        busy("Loading assignments…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.managedAssignments(batchId);
+                JSONArray assignments=array(data,"assignments");
+                runOnUiThread(()->renderManagedAssignments(assignments,back));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderManagedAssignments(JSONArray assignments,Runnable back){
+        screen="assignments";
+        replace(AssignmentReviewScreen.buildAssignments(
+                this,ui,assignments,back,
+                (assignmentId,assignmentTitle,maxScore)->
+                        showAssignmentSubmissions(
+                                assignmentId,
+                                assignmentTitle,
+                                maxScore,
+                                ()->renderManagedAssignments(assignments,back)
+                        )
+        ));
+    }
+
+    private void showAssignmentSubmissions(
+            String assignmentId,
+            String assignmentTitle,
+            Double maxScore,
+            Runnable back
+    ){
+        busy("Loading submissions…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.assignmentSubmissions(assignmentId);
+                JSONArray submissions=array(data,"submissions");
+                runOnUiThread(()->renderAssignmentSubmissions(
+                        assignmentId,assignmentTitle,maxScore,submissions,back
+                ));
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    back.run();
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void renderAssignmentSubmissions(
+            String assignmentId,
+            String assignmentTitle,
+            Double maxScore,
+            JSONArray submissions,
+            Runnable back
+    ){
+        screen="assignments";
+        replace(AssignmentReviewScreen.buildSubmissions(
+                this,ui,assignmentTitle,maxScore,submissions,back,
+                (submissionId,status,score,feedback)->
+                        gradeSubmission(
+                                assignmentId,assignmentTitle,maxScore,
+                                submissionId,status,score,feedback,back
+                        ),
+                this::openSubmissionAttachment
+        ));
+    }
+
+    private void gradeSubmission(
+            String assignmentId,
+            String assignmentTitle,
+            Double maxScore,
+            String submissionId,
+            String status,
+            Double score,
+            String feedback,
+            Runnable back
+    ){
+        busy("Saving grade…");
+        io.execute(()->{
+            try{
+                JSONObject data=api.gradeSubmission(
+                        assignmentId,submissionId,status,score,feedback
+                );
+                JSONArray submissions=array(data,"submissions");
+                runOnUiThread(()->{
+                    toast("Submission updated.");
+                    renderAssignmentSubmissions(
+                            assignmentId,assignmentTitle,maxScore,submissions,back
+                    );
+                });
+            }catch(Exception error){
+                runOnUiThread(()->{
+                    showAssignmentSubmissions(
+                            assignmentId,assignmentTitle,maxScore,back
+                    );
+                    toast(message(error));
+                });
+            }
+        });
+    }
+
+    private void openSubmissionAttachment(String path){
+        if(path==null||path.isBlank())return;
+        io.execute(()->{
+            try{
+                JSONObject data=api.submissionSignedUrl(path);
+                String url=data.optString("url","");
+                runOnUiThread(()->{
+                    if(url.isBlank())toast("Attachment is unavailable.");
+                    else openExternal(url);
+                });
+            }catch(Exception error){
+                runOnUiThread(()->toast(message(error)));
+            }
+        });
     }
 
     private void showAttendanceLectures(

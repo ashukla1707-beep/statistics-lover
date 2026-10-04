@@ -985,3 +985,32 @@ At the latest handoff:
 - Monorepo Quality run **37183540738 — SUCCESS**.
 - Monorepo Android verification run **37183540801 — SUCCESS**.
 - Existing website-style UI, stable session origin, auto-update lineage, single-transition recording startup, compact landscape fullscreen, inline-player exit fix and Drive seek-control stabilization remain preserved.
+
+
+### Android/web theme + splash correction — 1.0.31 / versionCode 32
+
+- User screenshots showed two splash logo states: Android system splash first displayed a zoomed/masked logo, then the custom circular overlay displayed a second logo.
+- Restored the earlier validated **420x420** original logo blob `4af648e1fcba3aa00ec481101b05cbe36ebc7393`; the previous current asset was only 240x240.
+- Web commit `f973e87514b4df8c6efabb1bcb23689d2bdbffac` adds automatic `prefers-color-scheme` light/dark styling, separate light/dark browser theme colors, service-worker cache v8, and the higher-resolution logo.
+- Web Quality run `37184284499` passed.
+- Vercel deployment `dpl_Cfeg8GzJYRGoi2uHfyo6j1a3anU8` is READY and assigned to `statistics-lover.vercel.app`; production root and `/app-start` serve bundle `index-DaYV35YY.js`.
+- Dedicated Android source commit: `7c7a6b34f13980af62c7f51c05b10acd6621e410`.
+- Verified signed release: **Statistics Lover 1.0.31 / versionCode 32**.
+- Dedicated workflow run: **37184367615 — SUCCESS**.
+- Signed release artifact ID: **11296217436**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **672466 bytes**.
+- APK SHA-256: **`4dc85506f5576cd6351dc1ffb9d76c78f5711a4368932c60677b091697459f48`**.
+- Auto-update channel: **1.0.31 / versionCode 32**.
+- Splash fix:
+  - Android system splash icon is now transparent, so it no longer shows a competing first logo;
+  - the Statistics Lover logo appears only once in the custom overlay;
+  - overlay uses FIT_CENTER, circular clipping and the 420x420 original, eliminating the previous CENTER_CROP zoom/crop.
+- Native theme:
+  - light splash/window/system bars: `#F7F8FB` with dark icons;
+  - dark splash/window/system bars: `#0B1020` with light icons;
+  - added Android `values-night` resources;
+  - system theme is re-applied on `uiMode` changes.
+- Monorepo Android mirror synced through commits `242e50e1f54a5448168268a96c6a007520aadf3d`, `8ce5d8398d2c206d494c38bfa3b922d88a951ac5`, `fb997d76e22986fa800854f6e8b03722b50cbe41`, `2b7b8f048ab1b944b7f1e13bf60129a690e598d0`, `16272074bdb789610ba9a39b7d1dda95c04c4653`, and `a46f4a1d05f5d914aad637c2ce164f94c1980235`.
+- Existing auth-aware startup/Home behavior, website UI, session continuity, single-transition recording startup, compact landscape fullscreen, inline-player exit and Drive seek fixes remain preserved.

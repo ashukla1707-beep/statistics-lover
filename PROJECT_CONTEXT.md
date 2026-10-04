@@ -1061,3 +1061,21 @@ At the latest handoff:
 - Auto-update channel now advertises 1.0.34 / versionCode 35.
 - Monorepo source sync commits: 8702b508af45d780dbe828a07f2e8f2733120ef1, 26d4236a0e85c115c63000834467f0dc541513c2, 2df1c081b3b7e05bd476e540766d476ef2e06bb1.
 - Existing auth-aware startup/Home routing, website UI, stable session origin, single-transition recording startup, compact landscape fullscreen, inline-player exit fix and Drive seek stabilization are preserved.
+
+
+### Android 1.0.35 splash/header-logo recovery
+
+- Real-device recording showed that the 1.0.34 circular splash logo was not visible and the website header logo was missing.
+- Dedicated Android fix commit: `fade6a561dbbd4420a5440f689b24f8f93de170c`.
+- Verified signed release: **Statistics Lover 1.0.35 / versionCode 36**.
+- Dedicated workflow run: **37187831151 — SUCCESS**.
+- Signed release artifact ID: **11298046692**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **673018 bytes**.
+- APK SHA-256: **`18837a88c4c313238d5f0a28c4cbcf649517b17fef2d6d123503b5fb4c25d9bd`**.
+- Auto-update channel now advertises **1.0.35 / versionCode 36**.
+- Splash fix: native circular logo overlay has a 1300 ms minimum visible duration so early web readiness cannot remove it before the system splash exits.
+- Header logo fix: web commit `7d11ea92da7256128a92aa9ef9d01fdbd18a0f7a`, cache-busted logo URL, SW cache v9, Quality run `37187777649`, Vercel deployment `dpl_DpDi4Wwwynu3UtbaMvxGKsm3fJUR` assigned to production.
+- Production bundle verified as `index-Cbxz-gPm.js` and contains the new logo URL.
+- Automatic light/dark theming remains active in Android DayNight resources and web `prefers-color-scheme` CSS.

@@ -51,6 +51,7 @@ import java.util.regex.Pattern;
 
 public class NativeMainActivity extends AppCompatActivity {
     private static final int FILE_CHOOSER_REQUEST = 4102;
+    private static final long MIN_SPLASH_VISIBLE_MS = 1300L;
     private static final Pattern RECORDING_ROUTE =
             Pattern.compile(".*/learn/[^/]+/lecture/[^/?#]+(?:[/?#].*)?$");
     private static final String DESKTOP_USER_AGENT =
@@ -73,6 +74,8 @@ public class NativeMainActivity extends AppCompatActivity {
     private AppUpdateManager updateManager;
     private boolean appFullscreen;
     private boolean webUiReady;
+    private boolean splashRevealScheduled;
+    private long launchOverlayShownAt;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -147,6 +150,7 @@ public class NativeMainActivity extends AppCompatActivity {
     }
 
     private void addLaunchOverlay() {
+        launchOverlayShownAt = SystemClock.uptimeMillis();
         launchOverlay = new FrameLayout(this);
         launchOverlay.setBackgroundColor(getColor(R.color.shell_background));
         launchOverlay.setClickable(true);
@@ -196,6 +200,20 @@ public class NativeMainActivity extends AppCompatActivity {
 
     private void revealWebContent() {
         if (webUiReady) return;
+
+        long elapsed = SystemClock.uptimeMillis() - launchOverlayShownAt;
+        long remaining = MIN_SPLASH_VISIBLE_MS - elapsed;
+        if (remaining > 0L) {
+            if (!splashRevealScheduled && root != null) {
+                splashRevealScheduled = true;
+                root.postDelayed(() -> {
+                    splashRevealScheduled = false;
+                    revealWebContent();
+                }, remaining);
+            }
+            return;
+        }
+
         webUiReady = true;
 
         if (webView != null) {

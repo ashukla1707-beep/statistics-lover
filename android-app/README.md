@@ -6,13 +6,13 @@ Canonical release record:
 
 - Dedicated repo: `ashukla1707-beep/statistics-lover-android`
 - Verified source commit: `7fff278316d50bf6ea3970f6d90ea52316acf8fc`
-- Version: **1.0.34**
-- versionCode: **35**
+- Version: **1.0.35**
+- versionCode: **36**
 - Package: `com.statisticslover.app`
-- Signed release workflow: `37186374672` — SUCCESS
-- Release artifact: `11296689615`
-- APK size: **672938 bytes**
-- APK SHA-256: `9bb92f9cc7a9557cb0aea70a2c239f3338b894419c65b929298e329cd5838a55`
+- Signed release workflow: `37187831151` — SUCCESS
+- Release artifact: `11298046692`
+- APK size: **673018 bytes**
+- APK SHA-256: `18837a88c4c313238d5f0a28c4cbcf649517b17fef2d6d123503b5fb4c25d9bd`
 
 This release was rebuilt from the pinned 1.0.15 working runtime behavior and intentionally excludes the later 1.0.16–1.0.18 player-layout/scaling experiments.
 
@@ -22,7 +22,7 @@ The app checks the permanent signed update channel in the dedicated Android repo
 
 `https://raw.githubusercontent.com/ashukla1707-beep/statistics-lover-android/main/downloads/version.json`
 
-Current channel: **1.0.34 / versionCode 35**.
+Current channel: **1.0.35 / versionCode 36**.
 
 Do not move or duplicate that publication channel casually. Existing installed release APKs depend on the permanent signing certificate and the dedicated repo's published APK.
 
@@ -126,3 +126,10 @@ Version 1.0.34 keeps the known-working 1.0.32 single-Activity startup while fixi
 - Light/dark system-bar icons and spinner colors follow the device theme.
 - No unstable values-night style override is used.
 - The web app already follows prefers-color-scheme on phone, tablet and desktop.
+
+
+## Visible splash + restored header logo
+
+Version 1.0.35 keeps the native circular Statistics Lover splash visible long enough to actually appear on real devices, even if the web app reports ready very early. It preserves the single-logo architecture: the Android system splash remains iconless, while the high-fidelity circular logo is shown by the native overlay and then fades into the WebView.
+
+The website header logo is restored via a cache-busted logo URL and service-worker cache v9. Adaptive light/dark behavior remains automatic for the native shell and web UI.

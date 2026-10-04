@@ -952,3 +952,36 @@ At the latest handoff:
 - Quality run `37183208568` passed.
 - Vercel deployment `dpl_8j8Fbyyfna9woyqwe2tbTuSk7PCH` is READY and assigned to production alias `statistics-lover.vercel.app`.
 - Android 1.0.30 / versionCode 31 uses `https://statistics-lover.vercel.app/app-start` as its cold-start URL, while all menu Home navigation still uses `/`.
+
+
+### Android 1.0.30 final launch/splash checkpoint
+
+- Verified signed Android release: **Statistics Lover 1.0.30 / versionCode 31**.
+- Dedicated Android source commit: `72adfccf12f2e288e7c6b2f005e7ca12255f173b`.
+- Dedicated Android workflow run: **37183354378 — SUCCESS**.
+- Signed release artifact ID: **11296375705**.
+- Signature verification: **PASSED** (APK Signature Scheme v2).
+- Self-update publication: **PASSED**.
+- APK size: **669698 bytes**.
+- APK SHA-256: **`d4f21fa5e1c14b337c0880948e0a1adafe4ad83421b183fa4afe95625dd7ca5b`**.
+- Auto-update channel is now **1.0.30 / versionCode 31**.
+- Launch behavior:
+  - APK cold-start URL is `https://statistics-lover.vercel.app/app-start`;
+  - anonymous -> Home;
+  - authenticated -> Dashboard;
+  - suspended -> Account suspended;
+  - menu/brand Home links continue to `/` and always show Home, including for authenticated users.
+- Splash behavior:
+  - old `SplashActivity` + 350 ms handoff removed;
+  - `NativeMainActivity` is the launcher and uses Android SplashScreen directly;
+  - WebView starts immediately behind a native overlay;
+  - existing Statistics Lover logo asset is shown clipped as a circular splash logo;
+  - native overlay remains until the final web route calls `StatisticsLoverNative.appReady()`;
+  - WebView fades in over 180 ms while splash fades out over 220 ms;
+  - 10-second fallback prevents a permanent splash if an old web bundle is ever served.
+- Web startup-routing commit: `f874aad193f934a098c94ffb688bb66692504d72`; Quality run **37183208568 — SUCCESS**.
+- Production Vercel alias now serves deployment `dpl_8j8Fbyyfna9woyqwe2tbTuSk7PCH`; both `/` and `/app-start` serve bundle `index-DrSE62Uv.js`.
+- Monorepo Android mirror commit: `8aba1d238cef2b3e7b0b7cf209d1f7d5c52edf28`.
+- Monorepo Quality run **37183540738 — SUCCESS**.
+- Monorepo Android verification run **37183540801 — SUCCESS**.
+- Existing website-style UI, stable session origin, auto-update lineage, single-transition recording startup, compact landscape fullscreen, inline-player exit fix and Drive seek-control stabilization remain preserved.

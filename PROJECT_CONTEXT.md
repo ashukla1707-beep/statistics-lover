@@ -1272,3 +1272,31 @@ At the latest handoff:
 - No schema or Android change was required in Stage 4.
 - Android **1.0.41 / versionCode 42** remains authoritative.
 - Next checkpoint: **Stage 5 — Admin and Owner operations, enrollment/staff/commerce/settings/audit and destructive-operation boundaries**.
+
+
+## STAGE 5 COMPLETE — Admin & Owner operations (2026-10-04)
+
+- Stage 5 operational acceptance: **PASS**.
+- Owner workflow was exercised live with rollback-only fixtures.
+- Verified Owner operations:
+  - platform-wide profile visibility;
+  - audit log and application-settings access;
+  - enrollment CRUD;
+  - teacher-role/assignment administration;
+  - commerce order visibility;
+  - manual payment finalization;
+  - receipt creation;
+  - paid-order enrollment/access provisioning;
+  - protected settings update;
+  - destructive core-content deletion.
+- Admin privilege boundaries remain verified by Stage 1 live rollback tests:
+  - Admin can grant Teacher/Content Manager;
+  - Admin cannot grant Admin/Owner;
+  - Owner remains the privileged role authority.
+- Live Admin/Owner RLS policies were re-reviewed and match the frontend route model for enrollments, commerce, audit, settings, staff and destructive operations.
+- The combined test that would temporarily rewrite the real Owner identity into Admin was not forced after the safety layer blocked that pattern; no bypass was attempted.
+- Audit record: `docs/STAGE5_ADMIN_OWNER_AUDIT.md`.
+- Repeatable Owner test: `database/tests/admin_owner_operations_acceptance.sql`.
+- No schema or Android change was required in Stage 5.
+- Android **1.0.41 / versionCode 42** remains authoritative.
+- Next checkpoint: **Stage 6 — production hardening, runtime health, performance/security advisors, deployment consistency and final audit closure**.

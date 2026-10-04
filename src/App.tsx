@@ -10,8 +10,10 @@ import {
   RequireAuth,
   ResetPasswordPage,
   SuspendedPage,
+  useAuth,
 } from './features/auth'
 import { HomePage } from './features/home/HomePage'
+import { isStatisticsLoverNativeShell } from './lib/runtime'
 
 
 const AcademicManagementPage=lazy(()=>import('./features/admin/AcademicManagementPage').then((module)=>({default:module.AcademicManagementPage})))
@@ -42,6 +44,31 @@ const StorePage=lazy(()=>import('./features/commerce/StorePage').then((module)=>
 const MyOrdersPage=lazy(()=>import('./features/commerce/MyOrdersPage').then((module)=>({default:module.MyOrdersPage})))
 const NotificationsPage=lazy(()=>import('./features/communications/NotificationsPage').then((module)=>({default:module.NotificationsPage})))
 const TeacherWorkspacePage=lazy(()=>import('./features/teacher/TeacherWorkspacePage').then((module)=>({default:module.TeacherWorkspacePage})))
+
+function StartupLandingPage() {
+  const { status } = useAuth()
+
+  // Browser users always see the public homepage at "/".
+  if (!isStatisticsLoverNativeShell()) {
+    return <HomePage />
+  }
+
+  // In the APK, wait for Supabase to hydrate the persisted session before
+  // choosing the landing page. This avoids flashing Home before Dashboard.
+  if (status === 'booting') {
+    return <div className="route-loading" role="status" aria-live="polite">Opening Statistics Lover…</div>
+  }
+
+  if (status === 'authenticated') {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (status === 'suspended') {
+    return <Navigate to="/account-suspended" replace />
+  }
+
+  return <HomePage />
+}
 
 function SiteLayout() {
   return (
@@ -88,7 +115,7 @@ export default function App() {
       />
 
       <Route element={<SiteLayout />}>
-        <Route index element={<HomePage />} />
+        <Route index element={<StartupLandingPage />} />
         <Route path="store" element={<StorePage />} />
         <Route
           path="notifications"

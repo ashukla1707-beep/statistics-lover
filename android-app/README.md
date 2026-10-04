@@ -1,18 +1,18 @@
 # Statistics Lover Android — monorepo mirror
 
-The Android source in this directory is the verified **Statistics Lover 1.0.21** release source mirrored from the dedicated Android repository.
+The Android source in this directory is the verified **Statistics Lover 1.0.31** release source mirrored from the dedicated Android repository.
 
 Canonical release record:
 
 - Dedicated repo: `ashukla1707-beep/statistics-lover-android`
 - Verified source commit: `7fff278316d50bf6ea3970f6d90ea52316acf8fc`
-- Version: **1.0.30**
-- versionCode: **31**
+- Version: **1.0.31**
+- versionCode: **32**
 - Package: `com.statisticslover.app`
-- Signed release workflow: `37183354378` — SUCCESS
-- Release artifact: `11296375705`
-- APK size: **669698 bytes**
-- APK SHA-256: `d4f21fa5e1c14b337c0880948e0a1adafe4ad83421b183fa4afe95625dd7ca5b`
+- Signed release workflow: `37184367615` — SUCCESS
+- Release artifact: `11296217436`
+- APK size: **672466 bytes**
+- APK SHA-256: `4dc85506f5576cd6351dc1ffb9d76c78f5711a4368932c60677b091697459f48`
 
 This release was rebuilt from the pinned 1.0.15 working runtime behavior and intentionally excludes the later 1.0.16–1.0.18 player-layout/scaling experiments.
 
@@ -22,7 +22,7 @@ The app checks the permanent signed update channel in the dedicated Android repo
 
 `https://raw.githubusercontent.com/ashukla1707-beep/statistics-lover-android/main/downloads/version.json`
 
-Current channel: **1.0.30 / versionCode 31**.
+Current channel: **1.0.31 / versionCode 32**.
 
 Do not move or duplicate that publication channel casually. Existing installed release APKs depend on the permanent signing certificate and the dedicated repo's published APK.
 
@@ -98,3 +98,10 @@ Version 1.0.30 removes the old two-Activity splash handoff and launches directly
 - Signed in -> Dashboard.
 - The Home menu link always opens Home because cold-start routing uses the dedicated `/app-start` route instead of hijacking `/`.
 - The splash fades out while the WebView fades in for a smoother transition.
+
+
+## Unified splash + system theme
+
+Version 1.0.31 removes the duplicate-logo startup effect. Android's system splash now shows only the current light/dark theme background, while the Statistics Lover logo appears once in the native loading overlay. The overlay uses the restored validated 420x420 original logo with FIT_CENTER and circular clipping.
+
+The native shell follows the device light/dark setting, including splash, WebView background and system bars. The website follows `prefers-color-scheme` on phone, tablet and desktop browsers.

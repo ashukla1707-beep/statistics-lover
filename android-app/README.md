@@ -6,13 +6,13 @@ Canonical release record:
 
 - Dedicated repo: `ashukla1707-beep/statistics-lover-android`
 - Verified source commit: `7fff278316d50bf6ea3970f6d90ea52316acf8fc`
-- Version: **1.0.26**
-- versionCode: **27**
+- Version: **1.0.27**
+- versionCode: **28**
 - Package: `com.statisticslover.app`
-- Signed release workflow: `37180060760` — SUCCESS
-- Release artifact: `11294094436`
-- APK size: **645119 bytes**
-- APK SHA-256: `b9fa02ead68b6db5f044ee330a99d9df64f6fef25cabc961c74bf756707bde42`
+- Signed release workflow: `37180641112` — SUCCESS
+- Release artifact: `11294579346`
+- APK size: **655138 bytes**
+- APK SHA-256: `e98b55697aed956ab6e35af38008e939eb19c6583e21ef5dfd141b7042ade991`
 
 This release was rebuilt from the pinned 1.0.15 working runtime behavior and intentionally excludes the later 1.0.16–1.0.18 player-layout/scaling experiments.
 
@@ -22,7 +22,7 @@ The app checks the permanent signed update channel in the dedicated Android repo
 
 `https://raw.githubusercontent.com/ashukla1707-beep/statistics-lover-android/main/downloads/version.json`
 
-Current channel: **1.0.26 / versionCode 27**.
+Current channel: **1.0.27 / versionCode 28**.
 
 Do not move or duplicate that publication channel casually. Existing installed release APKs depend on the permanent signing certificate and the dedicated repo's published APK.
 
@@ -66,3 +66,12 @@ Version 1.0.26 renders the same responsive website interface inside the APK.
 - Only recording pages temporarily switch to the desktop + `StatisticsLoverAndroid` user-agent required for Google Drive and the native fullscreen bridge.
 - Leaving recording restores normal website mode.
 - Stable origin remains `https://statistics-lover.vercel.app/` for session continuity.
+
+
+## Single-transition recording startup
+
+Version 1.0.27 restores the proven Android A15 behavior: the Google Drive-capable desktop UA is configured from app startup, so tapping **Watch recording** does not switch UA and does not reload the lecture route.
+
+To keep the requested website-style APK UI, a document-start script hides the `StatisticsLoverAndroid` marker from normal website routes and exposes it only on lecture routes. The lecture page therefore retains native fullscreen integration without forcing the rest of the APK into a separate Android UI.
+
+Expected transition: course page -> lecture page/player -> Google Drive provider load. There is no intermediate Statistics Lover route reload.

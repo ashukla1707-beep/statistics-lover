@@ -31,8 +31,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -58,8 +61,6 @@ public class NativeMainActivity extends AppCompatActivity {
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ValueCallback<Uri[]> filePathCallback;
     private AppUpdateManager updateManager;
-    private String websiteUserAgent;
-    private String recordingUserAgent;
     private boolean appFullscreen;
 
     @Override
@@ -146,11 +147,11 @@ public class NativeMainActivity extends AppCompatActivity {
         settings.setAllowContentAccess(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setSupportMultipleWindows(false);
-        websiteUserAgent = settings.getUserAgentString();
-        recordingUserAgent = DESKTOP_USER_AGENT
-                + " StatisticsLoverAndroid/"
-                + BuildConfig.VERSION_NAME;
-        settings.setUserAgentString(websiteUserAgent);
+        settings.setUserAgentString(
+                DESKTOP_USER_AGENT
+                        + " StatisticsLoverAndroid/"
+                        + BuildConfig.VERSION_NAME
+        );
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
@@ -160,6 +161,8 @@ public class NativeMainActivity extends AppCompatActivity {
                 new StatisticsLoverNativeBridge(),
                 "StatisticsLoverNative"
         );
+
+        installWebUiUserAgentMask();
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -173,6 +176,9 @@ public class NativeMainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 syncRecordingMode(url, false);
+                if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                    installWebUiUserAgentMask();
+                }
                 progressBar.setVisibility(View.VISIBLE);
                 progressBar.setProgress(10);
             }
@@ -253,21 +259,6 @@ public class NativeMainActivity extends AppCompatActivity {
         String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
 
         if (("http".equals(scheme) || "https".equals(scheme)) && APP_HOSTS.contains(host)) {
-            boolean recording = isRecordingUrl(uri.toString());
-            String desiredUserAgent = recording ? recordingUserAgent : websiteUserAgent;
-            String currentUserAgent = webView == null
-                    ? ""
-                    : webView.getSettings().getUserAgentString();
-
-            if (webView != null
-                    && desiredUserAgent != null
-                    && !desiredUserAgent.equals(currentUserAgent)) {
-                webView.getSettings().setUserAgentString(desiredUserAgent);
-                syncRecordingMode(uri.toString(), false);
-                webView.loadUrl(uri.toString());
-                return true;
-            }
-
             syncRecordingMode(uri.toString(), false);
             return false;
         }
@@ -303,21 +294,6 @@ public class NativeMainActivity extends AppCompatActivity {
     private void syncRecordingMode(String url, boolean allowReload) {
         boolean recording = isRecordingUrl(url);
 
-        if (webView != null) {
-            String desiredUserAgent = recording ? recordingUserAgent : websiteUserAgent;
-            String currentUserAgent = webView.getSettings().getUserAgentString();
-
-            if (desiredUserAgent != null
-                    && !desiredUserAgent.equals(currentUserAgent)) {
-                webView.getSettings().setUserAgentString(desiredUserAgent);
-
-                if (allowReload && url != null && !url.isBlank()) {
-                    webView.loadUrl(url);
-                    return;
-                }
-            }
-        }
-
         if (recording) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
@@ -327,6 +303,38 @@ public class NativeMainActivity extends AppCompatActivity {
             if (customView == null) {
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
+        }
+
+        // Proven A15 behavior: the Drive-capable desktop UA is present from app
+        // startup, so entering a lecture route never changes UA or reloads the page.
+        // The JS-visible Android marker is masked on normal website routes by the
+        // document-start script and exposed only on lecture routes.
+    }
+
+    private void installWebUiUserAgentMask() {
+        if (webView == null) return;
+
+        final String script =
+                "(function(){"
+                + "if(window.__SL_UA_MASK_INSTALLED__)return;"
+                + "window.__SL_UA_MASK_INSTALLED__=true;"
+                + "var raw=String(navigator.userAgent||'');"
+                + "var clean=raw.replace(/\\s*StatisticsLoverAndroid\\/[^\\s]+/ig,'');"
+                + "var lecture=/^\\/learn\\/[^/]+\\/lecture\\/[^/?#]+(?:[/?#].*)?$/;"
+                + "var value=function(){return lecture.test(location.pathname+location.search+location.hash)?raw:clean;};"
+                + "try{Object.defineProperty(navigator,'userAgent',{configurable:true,get:value});}"
+                + "catch(_){try{Object.defineProperty(Navigator.prototype,'userAgent',{configurable:true,get:value});}catch(__){}}"
+                + "})();";
+
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            WebViewCompat.addDocumentStartJavaScript(
+                    webView,
+                    script,
+                    Collections.singleton("*")
+            );
+        } else {
+            // Best-effort fallback for unusually old WebView providers.
+            webView.evaluateJavascript(script, null);
         }
     }
 

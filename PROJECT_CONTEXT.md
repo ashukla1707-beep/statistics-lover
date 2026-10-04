@@ -879,3 +879,25 @@ At the latest handoff:
 - Stable app origin remains `https://statistics-lover.vercel.app/` so existing WebView/Supabase sessions remain on the same origin.
 - Fullscreen retains the compact landscape behavior from the accepted fullscreen line.
 - 1.0.25 is superseded.
+
+
+### Android recording startup correction — 1.0.27 / versionCode 28
+
+- User supplied the repeated-loading recording again and pointed out this had been solved earlier.
+- Historical checkpoint A15 was recovered from the dedicated Android history: commit `293b1a2e88f4667173f04d4fa8e48d5e4e05578b` identified the exact cause as mobile-UA → desktop-UA switching and a route reload after **Watch recording**.
+- 1.0.26 had unintentionally reintroduced that same route-scoped UA switching.
+- Dedicated Android fix commit: `84384549591f3e98c8c4342a98e5ae1900d03cc6`.
+- Verified signed release: **Statistics Lover 1.0.27 / versionCode 28**.
+- Dedicated workflow run: **37180641112 — SUCCESS**.
+- Signed release artifact ID: **11294579346**.
+- Signature verification: **PASSED**.
+- Self-update publication: **PASSED**.
+- APK size: **655138 bytes**.
+- APK SHA-256: **`e98b55697aed956ab6e35af38008e939eb19c6583e21ef5dfd141b7042ade991`**.
+- Auto-update channel now advertises **1.0.27 / versionCode 28**.
+- Recording startup architecture:
+  - WebView/network UA is Drive-capable desktop Chrome + `StatisticsLoverAndroid/<version>` from startup;
+  - route navigation never changes UA or reloads the lecture URL;
+  - AndroidX WebKit document-start script hides the marker from normal website routes, preserving the website UI;
+  - the marker becomes JS-visible only on lecture routes so the existing native fullscreen bridge still works.
+- This restores the A15 single-navigation behavior while preserving the newer web-UI requirement, compact landscape fullscreen, stable session origin and auto-update chain.

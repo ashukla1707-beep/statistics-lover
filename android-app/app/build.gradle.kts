@@ -12,8 +12,8 @@ android {
         applicationId = "com.statisticslover.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 27
-        versionName = "1.0.26"
+        versionCode = 28
+        versionName = "1.0.27"
     }
 
     buildFeatures {
@@ -62,4 +62,5 @@ dependencies {
     implementation("androidx.activity:activity:1.10.1")
     implementation("androidx.core:core:1.15.0")
     implementation("androidx.core:core-splashscreen:1.2.0")
+    implementation("androidx.webkit:webkit:1.14.0")
 }

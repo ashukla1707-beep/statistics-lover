@@ -101,6 +101,18 @@ async function razorpayFetch(
       (payload as { error?: { description?: unknown } })?.error?.description ??
         `Razorpay request failed with status ${response.status}`,
     );
+    // Razorpay's Orders API uses "Authentication failed" for a mismatched,
+    // revoked or wrong-mode Key ID / Key Secret pair. Do not mistake this
+    // upstream failure for a user's Statistics Lover login problem.
+    if (response.status === 401 || /^authentication failed\\.?$/i.test(description)) {
+      console.warn("razorpay-checkout: Razorpay API credentials rejected", {
+        status: response.status,
+        endpoint: path === "/orders" ? "orders" : "payment",
+      });
+      throw new Error(
+        "Razorpay rejected the configured API keys. Open Supabase Edge Function Secrets and replace RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET with the latest matching Razorpay Test Mode pair."
+      );
+    }
     throw new Error(description);
   }
   return payload as Record<string, unknown>;

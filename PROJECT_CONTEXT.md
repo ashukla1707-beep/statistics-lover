@@ -1590,3 +1590,16 @@ At the latest verified handoff on **2026-10-04**:
 - v7 separates clients: `tokenVerifier.auth.getUser(accessToken)` with no global Authorization header, and `callerClient` carrying that **verified JWT** for own `user_roles`/`profiles` RLS lookups.
 - Only minimal diagnostic code logs on a failed token verification (no token, IDs or credentials), with actionable session text. No change to public gateway flag, Owner restriction, or service-role table grants.
 - Recheck production deploy and GitHub quality, then retry actual ₹1 Test Mode checkout. Do not claim payment success without verified captured event, receipt, enrollment, and webhook idempotency.
+
+
+## RAZORPAY CHECKOUT — TEST MODE CREDENTIALS BLOCKER (2026-10-06)
+
+- Owner retried the private ₹1 test checkout on Edge v7 at ~17:59 UTC. The browser reported **"Authentication failed"**.
+- Live logs confirm the **Statistics Lover authentication path is healthy**: Owner sandbox order RPC 200; Supabase Auth `/auth/v1/user` 200; app setting 200; owned order read 200; private sandbox marker 200; Owner role read via caller JWT 200.
+- The next operation is `POST https://api.razorpay.com/v1/orders` with `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET`. It returned Razorpay's upstream **"Authentication failed"** error, surfaced to the browser by the checkout function as HTTP 400. Razorpay documents that error for mismatched, expired, revoked or wrong-mode API credentials.
+- Existing private order remains **pending**, unbound to a Razorpay provider order (no `provider_order_reference`), and has no recorded payment. No real payment occurred.
+- Added explicit Razorpay upstream-auth error mapping (without exposing secrets, Key ID or token) so next attempt indicates **API key configuration**, not Statistics Lover login.
+- The owner previously regenerated a Razorpay Test Key pair. **Manual owner step required:** in Supabase Edge Function Secrets, overwrite **both** `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` with the latest matched **Test Mode** pair exactly as saved/downloaded (trim leading/trailing whitespace). Do not regenerate a third time unless the saved Secret is lost. Do not share keys in chat.
+- Other secret `RAZORPAY_WEBHOOK_SECRET` and existing test webhook configuration should remain unchanged.
+- This ChatGPT connector cannot read or update Supabase Edge Function secrets; never attempt to infer or export them. Once the owner confirms both values saved, retry `/admin/razorpay-sandbox` and verify payment, receipt, enrollment, webhook idempotency.
+- Keep `commerce_razorpay_enabled=false` and public offers at zero; Android 1.0.41 remains unchanged.

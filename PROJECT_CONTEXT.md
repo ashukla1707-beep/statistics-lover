@@ -1613,3 +1613,21 @@ At the latest verified handoff on **2026-10-04**:
 - Public gateway flag remains `commerce_razorpay_enabled=false`; one private pending INR 1 test order was present with **no gateway provider reference** (not paid or captured). Public offers remain zero.
 - No additional application code change is indicated. The next dependency is an owner action in Razorpay **Test Mode**: regenerate a **single matching Key ID + Key Secret pair**, immediately save/download both, and replace BOTH Supabase Edge Function secrets (raw values with no quote or whitespace). Regeneration revokes prior pair; never mix old and new credentials. Leave `RAZORPAY_WEBHOOK_SECRET` unchanged, and don't paste secrets into chat.
 - Only after replacing the pair should the Owner retry `/admin/razorpay-sandbox`. Verify Razorpay creates an order, then sandbox payment capture, signed verification/webhook, receipt, enrollment, idempotency; keep public gateway OFF until full validation and merchant approval.
+
+
+## STAGE 7E COMPLETE — RAZORPAY ₹1 END-TO-END SANDBOX PASS (2026-10-06)
+
+- Owner completed a real **Razorpay Test Mode** ₹1 payment through Statistics Lover's private Owner-only `/admin/razorpay-sandbox` flow.
+- Verified directly in live Supabase:
+  - paid order `754107b7-5c9c-46b5-88a2-fc858c75f7bc` with Razorpay order reference `order_Tkif3DIYBkbr6k`;
+  - payment reference `pay_TkihnbgMzwosmA`, verified captured event `payment:pay_TkihnbgMzwosmA:captured`;
+  - paid at **2026-10-06 18:23:25 UTC**, correct total **INR 1.00 / 100 paise**;
+  - exactly **one** verified payment row, **one** receipt, **one active sandbox enrollment**;
+  - captured payment row's `payload.source=webhook`, `status=captured`, `captured=true`; the Razorpay webhook handler validates its `x-razorpay-signature` HMAC before recording;
+  - rollback-only replay of the exact verified provider event **PASS**, unchanged payment/receipt/enrollment counts (1/1/1).
+- External Razorpay Test API key pair is now functional. Supabase checkout Edge Function was **v14 ACTIVE** with JWT verification on.
+- Public `commerce_razorpay_enabled=false` **unchanged**, public store offers count **0**. No real-money purchases enabled.
+- A **second** sandbox order `8d8f2f77-2261-4cea-9082-4ccfc68eb7c4` remained **pending** after the successful payment and had no captured payment/receipt/enrollment. **Do not submit another payment** for it; leave for orderly sandbox cleanup/expiry.
+- Full Stage 7E report: `docs/STAGE7E_RAZORPAY_SANDBOX_PAYMENT_VERIFIED.md`.
+- Remaining business blocker: Razorpay **KYC/live account approval**, followed by separate controlled Live Mode key/webhook configuration, real-mode verification, launch authorization and production readiness review. **Do not turn on the public Razorpay flag automatically.**
+- Android **1.0.41 / versionCode 42** remains untouched.

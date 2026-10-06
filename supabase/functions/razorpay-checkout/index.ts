@@ -124,7 +124,7 @@ Deno.serve(async (req: Request) => {
     const anonKey = requiredEnv("SUPABASE_ANON_KEY");
     const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
     const authorization = req.headers.get("authorization")?.trim() ?? "";
-    const bearerMatch = /^Bearer\\s+(\\S+)$/i.exec(authorization);
+    const bearerMatch = /^Bearer\s+(\S+)$/i.exec(authorization);
     if (!bearerMatch) return json(req, { error: "Authentication required" }, 401);
 
     // Edge Functions are stateless: they have no stored browser session.

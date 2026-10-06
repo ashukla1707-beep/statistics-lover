@@ -38,7 +38,7 @@ export function Header() {
     <header className="site-header">
       <div className="container header-inner">
         <Link className="brand" to="/" onClick={closeMenu} aria-label="Statistics Lover home">
-          <img className="brand-logo" src={siteConfig.logoPath} alt="Statistics Lover logo" />
+          <img className="brand-logo" src={`${siteConfig.logoPath}?v=20261007`} alt="Statistics Lover logo" onError={(event)=>{const img=event.currentTarget;if(!img.src.includes("statistics-lover-logo.jpg"))img.src="/brand/statistics-lover-logo.jpg?v=20261007"}} />
           <span className="brand-copy">
             <strong>{siteConfig.name}</strong>
             <small>{siteConfig.tagline}</small>

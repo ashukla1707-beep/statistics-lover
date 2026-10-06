@@ -133,6 +133,10 @@ Deno.serve(async (req: Request) => {
     // even when the request's Authorization header is valid.
     const accessToken = bearerMatch[1];
     const userClient = createClient(supabaseUrl, anonKey, {
+      // Scope all caller-owned queries to the already verified JWT. Sensitive
+      // tables intentionally withhold SELECT from service_role, so the Owner
+      // role and self-profile must be read under normal authenticated RLS.
+      global: { headers: { authorization } },
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: userData, error: userError } =
@@ -182,7 +186,7 @@ Deno.serve(async (req: Request) => {
             .eq("order_id", order.id)
             .eq("owner_id", user.id)
             .maybeSingle(),
-          admin.from("user_roles")
+          userClient.from("user_roles")
             .select("role")
             .eq("user_id", user.id)
             .eq("role", "owner")
@@ -232,7 +236,7 @@ Deno.serve(async (req: Request) => {
         if (bindError) throw bindError;
       }
 
-      const { data: profile, error: profileError } = await admin.from("profiles")
+      const { data: profile, error: profileError } = await userClient.from("profiles")
         .select("full_name,email,phone")
         .eq("id", user.id)
         .maybeSingle();

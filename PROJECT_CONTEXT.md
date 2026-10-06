@@ -1556,3 +1556,12 @@ At the latest verified handoff on **2026-10-04**:
 - Fix: parse/require a Bearer token from the request and call `supabase.auth.getUser(accessToken)` explicitly. This validates the session with Supabase Auth without weakening Owner/marker/price checks or disabling JWT enforcement.
 - Global `commerce_razorpay_enabled=false` remains unchanged. The original pending test order is deliberately retained for retry.
 - Must validate the corrected deployed Edge Function and retry in the Owner browser before claiming payment/receipt/enrollment success.
+
+
+## RAZORPAY OWNER CHECKOUT — 403 PERMISSION FIX (2026-10-06)
+
+- After Edge Function v5 corrected JWT validation, owner retested private ₹1 checkout and received **Payment request failed**.
+- Live Supabase gateway logs: authenticated `/auth/v1/user` 200; `app_settings` 200; owned `commerce_orders` 200; `commerce_sandbox_orders` 200; but `GET user_roles?role=owner` returned **403**, leading to checkout 400. No Razorpay Order was created, no payment captured.
+- Root cause: hardening intentionally revoked `service_role` direct SELECT on `user_roles` and `profiles`. Original checkout called `admin.from("user_roles")` and later `admin.from("profiles")`. This is an authorization integration defect, not a failure of the signed-in Owner.
+- Narrow fix: build `userClient` with the bearer JWT verified by `auth.getUser(accessToken)`; read only that user's own `user_roles` and `profiles` through their authenticated RLS. Keep service role for the server-only sandbox marker and authoritative commerce order. No table grants/RLS policies weakened, no change to global `commerce_razorpay_enabled=false`.
+- Await one real sandbox checkout retry; verify provider order binding -> captured test payment -> receipt -> enrollment, then webhook idempotency before declaring full success.

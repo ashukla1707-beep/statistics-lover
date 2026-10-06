@@ -1603,3 +1603,13 @@ At the latest verified handoff on **2026-10-04**:
 - Other secret `RAZORPAY_WEBHOOK_SECRET` and existing test webhook configuration should remain unchanged.
 - This ChatGPT connector cannot read or update Supabase Edge Function secrets; never attempt to infer or export them. Once the owner confirms both values saved, retry `/admin/razorpay-sandbox` and verify payment, receipt, enrollment, webhook idempotency.
 - Keep `commerce_razorpay_enabled=false` and public offers at zero; Android 1.0.41 remains unchanged.
+
+
+## RAZORPAY TEST CREDENTIALS RECHECK — 2026-10-06 18:12 UTC
+
+- After the owner reported updating Supabase's `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`, the owner retried the private ₹1 Owner sandbox checkout.
+- Live Supabase function logs at **18:11:08 UTC** and **18:12:26 UTC** explicitly recorded `razorpay-checkout: Razorpay API credentials rejected {status:401, endpoint:'orders'}`. Thus failure is **upstream Razorpay Orders API HTTP 401**, not login, RLS, or missing webhook.
+- The currently active Razorpay checkout Edge Function was **version 12** when checked, `ACTIVE`, with JWT verification enabled. Its Orders API request builds HTTP Basic authorization from the configured `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`.
+- Public gateway flag remains `commerce_razorpay_enabled=false`; one private pending INR 1 test order was present with **no gateway provider reference** (not paid or captured). Public offers remain zero.
+- No additional application code change is indicated. The next dependency is an owner action in Razorpay **Test Mode**: regenerate a **single matching Key ID + Key Secret pair**, immediately save/download both, and replace BOTH Supabase Edge Function secrets (raw values with no quote or whitespace). Regeneration revokes prior pair; never mix old and new credentials. Leave `RAZORPAY_WEBHOOK_SECRET` unchanged, and don't paste secrets into chat.
+- Only after replacing the pair should the Owner retry `/admin/razorpay-sandbox`. Verify Razorpay creates an order, then sandbox payment capture, signed verification/webhook, receipt, enrollment, idempotency; keep public gateway OFF until full validation and merchant approval.

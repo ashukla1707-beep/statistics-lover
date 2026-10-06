@@ -1631,3 +1631,13 @@ At the latest verified handoff on **2026-10-04**:
 - Full Stage 7E report: `docs/STAGE7E_RAZORPAY_SANDBOX_PAYMENT_VERIFIED.md`.
 - Remaining business blocker: Razorpay **KYC/live account approval**, followed by separate controlled Live Mode key/webhook configuration, real-mode verification, launch authorization and production readiness review. **Do not turn on the public Razorpay flag automatically.**
 - Android **1.0.41 / versionCode 42** remains untouched.
+
+
+## FUTURE BACKEND STORAGE EVALUATION — 2026-10-07
+
+- Owner raised concern about Supabase free-tier **database storage limits** and requested that alternative backends be documented for future consideration.
+- **No migration is authorized or planned now. Keep Supabase as the active authentication, PostgreSQL database, storage, RPC/RLS, and Edge Functions backend.** Do not change current production configuration, deployments, or application code based on this note.
+- Before revisiting, measure actual Supabase database size, table/index growth, file-storage usage, and expected growth; distinguish database storage from object storage and egress. Optimize and archive data where safe before proposing migration.
+- Potential alternatives to evaluate: **Neon PostgreSQL** (closer SQL compatibility, but free database allowance may not materially exceed Supabase and auth/storage/RLS/functions need replacement); **Cloudflare D1 + Workers** (potentially more generous database capacity but SQLite conversion and major rewrite of PostgreSQL/RPC/RLS/auth workflows); **Appwrite** (integrated services but substantial schema and authorization migration). Compare current published pricing/limits when decision is revisited.
+- Preserve Google Drive as the video provider unless separately authorized. Any migration requires a full impact assessment covering user accounts, RLS/permissions, course/assessment records, private assignment attachments, payment webhooks, Razorpay checkout/receipts/enrollment, and rollback/testing before approval.
+- This is a **future research option only**, not a decision to switch backend or frontend hosting.

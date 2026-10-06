@@ -120,6 +120,7 @@ export interface StudentTopicAnalytics {
   moduleId:string
   moduleTitle:string
   subjectTitle:string
+  source:'module'|'test_section'
   questions:number
   answered:number
   correct:number
@@ -136,7 +137,7 @@ export interface StudentAssessmentInsights {
   latestTestRank:StudentTestRanking|null
 }
 type RawStudentInsights={
-  topics?:Array<{module_id:string;module_title:string;subject_title:string;questions:number;answered:number;correct:number;accuracy_percentage:number}>
+  topics?:Array<{module_id:string;module_title:string;subject_title:string;source:'module'|'test_section';questions:number;answered:number;correct:number;accuracy_percentage:number}>
   latest_test_rank?:{test_title:string;rank:number;participants:number;best_percentage:number}|null
 }
 
@@ -147,6 +148,7 @@ export async function loadMyAssessmentInsights(batchId:string):Promise<StudentAs
   return {
     topics:(raw.topics??[]).map(t=>({
       moduleId:t.module_id,moduleTitle:t.module_title,subjectTitle:t.subject_title,
+      source:t.source==='module'?'module':'test_section',
       questions:numeric(t.questions),answered:numeric(t.answered),correct:numeric(t.correct),
       accuracyPercentage:numeric(t.accuracy_percentage),
     })),

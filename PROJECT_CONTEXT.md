@@ -1581,3 +1581,12 @@ At the latest verified handoff on **2026-10-04**:
 - The global Razorpay setting remains `commerce_razorpay_enabled=false`. Public offers count remains zero.
 - Next step is **a single Owner browser retry** of `Start ₹1 test checkout` using official Razorpay Test Mode card; inspect result and verify order -> payment -> receipt -> enrollment -> webhook replay/idempotency. Do not claim this end-to-end test has passed until it actually does.
 - Android 1.0.41/versionCode 42 unchanged.
+
+
+## RAZORPAY CHECKOUT v7 — SEPARATE TOKEN VERIFICATION FROM OWNER RLS (2026-10-06)
+
+- Owner screenshot at ~17:51 UTC showed `Authentication required` after v6. The private order RPC returned HTTP 200 and authenticated JWT (ES256, Owner user, unexpired token) was present in the Edge request; checkout v6 returned 401 without an observable `auth/v1/user` request.
+- v5 successfully verified the Owner via `auth.getUser(accessToken)` but failed at a separate direct service-role `user_roles` SELECT (403); v6 added the caller Authorization header directly to that same GoTrue client, unintentionally regressing token verification.
+- v7 separates clients: `tokenVerifier.auth.getUser(accessToken)` with no global Authorization header, and `callerClient` carrying that **verified JWT** for own `user_roles`/`profiles` RLS lookups.
+- Only minimal diagnostic code logs on a failed token verification (no token, IDs or credentials), with actionable session text. No change to public gateway flag, Owner restriction, or service-role table grants.
+- Recheck production deploy and GitHub quality, then retry actual ₹1 Test Mode checkout. Do not claim payment success without verified captured event, receipt, enrollment, and webhook idempotency.

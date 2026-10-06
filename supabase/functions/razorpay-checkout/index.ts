@@ -132,17 +132,28 @@ Deno.serve(async (req: Request) => {
     // getUser() without a JWT looks for a local session and returns 401,
     // even when the request's Authorization header is valid.
     const accessToken = bearerMatch[1];
-    const userClient = createClient(supabaseUrl, anonKey, {
-      // Scope all caller-owned queries to the already verified JWT. Sensitive
-      // tables intentionally withhold SELECT from service_role, so the Owner
-      // role and self-profile must be read under normal authenticated RLS.
-      global: { headers: { authorization } },
+    // Do not attach a global Authorization header to the GoTrue verifier.
+    // GoTrue's getUser(jwt) needs to construct its own token request; mixing
+    // global headers into the auth client previously caused 401 at this stage.
+    const tokenVerifier = createClient(supabaseUrl, anonKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: userData, error: userError } =
-      await userClient.auth.getUser(accessToken);
-    if (userError || !userData.user) return json(req, { error: "Authentication required" }, 401);
+      await tokenVerifier.auth.getUser(accessToken);
+    if (userError || !userData.user) {
+      console.warn("razorpay-checkout: caller token verification failed", {
+        authCode: userError?.code ?? "unknown",
+      });
+      return json(req, { error: "Your login session could not be verified. Sign in again and retry." }, 401);
+    }
     const user = userData.user;
+
+    // Keep role/profile queries separate from token verification. This is
+    // the caller's verified access token, not a service-role privilege grant.
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
     const admin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false },
@@ -186,7 +197,7 @@ Deno.serve(async (req: Request) => {
             .eq("order_id", order.id)
             .eq("owner_id", user.id)
             .maybeSingle(),
-          userClient.from("user_roles")
+          callerClient.from("user_roles")
             .select("role")
             .eq("user_id", user.id)
             .eq("role", "owner")
@@ -236,7 +247,7 @@ Deno.serve(async (req: Request) => {
         if (bindError) throw bindError;
       }
 
-      const { data: profile, error: profileError } = await userClient.from("profiles")
+      const { data: profile, error: profileError } = await callerClient.from("profiles")
         .select("full_name,email,phone")
         .eq("id", user.id)
         .maybeSingle();

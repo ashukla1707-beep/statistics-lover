@@ -1494,3 +1494,13 @@ At the latest verified handoff on **2026-10-04**:
   10. later repeat the same controlled process with Live Mode keys/webhook after Razorpay live activation.
 - Until KYC is complete, make no further Razorpay activation changes.
 - Android remains **1.0.41 / versionCode 42** and requires no payment-specific rebuild at this checkpoint.
+
+
+## RAZORPAY TEST-MODE SETUP RESUMED — 2026-10-06
+
+- The Razorpay merchant account exists and KYC is **under review**, not yet approved.
+- The owner explicitly authorized proceeding with **Test Mode** setup while KYC review is pending.
+- Test-mode configuration and a sandbox transaction may proceed one step at a time; production/live payment activation still requires appropriate merchant approval and successful payment verification.
+- Next user-facing step: sign into Razorpay's web dashboard and switch to **Test Mode**. Guide the owner through Test API key creation, safe Supabase secret configuration, webhook setup, and sandbox payment testing one step at a time after they confirm each screen.
+- Never ask the owner to paste key secrets or webhook secrets into chat. Keep `commerce_razorpay_enabled=false` until Test Mode end-to-end verification has passed.
+- Android 1.0.41/versionCode 42 stays unchanged.

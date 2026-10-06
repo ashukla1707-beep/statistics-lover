@@ -457,3 +457,13 @@ At the time this handoff was written:
 - Android player media/overlay use the real element dimensions inline and in custom fullscreen, eliminating stale `--drive-player-scale` races that sometimes distorted Google Drive controls.
 - Web Quality run `37148555562` passed.
 - Android 1.0.16 also injects the same real-size CSS override natively, so the fix does not depend on immediate production redeployment.
+
+
+### Deferred storage migration plan (2026-10-07)
+
+- Decision: retain Supabase PostgreSQL for questions, answers, detailed solutions, attempts, scores, assignment records, and authentication; Vercel for web hosting.
+- Prefer Google Drive for recorded lectures and shareable course PDFs, notes, and downloadable educational materials, using existing Drive playback.
+- Plan Cloudflare R2 for private student assignment uploads and files requiring secure programmatic access; use private buckets, server-side authorization and short-lived signed URLs. Never expose R2 secrets in frontend code.
+- Current state: Supabase private `assignment-submissions` bucket is configured; SQL check showed 0 stored objects. The current app still uploads attachments to Supabase Storage; R2 is not configured or connected.
+- User does not yet know whether Cloudflare R2 is enabled. **All R2 activation, bucket creation, credential setup, migration, and code changes are deferred until the user asks to resume.** Do not disrupt current assignment upload/download functionality.
+- When resuming: inspect Cloudflare dashboard R2 status; create `statistics-lover-files` private bucket if needed; set up secure backend signing; test access control and uploads/downloads; switch storage only after verification.

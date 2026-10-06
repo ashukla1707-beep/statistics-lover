@@ -1545,3 +1545,14 @@ At the latest verified handoff on **2026-10-04**:
 - Source migration: `database/migrations/0036_razorpay_restricted_owner_sandbox.sql`. Repeatable test: `database/tests/razorpay_owner_sandbox_acceptance.sql`. Runbook: `docs/STAGE7D_RAZORPAY_SANDBOX.md`.
 - Next action: verify canonical Vercel deployment then make exactly one Razorpay Test Mode checkout from Owner account and inspect captured payment, receipt, enrollment and webhook idempotency. **Do not claim real end-to-end success until then.**
 - Keep global gateway disabled and Android 1.0.41 unchanged.
+
+
+## RAZORPAY CHECKOUT AUTH FIX — 2026-10-06
+
+- Owner reached `/admin/razorpay-sandbox` and used **Start ₹1 test checkout**.
+- The Owner-authenticated `create_razorpay_sandbox_order()` RPC succeeded, producing a pending ₹1 Razorpay order with private marker and **no provider_order_reference**, so no gateway payment started.
+- Live Supabase function logs for Razorpay checkout showed HTTP 401 even while the authenticated RPC returned HTTP 200.
+- Cause identified: the stateless Edge Function was calling `supabase.auth.getUser()` without passing the user's bearer access token, so Supabase Auth looked for a non-existent local Edge session.
+- Fix: parse/require a Bearer token from the request and call `supabase.auth.getUser(accessToken)` explicitly. This validates the session with Supabase Auth without weakening Owner/marker/price checks or disabling JWT enforcement.
+- Global `commerce_razorpay_enabled=false` remains unchanged. The original pending test order is deliberately retained for retry.
+- Must validate the corrected deployed Edge Function and retry in the Owner browser before claiming payment/receipt/enrollment success.

@@ -123,14 +123,20 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = requiredEnv("SUPABASE_URL");
     const anonKey = requiredEnv("SUPABASE_ANON_KEY");
     const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const authorization = req.headers.get("authorization");
-    if (!authorization) return json(req, { error: "Authentication required" }, 401);
+    const authorization = req.headers.get("authorization")?.trim() ?? "";
+    const bearerMatch = /^Bearer\\s+(\\S+)$/i.exec(authorization);
+    if (!bearerMatch) return json(req, { error: "Authentication required" }, 401);
 
+    // Edge Functions are stateless: they have no stored browser session.
+    // Explicitly pass the caller's bearer JWT to getUser(jwt). Calling
+    // getUser() without a JWT looks for a local session and returns 401,
+    // even when the request's Authorization header is valid.
+    const accessToken = bearerMatch[1];
     const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { authorization } },
-      auth: { persistSession: false },
+      auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { data: userData, error: userError } = await userClient.auth.getUser();
+    const { data: userData, error: userError } =
+      await userClient.auth.getUser(accessToken);
     if (userError || !userData.user) return json(req, { error: "Authentication required" }, 401);
     const user = userData.user;
 

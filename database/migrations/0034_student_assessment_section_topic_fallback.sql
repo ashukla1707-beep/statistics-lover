@@ -46,7 +46,7 @@ begin
           and a.score is not null
           and private.assessment_result_is_released(a.id)
           and (m.id is not null or nullif(trim(aq.section_title),'') is not null)
-        group by m.id, m.title, sub.id, sub.title, aq.section_title
+        group by 1, 2, 3, 4
       ) g
     ), '[]'::jsonb),
     'latest_test_rank', (

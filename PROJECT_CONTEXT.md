@@ -1565,3 +1565,19 @@ At the latest verified handoff on **2026-10-04**:
 - Root cause: hardening intentionally revoked `service_role` direct SELECT on `user_roles` and `profiles`. Original checkout called `admin.from("user_roles")` and later `admin.from("profiles")`. This is an authorization integration defect, not a failure of the signed-in Owner.
 - Narrow fix: build `userClient` with the bearer JWT verified by `auth.getUser(accessToken)`; read only that user's own `user_roles` and `profiles` through their authenticated RLS. Keep service role for the server-only sandbox marker and authoritative commerce order. No table grants/RLS policies weakened, no change to global `commerce_razorpay_enabled=false`.
 - Await one real sandbox checkout retry; verify provider order binding -> captured test payment -> receipt -> enrollment, then webhook idempotency before declaring full success.
+
+
+## RAZORPAY SANDBOX EDGE v6 — VERIFIED RLS INTEGRATION FIX (2026-10-06)
+
+- Follow-up Owner sandbox failure `Payment request failed` was traced exactly with timestamped Supabase logs: checkout authenticated JWT 200, looked up owner sandbox marker 200, but service-role query to `public.user_roles` returned **403**. `public.profiles` also intentionally withholds service-role SELECT.
+- Fixed `razorpay-checkout`: validated caller bearer JWT is now supplied to `userClient` as its global Authorization header. The Owner role check and caller's own profile are read with this caller-scoped client under existing RLS. Server-only order and marker queries remain under `service_role` as before.
+- **No RLS change or broader table grants** were made.
+- Live Edge Function `razorpay-checkout` **v6 ACTIVE**, JWT validation ON.
+- Rollback-only Owner RLS acceptance test **PASS**: authenticated Owner can read their own `user_roles` and `profiles`, no service-role grants required.
+- GitHub Quality run **37506464229 SUCCESS**, typecheck/lint/build.
+- Vercel deployment `dpl_4uCRrrFYD2Vai4v9ERotYNyP92hP` **READY**, aliased to `statistics-lover.vercel.app`.
+- Canonical `/admin/razorpay-sandbox` GET 200 with CSP present.
+- The private ₹1 sandbox order is still pending and has no gateway provider order reference; no payment has been captured.
+- The global Razorpay setting remains `commerce_razorpay_enabled=false`. Public offers count remains zero.
+- Next step is **a single Owner browser retry** of `Start ₹1 test checkout` using official Razorpay Test Mode card; inspect result and verify order -> payment -> receipt -> enrollment -> webhook replay/idempotency. Do not claim this end-to-end test has passed until it actually does.
+- Android 1.0.41/versionCode 42 unchanged.

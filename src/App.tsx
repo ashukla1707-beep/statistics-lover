@@ -27,6 +27,7 @@ const TestBuilderPage=lazy(()=>import('./features/admin/TestBuilderPage').then((
 const TestSchedulePage=lazy(()=>import('./features/admin/TestSchedulePage').then((module)=>({default:module.TestSchedulePage})))
 const AssessmentAnalyticsPage=lazy(()=>import('./features/admin/AssessmentAnalyticsPage').then((module)=>({default:module.AssessmentAnalyticsPage})))
 const CommerceManagementPage=lazy(()=>import('./features/admin/CommerceManagementPage').then((module)=>({default:module.CommerceManagementPage})))
+const RazorpaySandboxPage=lazy(()=>import('./features/admin/RazorpaySandboxPage').then((module)=>({default:module.RazorpaySandboxPage})))
 const AdminOverviewPage=lazy(()=>import('./features/admin/AdminOverviewPage').then((module)=>({default:module.AdminOverviewPage})))
 const AdminAuditPage=lazy(()=>import('./features/admin/AdminAuditPage').then((module)=>({default:module.AdminAuditPage})))
 const AdminSettingsPage=lazy(()=>import('./features/admin/AdminSettingsPage').then((module)=>({default:module.AdminSettingsPage})))
@@ -397,6 +398,20 @@ export default function App() {
               suspendedFallback={<Navigate to="/account-suspended" replace />}
             >
               <AnnouncementManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="admin/razorpay-sandbox"
+          element={
+            <RequireAuth
+              roles={['owner']}
+              loadingFallback={<div className="auth-state">Checking sandbox access…</div>}
+              anonymousFallback={<Navigate to="/login" replace />}
+              unauthorizedFallback={<Navigate to="/dashboard" replace />}
+              suspendedFallback={<Navigate to="/account-suspended" replace />}
+            >
+              <RazorpaySandboxPage />
             </RequireAuth>
           }
         />

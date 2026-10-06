@@ -1519,3 +1519,16 @@ At the latest verified handoff on **2026-10-04**:
 - At this checkpoint the database has **zero active batch offers**, **one active batch**, **zero pending Razorpay commerce orders**, and the rollout flag `commerce_razorpay_enabled=false`.
 - Next stage: design/create a controlled, reversible sandbox **Statistics Lover store offer** and test the actual checkout order -> Razorpay capture -> verified webhook/payment -> receipt -> enrollment end-to-end. Do not turn on the global rollout flag for actual customers prematurely; avoid exposing a test product on the public store without deliberate controls.
 - KYC remains under review, live-mode activation is not authorized, and Android 1.0.41 remains unchanged.
+
+
+## RAZORPAY RESTRICTED SANDBOX PREPARED — 2026-10-06
+
+- Explicit authorization received to prepare an isolated INR 1 end-to-end checkout test.
+- New hidden course `statistics-lover-razorpay-sandbox` remains **draft**, hidden batch remains **draft**, and offer remains **inactive**.
+- Store RPC `get_public_batch_offers()` still returns no public offers.
+- New `public.commerce_sandbox_orders` server-owned marker table is RLS-enabled; no public/anonymous/authenticated direct access.
+- New `create_razorpay_sandbox_order()` RPC only allows active Owner to create or reuse a pending ₹1 Razorpay test order. Customer-facing order creation is unchanged.
+- Razorpay checkout Edge Function permits a narrowly scoped bypass of the global disabled flag **only** for a server-marked test order belonging to a currently authorized Owner, of amount 100 paise in INR. Other users still receive 503.
+- New Owner-only route: `/admin/razorpay-sandbox`.
+- The actual simulated card payment remains a separate user action; do not claim this end-to-end test passed until receipt/enrollment and webhook idempotency are verified on a real sandbox gateway order.
+- Keep `commerce_razorpay_enabled=false` and Android 1.0.41 unchanged.

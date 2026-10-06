@@ -138,9 +138,9 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false },
     });
 
-    if (!(await requireEnabled(admin))) {
-      return json(req, { error: "Online payments are not enabled yet." }, 503);
-    }
+    // Ordinary checkout remains globally disabled until launch readiness.
+    // Only a server-marked sandbox order owned by the active Owner may bypass it.
+    const globallyEnabled = await requireEnabled(admin);
 
     const keyId = requiredEnv("RAZORPAY_KEY_ID");
     const keySecret = requiredEnv("RAZORPAY_KEY_SECRET");
@@ -166,6 +166,28 @@ Deno.serve(async (req: Request) => {
 
     if (order.provider !== "razorpay") {
       return json(req, { error: "This order is not a Razorpay order." }, 409);
+    }
+
+    if (!globallyEnabled) {
+      const [{ data: sandboxMarker, error: markerError }, { data: ownerRole, error: roleError }] =
+        await Promise.all([
+          admin.from("commerce_sandbox_orders")
+            .select("order_id")
+            .eq("order_id", order.id)
+            .eq("owner_id", user.id)
+            .maybeSingle(),
+          admin.from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "owner")
+            .maybeSingle(),
+        ]);
+      if (markerError) throw markerError;
+      if (roleError) throw roleError;
+      if (!sandboxMarker || !ownerRole ||
+          order.total_minor !== 100 || order.currency !== "INR") {
+        return json(req, { error: "Online payments are not enabled yet." }, 503);
+      }
     }
     if (order.status === "paid") return json(req, { paid: true, orderId: order.id });
     if (order.status !== "pending") {

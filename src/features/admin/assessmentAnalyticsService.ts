@@ -114,3 +114,46 @@ export async function loadMyAssessmentAnalytics(batchId:string):Promise<StudentA
     recentAttempts:(raw.recent_attempts??[]).map((a)=>({attemptId:a.attempt_id,testTitle:a.test_title,score:numeric(a.score),maxScore:numeric(a.max_score),percentage:numeric(a.percentage),submittedAt:a.submitted_at,attemptNumber:numeric(a.attempt_number)})),
   }
 }
+
+/** Private, release-aware insights returned only for the signed-in enrolled student. */
+export interface StudentTopicAnalytics {
+  moduleId:string
+  moduleTitle:string
+  subjectTitle:string
+  questions:number
+  answered:number
+  correct:number
+  accuracyPercentage:number
+}
+export interface StudentTestRanking {
+  testTitle:string
+  rank:number
+  participants:number
+  bestPercentage:number
+}
+export interface StudentAssessmentInsights {
+  topics:StudentTopicAnalytics[]
+  latestTestRank:StudentTestRanking|null
+}
+type RawStudentInsights={
+  topics?:Array<{module_id:string;module_title:string;subject_title:string;questions:number;answered:number;correct:number;accuracy_percentage:number}>
+  latest_test_rank?:{test_title:string;rank:number;participants:number;best_percentage:number}|null
+}
+
+export async function loadMyAssessmentInsights(batchId:string):Promise<StudentAssessmentInsights>{
+  const {data,error}=await requireSupabase().rpc('get_my_assessment_insights',{target_batch:batchId})
+  if(error)throw error
+  const raw=(data??{}) as RawStudentInsights
+  return {
+    topics:(raw.topics??[]).map(t=>({
+      moduleId:t.module_id,moduleTitle:t.module_title,subjectTitle:t.subject_title,
+      questions:numeric(t.questions),answered:numeric(t.answered),correct:numeric(t.correct),
+      accuracyPercentage:numeric(t.accuracy_percentage),
+    })),
+    latestTestRank:raw.latest_test_rank?{
+      testTitle:raw.latest_test_rank.test_title,rank:numeric(raw.latest_test_rank.rank),
+      participants:numeric(raw.latest_test_rank.participants),
+      bestPercentage:numeric(raw.latest_test_rank.best_percentage),
+    }:null,
+  }
+}

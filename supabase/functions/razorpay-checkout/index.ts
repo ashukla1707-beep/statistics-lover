@@ -104,7 +104,7 @@ async function razorpayFetch(
     // Razorpay's Orders API uses "Authentication failed" for a mismatched,
     // revoked or wrong-mode Key ID / Key Secret pair. Do not mistake this
     // upstream failure for a user's Statistics Lover login problem.
-    if (response.status === 401 || /^authentication failed\\.?$/i.test(description)) {
+    if (response.status === 401 || /^authentication failed\.?$/i.test(description)) {
       console.warn("razorpay-checkout: Razorpay API credentials rejected", {
         status: response.status,
         endpoint: path === "/orders" ? "orders" : "payment",

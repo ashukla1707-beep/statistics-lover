@@ -129,11 +129,11 @@ export function StudentPerformancePage(){
         </section>
 
         <section className="student-subject-performance" aria-labelledby="performance-topics-title">
-          <div className="student-performance-heading"><span className="eyebrow">By topic</span><h2 id="performance-topics-title">Chapter accuracy</h2></div>
+          <div className="student-performance-heading"><span className="eyebrow">By chapter or test section</span><h2 id="performance-topics-title">Topic accuracy</h2></div>
           {topics.length?topics.map(topic=><article key={topic.moduleId}>
-            <div><strong>{topic.moduleTitle}</strong><small>{topic.subjectTitle} · {topic.correct}/{topic.answered} correct · {topic.questions} questions</small></div>
+            <div><strong>{topic.moduleTitle}</strong><small>{topic.source==='module'?'Chapter':'Test section'} · {topic.subjectTitle} · {topic.correct}/{topic.answered} correct · {topic.questions} questions</small></div>
             <div className="student-subject-score"><span>{pct(topic.accuracyPercentage)} accuracy</span><div><i style={{width:`${clamp(topic.accuracyPercentage)}%`}} /></div><small>{topic.answered<3?'Early estimate: fewer than 3 answers':'Based on answered questions'}</small></div>
-          </article>):<div className="learning-empty-card"><h3>Topic analytics are coming</h3><p>Questions must be linked to a chapter or module in the question bank. Until then, subject-level accuracy above is available.</p></div>}
+          </article>):<div className="learning-empty-card"><h3>No topic details yet</h3><p>Topic performance appears once a test with named sections is released, or questions are linked to chapters in the question bank.</p></div>}
         </section>
 
         <section className="performance-panel performance-advice" aria-labelledby="performance-advice-title">

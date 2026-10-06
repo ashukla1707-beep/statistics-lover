@@ -1532,3 +1532,16 @@ At the latest verified handoff on **2026-10-04**:
 - New Owner-only route: `/admin/razorpay-sandbox`.
 - The actual simulated card payment remains a separate user action; do not claim this end-to-end test passed until receipt/enrollment and webhook idempotency are verified on a real sandbox gateway order.
 - Keep `commerce_razorpay_enabled=false` and Android 1.0.41 unchanged.
+
+
+## STAGE 7D — OWNER-ONLY ₹1 RAZORPAY SANDBOX (2026-10-06)
+
+- Prepared private draft course + draft batch + inactive INR 1 offer. Public Store RPC still has **zero offers**.
+- Dedicated active-Owner-only RPC `create_razorpay_sandbox_order()` creates or reuses an unexpired ₹1 test order and server-only marker row.
+- Table `commerce_sandbox_orders` is RLS-enabled and unavailable for direct reads by normal/anonymous users.
+- `razorpay-checkout` Edge Function version 4 ACTIVE with JWT verification, allowing a tightly constrained Owner+sandbox-marked+100-paise test order even though global `commerce_razorpay_enabled=false`. Public checkout stays disabled.
+- Owner-only browser route: `/admin/razorpay-sandbox`.
+- Rollback-only role/order/store-isolation acceptance: PASS. GitHub Quality 37504558472: SUCCESS.
+- Source migration: `database/migrations/0036_razorpay_restricted_owner_sandbox.sql`. Repeatable test: `database/tests/razorpay_owner_sandbox_acceptance.sql`. Runbook: `docs/STAGE7D_RAZORPAY_SANDBOX.md`.
+- Next action: verify canonical Vercel deployment then make exactly one Razorpay Test Mode checkout from Owner account and inspect captured payment, receipt, enrollment and webhook idempotency. **Do not claim real end-to-end success until then.**
+- Keep global gateway disabled and Android 1.0.41 unchanged.

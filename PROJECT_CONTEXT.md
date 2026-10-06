@@ -1504,3 +1504,18 @@ At the latest verified handoff on **2026-10-04**:
 - Next user-facing step: sign into Razorpay's web dashboard and switch to **Test Mode**. Guide the owner through Test API key creation, safe Supabase secret configuration, webhook setup, and sandbox payment testing one step at a time after they confirm each screen.
 - Never ask the owner to paste key secrets or webhook secrets into chat. Keep `commerce_razorpay_enabled=false` until Test Mode end-to-end verification has passed.
 - Android 1.0.41/versionCode 42 stays unchanged.
+
+
+## RAZORPAY TEST-MODE WEBHOOK DELIVERY VERIFIED — 2026-10-06
+
+- Razorpay Test Mode account API key/secret have been saved by the owner in Supabase Edge Function secrets (not exposed to the chat).
+- Separate webhook secret was saved in Supabase and entered into Razorpay; the owner confirmed the webhook settings screenshot:
+  - URL `https://wjsudutyvsssfhrdqvbr.supabase.co/functions/v1/razorpay-webhook`;
+  - enabled, in Test Mode;
+  - events `payment.captured` and `payment.failed`.
+- Owner created a standalone Razorpay Test Mode Payment Link for INR 1 and completed a simulated card payment.
+- Supabase live function gateway logs show Razorpay's POST to the `razorpay-webhook` function on **2026-10-06 17:26:27 UTC**, sender `Razorpay-Webhook/v1`, returning **HTTP 200**.
+- The standalone Payment Link is not mapped to an internal Statistics Lover commerce order. Thus this confirms **webhook delivery/HTTP success**, not full platform checkout, receipt, or enrollment.
+- At this checkpoint the database has **zero active batch offers**, **one active batch**, **zero pending Razorpay commerce orders**, and the rollout flag `commerce_razorpay_enabled=false`.
+- Next stage: design/create a controlled, reversible sandbox **Statistics Lover store offer** and test the actual checkout order -> Razorpay capture -> verified webhook/payment -> receipt -> enrollment end-to-end. Do not turn on the global rollout flag for actual customers prematurely; avoid exposing a test product on the public store without deliberate controls.
+- KYC remains under review, live-mode activation is not authorized, and Android 1.0.41 remains unchanged.
